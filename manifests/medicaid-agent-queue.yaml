@@ -1407,11 +1407,11 @@ states:
     version: 2026-09-10-medicaid-state-eligibility-manual
   index_url: https://pamms.dhs.ga.gov/dfcs/medicaid/
   index_document_count: 428
-  taken_count: 252
+  taken_count: 251
   index_families:
     manual_section_html:
-      found: 241
-      taken: 241
+      found: 240
+      taken: 240
     appendix_html:
       found: 11
       taken: 11
@@ -1424,8 +1424,11 @@ states:
     mt_cover_letter_pdf:
       found: 169
       taken: 0
-  notes: 'Batch 1 (2026-09-10): 252 manual documents taken from the publisher''s own index (428 documents inventoried across
-    5 families; 252 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-1.md.'
+    section_already_in_us_ga_ssp_manual_scope:
+      found: 1
+      taken: 0
+  notes: 'Batch 1 (2026-09-10): 251 manual documents taken from the publisher''s own index (428 documents inventoried across
+    6 families; 251 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-1.md.'
 - jurisdiction: us-il
   name: Illinois
   lead_counts: {}

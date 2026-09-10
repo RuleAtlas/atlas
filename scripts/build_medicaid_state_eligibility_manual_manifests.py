@@ -254,7 +254,12 @@ def build_ga() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     page = fetch(index)
     families = {"manual_section_html": {"found": 0, "taken": 0}, "appendix_html": {"found": 0, "taken": 0},
                 "toc_page_html": {"found": 0, "taken": 0}, "pdf_export": {"found": 0, "taken": 0},
-                "mt_cover_letter_pdf": {"found": 0, "taken": 0}}
+                "mt_cover_letter_pdf": {"found": 0, "taken": 0},
+                "section_already_in_us_ga_ssp_manual_scope": {"found": 0, "taken": 0}}
+    # Section 2578 (SSI Recipients) is already in the corpus under manifests/us-ga-ssp-manual.yaml with the
+    # same citation path us-ga/manual/dfcs/medicaid/2578 and identical text; a release rejects duplicate
+    # citation paths across scopes, so it is inventoried but not taken here.
+    already_in_corpus = {"2578/"}
     docs = []
 
     def add(label: str, title: str, url: str) -> None:
@@ -271,6 +276,9 @@ def build_ga() -> tuple[list[dict[str, Any]], dict[str, Any]]:
                 families["pdf_export"]["found"] += 1
             continue
         if re.fullmatch(r"\d{4}/", rel):
+            if rel in already_in_corpus:
+                families["section_already_in_us_ga_ssp_manual_scope"]["found"] += 1
+                continue
             families["manual_section_html"]["found"] += 1
             families["manual_section_html"]["taken"] += 1
             add(rel.strip("/"), text, href)

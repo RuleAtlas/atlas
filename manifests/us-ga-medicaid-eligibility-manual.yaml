@@ -3080,26 +3080,6 @@ documents:
     manual_index_url: https://pamms.dhs.ga.gov/dfcs/medicaid/
     source_discovery_group: us-ga/manual/medicaid
     discovered_via: manual-review:medicaid-agent-queue batch 1; publisher index https://pamms.dhs.ga.gov/dfcs/medicaid/
-- source_id: us-ga-medicaid-2578
-  jurisdiction: us-ga
-  document_class: manual
-  title: 'Georgia Medicaid Policy Manual: 2578 SSI Recipients'
-  source_url: https://pamms.dhs.ga.gov/dfcs/medicaid/2578/
-  source_format: html
-  source_as_of: '2026-09-10'
-  expression_date: '2026-09-10'
-  citation_path: us-ga/manual/dfcs/medicaid/2578
-  extraction:
-    html_content_selector: article.doc
-  metadata:
-    primary_source: true
-    source_authority: Georgia Department of Human Services, Division of Family and Children Services
-    document_subtype: eligibility_manual_section
-    program: MEDICAID
-    manual: Georgia DFCS Medicaid Policy Manual (ODIS/PAMMS)
-    manual_index_url: https://pamms.dhs.ga.gov/dfcs/medicaid/
-    source_discovery_group: us-ga/manual/medicaid
-    discovered_via: manual-review:medicaid-agent-queue batch 1; publisher index https://pamms.dhs.ga.gov/dfcs/medicaid/
 - source_id: us-ga-medicaid-2579
   jurisdiction: us-ga
   document_class: manual

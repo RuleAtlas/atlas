@@ -50,12 +50,12 @@ provisions JSONL was verified independently with a counter.
 | us-va | DMAS Eligibility Manual | 21 | 1,950 | 46 |
 | us-ny | DOH Medicaid Reference Guide | 8 | 978 | 8 |
 | us-nj | DHS current administrative rules (Title 10) | 6 | 914 | 9 |
-| us-ga | DFCS Medicaid Policy Manual (PAMMS) | 252 | 2,216 | 68 |
+| us-ga | DFCS Medicaid Policy Manual (PAMMS) | 251 | 2,208 | 71 (re-run; first run 252 documents, 2,216 provisions, 68 s) |
 | us-nc | DHB Adult / Family & Children's Medicaid manuals | 149 | 2,509 | 106 |
 | us-pa | DHS Medical Assistance Eligibility Handbook | 380 | 1,297 | 101 |
 | us-tx | HHSC MEPD Handbook + Texas Works Handbook Part A | 712 | 5,026 | 85 |
 
-Total: 1,530 documents, 15,453 provisions across 8 scopes. Index documents found
+Total: 1,529 documents, 15,445 provisions across 8 scopes (after the Georgia re-run below). Index documents found
 versus taken are in the queue rows (`index_document_count`, `taken_count`, `index_families`).
 
 ### Index inventories (every document family on the publisher index; taken counts)
@@ -89,7 +89,12 @@ administrative letters 118, FCM change notices 81, DHB forms 400, EIS documents 
 Citation paths `us-nc/manual/dhb/medicaid/ma-2250`, `.../ma-3233-a`, `.../abd-adult-medicaid-table-of-contents`.
 
 **us-ga** — https://pamms.dhs.ga.gov/dfcs/medicaid/
-Numbered manual sections (2000–2985) as HTML pages: 241 found, 241 taken. Appendix pages
+Numbered manual sections (2000–2985) as HTML pages: 241 found, 240 taken; section 2578 (SSI Recipients) is
+inventoried under its own family and not taken because `manifests/us-ga-ssp-manual.yaml` already carries it in the
+released scope `us-ga/manual/2026-07-13-recovery-r2026-07-17-dedup` under the same citation path
+`us-ga/manual/dfcs/medicaid/2578` with byte-identical text (release deep validation rejects duplicate citation
+paths across scopes). The scope was re-extracted after the controller removed it: 251 documents, 2,208 provisions,
+coverage complete, 71 s. Appendix pages
 (B hearings, B appeal, B OSAH responsibilities, C Medicaid issuance, E glossary, and the four
 Appendix H administrative-review sub-pages listed on the Appendix H TOC): 11 found, 11 taken.
 TOC pages (manual TOC, Appendix B/G/H TOCs): 6 found, 0 taken. PDF export of the whole manual: 1,
@@ -206,7 +211,12 @@ existence assertion on those paths); none touch the Medicaid manifests or the ge
 6. NC: both the ABD and the Family & Children's manuals plus the Basic Requirements document form
    the family; letters, change notices, forms and EIS documents do not.
 7. GA: TOC pages, the PDF export and the MT cover letters are not taken; the four Appendix H
-   sub-pages are taken because the Appendix H TOC is the only index that lists them.
+   sub-pages are taken because the Appendix H TOC is the only index that lists them. Section 2578
+   is not taken because the released SSP manual scope already carries it under the same citation path
+   (controller change after `validate-release` on the draft successor selector flagged 8 duplicate
+   citation paths). Section 2136 also exists in the unreleased, superseded scope
+   `us-ga/manual/2026-06-24-ga-ssp` (7 rows); that scope is not in any release selector, so 2136 is
+   kept here; a reviewer who re-releases the 06-24 scope must drop one side.
 8. PA: the chapter 300 catalog pages are not taken (the PA SNAP handbook scope did take its
    equivalent chapter 500 catalog pages); anchors into one topic page are one document.
 9. TX: MEPD in full plus TWH Part A only; TWH Parts B–X deferred; overlap with the eleven TWH
