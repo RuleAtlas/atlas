@@ -12,10 +12,17 @@ pointer and the next largest state is pulled (NC for IL; MI for FL, which is its
 already covered by the Bridges manual, so NJ is pulled). CA and OH block retrieval and
 are recorded as `blocked_primary_source` with the exact failure.
 
-    uv run python scripts/build_medicaid_state_eligibility_manual_manifests.py
+    uv run python scripts/build_medicaid_state_eligibility_manual_manifests.py            # both batches
+    uv run python scripts/build_medicaid_state_eligibility_manual_manifests.py --batch 2  # batch 2 only
+
+Batch 2 = the next ten states by population (WA, AZ, TN, MA, IN, MD, MO, WI, CO, MN). None
+was already covered by a combined manual in the corpus, so no replacement state was pulled.
+AZ and TN block retrieval and are recorded as `blocked_primary_source` with the exact
+failure; CA and OH were retried once each and their row notes record the outcome.
 """
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import html
 import json
@@ -169,7 +176,7 @@ def build_ny() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     families = {"manual_chapter_pdf": {"found": 0, "taken": 0}, "full_manual_pdf": {"found": 0, "taken": 0},
                 "update_archive_pdf_or_html": {"found": 0, "taken": 0}}
     docs = []
-    for href, text in links(page, index):
+    for href, _text in links(page, index):
         if "/reference/mrg/" not in href:
             continue
         name = href.rsplit("/", 1)[-1]
@@ -460,6 +467,395 @@ def build_nj() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     return docs, {"index_url": index, "families": families}
 
 
+# --------------------------------------------------------------------------- batch 2 states
+
+DISCOVERED_VIA_B2 = "manual-review:medicaid-agent-queue batch 2; publisher index {index}"
+
+
+def document2(jur: str, **kwargs: Any) -> dict[str, Any]:
+    """Batch-2 wrapper around ``document``: same shape, batch-2 discovery provenance."""
+    doc = document(jur, **kwargs)
+    doc["metadata"]["discovered_via"] = DISCOVERED_VIA_B2.format(index=kwargs["index_url"])
+    return doc
+
+
+def build_wa() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """HCA Apple Health eligibility manual: four hub pages (Drupal views) list the manual pages."""
+    from bs4 import BeautifulSoup
+
+    host = "https://www.hca.wa.gov"
+    index = host + "/health-care-services-supports/program-administration/apple-health-eligibility-manual"
+    overview = fetch(index)
+    hubs = {"general": "General eligibility requirements that apply to all Apple Health programs",
+            "non-magi": "Classic (Non-MAGI-based) programs manual",
+            "magi": "Modified Adjusted Gross Income (MAGI-based) programs manual",
+            "ltss": "Long-term services and supports (LTSS) manual"}
+    soup = BeautifulSoup(overview, "html.parser")
+    body = soup.select_one("main")
+    hub_links = [urljoin(index, str(a["href"])) for a in body.select("a[href]") if a.get_text(" ", strip=True).startswith("View ")]
+    tools = [(urljoin(index, str(a["href"])), a.get_text(" ", strip=True)) for a in body.select("a[href]")
+             if a.get_text(" ", strip=True) in {"Introduction overview", "Program standards for income and resources",
+                                                 "Apple Health (Medicaid) manual WAC index", "Apple Health (Medicaid) manual revision log",
+                                                 "Forms and publications", "Authorized Representative DSHS form 14-532"}]
+    families: dict[str, dict[str, int]] = {}
+    docs: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    manual = "Washington Apple Health Eligibility Manual"
+
+    def add(url: str, text: str, part: str) -> bool:
+        final = url.rstrip("/")
+        label = slug(final.rsplit("/", 1)[-1], 100)
+        if label in seen:
+            return False  # the same page is listed under more than one hub / tool list
+        seen.add(label)
+        docs.append(document2("us-wa", label=label, title=f"{manual}: {text}", url=final, fmt="html",
+                              authority="Washington State Health Care Authority", manual=manual, index_url=index,
+                              subtype="eligibility_manual_page",
+                              extraction={"html_content_selector": "main article.node--type-eligibility-manual",
+                                          "html_drop_selectors": [".field--name-field-report-link"]},
+                              extra={"agency": "hca", "manual_part": part}))
+        return True
+
+    for hub_url in hub_links:
+        page = BeautifulSoup(fetch(hub_url), "html.parser")
+        block = page.select_one(".region-content-views .block-views")
+        key = next(k for k in hubs if block.get("id", "").endswith(k))
+        fam = families.setdefault(f"{key}_manual_page_html", {"found": 0, "taken": 0})
+        for a in block.select("a[href]"):
+            fam["found"] += 1
+            if add(urljoin(hub_url, str(a["href"])), a.get_text(" ", strip=True), key):
+                fam["taken"] += 1
+    families["hub_landing_page_html"] = {"found": len(hub_links), "taken": 0}
+    families["additional_tool_manual_page_html"] = {"found": 0, "taken": 0}
+    families["additional_tool_other_page_or_form"] = {"found": 0, "taken": 0}
+    for url, text in tools:
+        if text in {"Introduction overview", "Program standards for income and resources"}:
+            families["additional_tool_manual_page_html"]["found"] += 1
+            # /node/N redirects to the canonical alias; resolve it so source_url is the published path
+            resp = requests.get(url, headers={"User-Agent": UA}, timeout=90, allow_redirects=True)
+            resp.raise_for_status()
+            if add(resp.url, text, "general"):
+                families["additional_tool_manual_page_html"]["taken"] += 1
+        else:
+            families["additional_tool_other_page_or_form"]["found"] += 1
+    return docs, {"index_url": index, "families": families}
+
+
+def build_ma() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """MassHealth member eligibility regulations 130 CMR 501-522 from the mass.gov law library.
+
+    The regulation page carries only the downloads; the text is the official PDF, so the page is
+    ``source_url`` and the PDF is ``download_url``. mass.gov rate-limits: pace requests, retry 403.
+    """
+    from bs4 import BeautifulSoup
+
+    index = "https://www.mass.gov/law-library/130-cmr"
+
+    def slow_fetch(url: str) -> str:
+        for attempt in range(4):
+            resp = requests.get(url, headers={"User-Agent": UA}, timeout=90)
+            if resp.status_code == 403 and attempt < 3:
+                time.sleep(20 * (attempt + 1))
+                continue
+            resp.raise_for_status()
+            time.sleep(3)
+            return resp.text
+        raise AssertionError("unreachable")
+
+    page = slow_fetch(index)
+    families = {"member_eligibility_regulation_pdf": {"found": 0, "taken": 0}, "other_130_cmr_regulation": {"found": 0, "taken": 0}}
+    docs = []
+    seen: set[str] = set()
+    for href, text in links(page, index):
+        m = re.match(r"^130 CMR (\d{3})\.000: MassHealth: (.+)$", text)
+        if "/regulations/130-CMR-" not in href or href in seen:
+            continue
+        seen.add(href)
+        if not m or not (501 <= int(m.group(1)) <= 522):
+            families["other_130_cmr_regulation"]["found"] += 1
+            continue
+        chapter, heading = m.group(1), m.group(2)
+        families["member_eligibility_regulation_pdf"]["found"] += 1
+        reg = BeautifulSoup(slow_fetch(href), "html.parser")
+        pdf = None
+        for a in reg.select("a.ma__download-link__file-link[href]"):
+            if "Open PDF file" in a.get_text(" ", strip=True):
+                pdf = urljoin(href, str(a["href"]))
+                break
+        if pdf is None:
+            print(f"us-ma: no PDF download on {href}", file=sys.stderr)
+            continue
+        families["member_eligibility_regulation_pdf"]["taken"] += 1
+        doc = document2("us-ma", label=f"130-cmr-{chapter}", title=f"MassHealth Member Regulations: 130 CMR {chapter}.000 {heading}", url=href, fmt="pdf",
+                        authority="Massachusetts Executive Office of Health and Human Services (MassHealth)",
+                        manual="MassHealth member eligibility regulations (130 CMR 501.000-522.000)", index_url=index,
+                        subtype="eligibility_regulation_chapter_pdf", extraction={"ocr": True},
+                        extra={"agency": "eohhs", "extraction_granularity": "pdf_page", "cmr_chapter": f"130 CMR {chapter}.000",
+                               "download_note": "the mass.gov regulation page carries no text, only the official PDF/DOCX downloads; the PDF is fetched as download_url"})
+        doc["download_url"] = pdf
+        docs.append(doc)
+    return docs, {"index_url": index, "families": families}
+
+
+def build_in() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    index = "https://www.in.gov/fssa/ompp/forms-documents-and-tools/medicaid-eligibility-policy-manual/"
+    page = fetch(index)
+    families = {"manual_chapter_pdf": {"found": 0, "taken": 0}, "combined_manual_pdf": {"found": 0, "taken": 0},
+                "transmittal_pdf": {"found": 0, "taken": 0}}
+    docs = []
+    manual = "Indiana Health Coverage Program Policy Manual (IHCPPM)"
+    seen: set[str] = set()
+    for href, text in links(page, index):
+        m = re.search(r"/Medicaid_PM_(\d{4})\.pdf", href)
+        if m and href not in seen:
+            seen.add(href)
+            families["manual_chapter_pdf"]["found"] += 1
+            families["manual_chapter_pdf"]["taken"] += 1
+            docs.append(document2("us-in", label=f"ihcppm-chapter-{m.group(1)}", title=f"{manual}: Chapter {m.group(1)} {text}", url=href, fmt="pdf",
+                                  authority="Indiana Family and Social Services Administration, Office of Medicaid Policy and Planning",
+                                  manual=manual, index_url=index, subtype="eligibility_manual_chapter_pdf", extraction={"ocr": True},
+                                  extra={"agency": "fssa", "extraction_granularity": "pdf_page", "manual_chapter": m.group(1)}))
+        elif "/Medicaid_Combined_PM.pdf" in href and href not in seen:
+            seen.add(href)
+            families["combined_manual_pdf"]["found"] += 1
+        elif href.rstrip("/").endswith("medicaid-program-policy-manual-transmittals"):
+            sub = fetch(href)
+            families["transmittal_pdf"]["found"] = len({h for h, _ in links(sub, href) if re.search(r"/dA/|\.pdf", h, re.I)})
+    return docs, {"index_url": index, "families": families}
+
+
+def build_md() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    index = "https://health.maryland.gov/mmcp/Pages/MedicaidManual.aspx"
+    page = fetch(index)
+    families = {"manual_section_pdf": {"found": 0, "taken": 0}, "manual_supplement_action_transmittal_pdf": {"found": 0, "taken": 0},
+                "coverage_group_guide_pdf": {"found": 0, "taken": 0}}
+    docs = []
+    manual = "Maryland Medical Assistance Eligibility Manual"
+    seen: set[str] = set()
+    for href, text in links(page, index):
+        if not href.lower().endswith(".pdf") or href in seen:
+            continue
+        seen.add(href)
+        if "/ManualSupplements/" in href:
+            families["manual_supplement_action_transmittal_pdf"]["found"] += 1
+        elif "/Coverage%20Groups/" in href or "/Coverage Groups/" in href:
+            families["coverage_group_guide_pdf"]["found"] += 1
+        elif "/Medicaid%20Manual/" in href or "/Medicaid Manual/" in href:
+            families["manual_section_pdf"]["found"] += 1
+            families["manual_section_pdf"]["taken"] += 1
+            m = re.match(r"^Section[- ]?(\d{3,4})[- ]*(.*)$", text)
+            if m and not re.search(r"Resource[- ]Table", text):
+                label, title = f"section-{m.group(1)}", f"Section {m.group(1)} {m.group(2).strip(' -')}"
+            elif m:
+                label, title = f"section-{m.group(1)}-resource-table-2024", "Section 800 Resource Table 2024"
+            elif text.startswith("Appendix schedules"):
+                label, title = "appendix-schedules-2026", "Appendix schedules 2026 (effective 1/1/2026)"
+            else:
+                label, title = slug(text), text
+            docs.append(document2("us-md", label=label, title=f"{manual}: {title}", url=href, fmt="pdf",
+                                  authority="Maryland Department of Health, Medicaid (Medical Care Programs) Administration",
+                                  manual=manual, index_url=index, subtype="eligibility_manual_section_pdf", extraction={"ocr": True},
+                                  extra={"agency": "mdh", "extraction_granularity": "pdf_page"}))
+
+    def order(doc: dict[str, Any]) -> tuple[int, int, str]:
+        label = doc["citation_path"].rsplit("/", 1)[-1]
+        m = re.match(r"^section-(\d+)", label)
+        return (1 if m else (0 if label in {"beginning-of-manual", "manual-table-of-contents"} else 2), int(m.group(1)) if m else 0, label)
+
+    docs.sort(key=order)  # manual order: front matter, sections 200-1600, appendix/tables
+    return docs, {"index_url": index, "families": families}
+
+
+def build_mo() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """DSS manuals site (WordPress): the section pages are enumerated from the site's own sitemap,
+    as the MO SNAP manual scope did; the appendix files hang off the manual landing pages' menus."""
+    from bs4 import BeautifulSoup
+
+    host = "https://dssmanuals.mo.gov"
+    manuals = {"magi": (host + "/family-mo-healthnet-magi/", "Missouri Family MO HealthNet (MAGI) Manual", "menu-magi-appendices-container"),
+               "mhabd": (host + "/mo-healthnet-for-the-aged-blind-and-disabled/", "Missouri MO HealthNet for the Aged, Blind, and Disabled (MHABD) Manual",
+                         "menu-mhabdsubnav-container")}
+    sitemaps = [host + "/wp-sitemap-posts-page-1.xml", host + "/wp-sitemap-posts-page-2.xml"]
+    urls: list[str] = []
+    for sm in sitemaps:
+        urls.extend(re.findall(r"<loc>([^<]+)</loc>", fetch(sm)))
+    families: dict[str, dict[str, int]] = {}
+    docs = []
+    for key, (landing, manual, menu_class) in manuals.items():
+        fam = families.setdefault(f"{key}_manual_page_html", {"found": 0, "taken": 0})
+        for url in urls:
+            if not url.startswith(landing):
+                continue
+            rel = url[len(landing):].strip("/")
+            fam["found"] += 1
+            fam["taken"] += 1
+            label = key if not rel else key + "/" + "/".join(slug(p, 100) for p in rel.split("/"))
+            title = manual if not rel else f"{manual}: {rel.rsplit('/', 1)[-1]}"
+            docs.append(document2("us-mo", label=label, title=title, url=url, fmt="html",
+                                  authority="Missouri Department of Social Services, Family Support Division", manual=manual,
+                                  index_url=landing, subtype="eligibility_manual_section", extraction={"html_content_selector": ".entry-content"},
+                                  extra={"agency": "dss", "manual_part": key, "source_sitemap_urls": sitemaps}))
+        soup = BeautifulSoup(fetch(landing), "html.parser")
+        menu = soup.select_one(f".{menu_class}")
+        pdf_fam = families.setdefault(f"{key}_appendix_pdf", {"found": 0, "taken": 0})
+        other_fam = families.setdefault(f"{key}_appendix_spreadsheet", {"found": 0, "taken": 0})
+        for a in menu.select("a[href*='wp-content/uploads']"):
+            href, text = str(a["href"]), a.get_text(" ", strip=True)
+            m = re.match(r"^Appendix ([A-Z])\b", text)
+            if not href.lower().endswith(".pdf"):
+                other_fam["found"] += 1
+                continue
+            pdf_fam["found"] += 1
+            pdf_fam["taken"] += 1
+            docs.append(document2("us-mo", label=f"{key}/appendix-{m.group(1).lower()}", title=f"{manual}: {text}", url=href, fmt="pdf",
+                                  authority="Missouri Department of Social Services, Family Support Division", manual=manual,
+                                  index_url=landing, subtype="eligibility_manual_appendix_pdf", extraction={"ocr": True},
+                                  extra={"agency": "dss", "manual_part": key, "extraction_granularity": "pdf_page"}))
+    return docs, {"index_url": manuals["magi"][0], "mhabd_index_url": manuals["mhabd"][0], "families": families}
+
+
+def build_wi() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """DHS publications library collections for the two eligibility handbooks; the online handbook
+    host (emhandbooks.wisconsin.gov) does not answer TCP from this network, so the publisher's own
+    PDF release is taken, as the FoodShare handbook scope did."""
+    collections = {"meh": ("https://www.dhs.wisconsin.gov/library/collection/p-10030", "Wisconsin Medicaid Eligibility Handbook", r"p10030-(\d\d-\d\d)\.pdf"),
+                   "badgercare-plus-handbook": ("https://www.dhs.wisconsin.gov/library/collection/p-10171", "Wisconsin BadgerCare Plus Eligibility Handbook", r"p10171-(\d\d-\d\d)\.pdf")}
+    families: dict[str, dict[str, int]] = {}
+    docs = []
+    for key, (index, manual, pat) in collections.items():
+        page = fetch(index)
+        releases = []
+        for href, text in links(page, index):
+            m = re.search(pat, href)
+            if m:
+                releases.append((m.group(1), href, text))
+        releases.sort(reverse=True)
+        current = releases[0]
+        families[f"{key}_current_release_pdf"] = {"found": 1, "taken": 1}
+        families[f"{key}_prior_release_pdf"] = {"found": len(releases) - 1, "taken": 0}
+        docs.append(document2("us-wi", label=f"{key}-release-{current[0]}", title=f"{manual}: Release {current[0]}", url=current[1], fmt="pdf",
+                              authority="Wisconsin Department of Health Services", manual=manual, index_url=index,
+                              subtype="eligibility_handbook_release_pdf", extraction={"ocr": True},
+                              extra={"agency": "dhs", "extraction_granularity": "pdf_page", "release": current[0],
+                                     "online_handbook_url": "https://www.emhandbooks.wisconsin.gov/" + ("meh-ebd/meh.htm" if key == "meh" else "bcplus/bcplus.htm"),
+                                     "transport_note": "emhandbooks.wisconsin.gov TCP connections time out from this network (curl 28, plain and browser-impersonated); the DHS publications library PDF of the same release is the publisher's own copy"}))
+    return docs, {"index_url": collections["meh"][0], "badgercare_index_url": collections["badgercare-plus-handbook"][0], "families": families}
+
+
+def build_co() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Colorado has no separate eligibility manual: Medical Assistance eligibility is 10 CCR 2505-10
+    section 8.100 on the Secretary of State CCR site (the publisher used by the CO SNAP rules scope)."""
+    index = ("https://www.sos.state.co.us/CCR/NumericalCCRDocList.do?deptID=7&deptName=2505,1305%20Department%20of%20Health%20Care%20Policy%20and%20Financing"
+             "&agencyID=69&agencyName=2505%20Medical%20Services%20Board%20(Volume%208;%20Medical%20Assistance,%20Children's%20Health%20Plan)")
+    page = fetch(index)
+    families = {"medical_assistance_eligibility_rule_pdf": {"found": 0, "taken": 0}, "other_volume_8_rule": {"found": 0, "taken": 0}}
+    docs = []
+    for m in re.finditer(r"<a[^>]+href=['\"]([^'\"]*ruleId[^'\"]*)['\"][^>]*>(.*?)</a></TD>\s*<TD>(.*?)</TD>", page, re.S | re.I):
+        series = re.sub(r"\s+", " ", m.group(2)).strip()
+        title = html.unescape(re.sub(r"\s+", " ", m.group(3)).strip())
+        if series != "10 CCR 2505-10 8.100":
+            families["other_volume_8_rule"]["found"] += 1
+            continue
+        families["medical_assistance_eligibility_rule_pdf"]["found"] += 1
+        info_url = urljoin(index, html.unescape(m.group(1)))
+        info = fetch(info_url)
+        cur = re.search(r"<b>Current version</b>.*?OpenRuleWindow\('(\d+)',\s*'([^']+)'\s*\)\"\s*>\s*(\d{2}/\d{2}/\d{4})\s*\(PDF\)", info, re.S)
+        if not cur:
+            print("us-co: current version link not found on rule info page", file=sys.stderr)
+            continue
+        version_id, file_name, effective = cur.group(1), cur.group(2), cur.group(3)
+        pdf = f"https://www.sos.state.co.us/CCR/GenerateRulePdf.do?ruleVersionId={version_id}&fileName={file_name.replace(' ', '%20')}"
+        families["medical_assistance_eligibility_rule_pdf"]["taken"] += 1
+        doc = document2("us-co", label="10-ccr-2505-10-8-100", title=f"Colorado Medical Assistance Rules: 10 CCR 2505-10 Section 8.100 {title.split('8.100', 1)[-1].strip(' ,')}",
+                        url=info_url, fmt="pdf", authority="Colorado Department of Health Care Policy and Financing, Medical Services Board",
+                        manual="Colorado Medical Assistance Eligibility Rules (10 CCR 2505-10 Section 8.100)", index_url=index,
+                        subtype="eligibility_rule_pdf", extraction={"ocr": True},
+                        extra={"agency": "hcpf", "extraction_granularity": "pdf_page", "official_publisher": "Colorado Secretary of State",
+                               "code_rule": "10 CCR 2505-10 8.100", "rule_version_id": version_id,
+                               "rule_effective_date": dt.datetime.strptime(effective, "%m/%d/%Y").date().isoformat()})
+        doc["download_url"] = pdf
+        docs.append(doc)
+    return docs, {"index_url": index, "families": families}
+
+
+def build_mn() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    # RoboHelp output like the PA handbook: topic tree in whxdata/toc.new.js + nested tocN.new.js
+    base = "https://hcopub.dhs.state.mn.us/epm/"
+    index = base + "home.htm"
+    home = fetch(index)
+
+    def toc(key: str) -> list[dict[str, Any]]:
+        text = fetch(f"{base}whxdata/{key}.new.js")
+        m = re.search(r"var toc =\s*(\[.*?\]);\s*window", text, re.S)
+        return json.loads(m.group(1)) if m else []
+
+    entries: list[tuple[str, str]] = []
+
+    def walk(key: str) -> None:
+        for item in toc(key):
+            if item.get("url"):
+                entries.append((item.get("name", ""), base + item["url"].split("#", 1)[0]))
+            if item.get("type") == "book" and item.get("key"):
+                walk(item["key"])
+
+    walk("toc")
+    families = {"manual_topic_html": {"found": 0, "taken": 0}, "home_page_bulletin_pdf": {"found": 0, "taken": 0}}
+    families["home_page_bulletin_pdf"]["found"] = len({h for h, _ in links(home, index) if h.lower().endswith(".pdf")})
+    docs = []
+    seen: set[str] = set()
+    manual = "Minnesota Health Care Programs Eligibility Policy Manual (EPM)"
+    for name, url in entries:
+        families["manual_topic_html"]["found"] += 1
+        if url in seen:
+            continue  # the TOC lists 2.1.1.2.1 twice
+        seen.add(url)
+        families["manual_topic_html"]["taken"] += 1
+        label = slug(url[len(base):].rsplit(".", 1)[0])
+        docs.append(document2("us-mn", label=label, title=f"{manual}: {name}", url=url, fmt="html",
+                              authority="Minnesota Department of Human Services", manual=manual, index_url=index,
+                              subtype="eligibility_manual_topic",
+                              extraction={"html_content_selector": "#rh-topic", "html_drop_selectors": ["p.Footer"]},
+                              extra={"agency": "dhs"}))
+    return docs, {"index_url": index, "families": families}
+
+
+BUILDERS_BATCH2 = {"us-wa": build_wa, "us-ma": build_ma, "us-in": build_in, "us-md": build_md,
+                   "us-mo": build_mo, "us-wi": build_wi, "us-co": build_co, "us-mn": build_mn}
+NAMES_BATCH2 = {"us-wa": "Washington", "us-az": "Arizona", "us-tn": "Tennessee", "us-ma": "Massachusetts", "us-in": "Indiana",
+                "us-md": "Maryland", "us-mo": "Missouri", "us-wi": "Wisconsin", "us-co": "Colorado", "us-mn": "Minnesota"}
+SOURCE_KIND_BATCH2 = {"us-wa": "official_html_manual_pages", "us-ma": "official_pdf_cmr_chapters", "us-in": "official_pdf_manual_chapters",
+                      "us-md": "official_pdf_manual_sections", "us-mo": "official_html_manual_sections", "us-wi": "official_pdf_handbook_releases",
+                      "us-co": "official_pdf_ccr_rule", "us-mn": "official_html_manual_topics"}
+RETRY_NOTE = (" Retried 2026-09-10T18:36Z (plain request) and 2026-09-10T18:37Z (curl-cffi chrome120 browser impersonation, 20 s timeouts), "
+              "same failure: {detail}")
+STATIC_ROWS_BATCH2: dict[str, dict[str, Any]] = {
+    "us-az": {
+        "queue_status": "blocked_primary_source",
+        "source_kind": "official_html_manual_pages",
+        "primary_source_url": "https://www.azahcccs.gov/Resources/EligibilityPolicy/",
+        "target_manifest": "manifests/us-az-medicaid-eligibility-manual.yaml",
+        "target_scope": {"jurisdiction": "us-az", "document_class": "manual", "version": VERSION},
+        "index_url": "https://www.azahcccs.gov/Resources/EligibilityPolicy/",
+        "index_document_count": None, "taken_count": 0,
+        "notes": ("Blocked 2026-09-10: azahcccs.gov (AHCCCS Eligibility Policy Manual index, the AHCCCS Medical Policy Manual path and the site root) "
+                  "returns HTTP 403 Forbidden from 'Microsoft-Azure-Application-Gateway/v2' within 1 s for the Axiom user agent, a plain Chrome user "
+                  "agent and curl-cffi chrome120 impersonation (179-581 byte bodies). No workaround attempted. Index inventory not possible."),
+    },
+    "us-tn": {
+        "queue_status": "blocked_primary_source",
+        "source_kind": "official_pdf_policy_documents",
+        "primary_source_url": "https://www.tn.gov/tenncare/policy-guidelines/eligibility-policy.html",
+        "target_manifest": "manifests/us-tn-medicaid-eligibility-manual.yaml",
+        "target_scope": {"jurisdiction": "us-tn", "document_class": "manual", "version": VERSION},
+        "index_url": "https://www.tn.gov/tenncare/policy-guidelines/eligibility-policy.html",
+        "index_document_count": None, "taken_count": 0,
+        "notes": ("Blocked 2026-09-10: tn.gov (TennCare Eligibility Policy index) returns HTTP 403 Forbidden from 'awselb/2.0' within 1 s (118-520 byte "
+                  "bodies) for the Axiom user agent, a plain Chrome user agent and curl-cffi chrome120 impersonation; the tn.gov/tenncare.html root "
+                  "did not answer at all (curl exit 0 bytes). No workaround attempted. Index inventory not possible."),
+    },
+}
+
+
 BUILDERS = {"us-va": build_va, "us-ny": build_ny, "us-nc": build_nc, "us-ga": build_ga,
             "us-tx": build_tx, "us-pa": build_pa, "us-ar": build_ar, "us-nj": build_nj}
 NAMES = {"us-ar": "Arkansas", "us-va": "Virginia", "us-ca": "California", "us-tx": "Texas", "us-fl": "Florida",
@@ -549,53 +945,85 @@ STATIC_ROWS: dict[str, dict[str, Any]] = {
 }
 
 
+BATCHES = {
+    "1": (BUILDERS, STATIC_ROWS, NAMES, SOURCE_KIND,
+          "Batch 1 (2026-09-10): the two queued state rows plus the eight largest states by population; done-already states "
+          "are replaced by the next largest. Generator: scripts/build_medicaid_state_eligibility_manual_manifests.py."),
+    "2": (BUILDERS_BATCH2, STATIC_ROWS_BATCH2, NAMES_BATCH2, SOURCE_KIND_BATCH2,
+          "Batch 2 (2026-09-10): the next ten states by population (WA, AZ, TN, MA, IN, MD, MO, WI, CO, MN); none was already covered "
+          "by a combined manual, so no replacement was pulled. CA and OH retried once each. Generator: "
+          "scripts/build_medicaid_state_eligibility_manual_manifests.py --batch 2."),
+}
+BATCH1_RETRY_DETAILS = {
+    "us-ca": "HTTP 403 Incapsula interstitial (incident id 648000110658208525-192905496909841125) for both requests.",
+    "us-oh": ("codes.ohio.gov TCP connect timeout (curl 28 at 20 s) for both requests; medicaid.ohio.gov MEPL index still 404 (5,279 bytes) "
+              "to the plain request but returned HTTP 200 (399,073 bytes) to chrome120 impersonation, so the procedure-letter family is "
+              "reachable with the existing browser_impersonation option while the OAC 5160:1 rules on codes.ohio.gov remain unreachable; "
+              "not ingested in batch 2 (the rules are the eligibility manual; the letters alone are a separate family)."),
+}
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--batch", choices=["1", "2", "all"], default="all",
+                        help="which batch's builders and static rows to (re)build; rows of the other batch are left untouched")
+    parser.add_argument("--only", action="append", default=[], metavar="JURISDICTION",
+                        help="restrict live builders to these jurisdictions (static rows of the batch are still applied)")
+    args = parser.parse_args()
+    batches = ["1", "2"] if args.batch == "all" else [args.batch]
     queue = yaml.safe_load(QUEUE.read_text())
     rows = {s["jurisdiction"]: s for s in queue["states"]}
     summary: dict[str, Any] = {}
-    for jur, build in BUILDERS.items():
-        docs, info = build()
-        if not docs:
-            print(f"{jur}: no documents found; index layout changed?", file=sys.stderr)
-            return 1
-        paths = [d["citation_path"] for d in docs]
-        if len(set(paths)) != len(paths):
-            dupes = sorted({p for p in paths if paths.count(p) > 1})
-            print(f"{jur}: duplicate citation paths {dupes}", file=sys.stderr)
-            return 1
-        stem = f"{jur}-medicaid-eligibility-manual"
-        (ROOT / "manifests" / f"{stem}.yaml").write_text(
-            yaml.safe_dump({"version": VERSION, "documents": docs}, sort_keys=False, allow_unicode=True, width=120))
-        found = sum(f["found"] for f in info["families"].values())
-        taken = sum(f["taken"] for f in info["families"].values())
-        summary[jur] = {"documents": len(docs), **info}
-        row = rows.get(jur) or {"jurisdiction": jur, "name": NAMES[jur], "lead_counts": {}, "candidate_sources": []}
-        row.update({
-            "name": NAMES[jur], "queue_status": "agent_ready", "source_kind": SOURCE_KIND[jur],
-            "primary_source_url": docs[0]["source_url"], "target_manifest": f"manifests/{stem}.yaml",
-            "target_scope": {"jurisdiction": jur, "document_class": "manual", "version": VERSION},
-            "index_url": info["index_url"], "index_document_count": found, "taken_count": taken,
-            "index_families": info["families"],
-            "notes": (f"Batch 1 (2026-09-10): {len(docs)} manual documents taken from the publisher's own index ({found} documents inventoried "
-                      f"across {len(info['families'])} families; {taken} taken). Extraction proven with the official-documents extractor; "
-                      "see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-1.md."),
-        })
-        rows[jur] = row
-        print(f"{jur}: {len(docs)} documents; index families {info['families']}")
-    for jur, static in STATIC_ROWS.items():
-        row = rows.get(jur) or {"jurisdiction": jur, "name": NAMES.get(jur, "Federal"), "lead_counts": {}, "candidate_sources": []}
-        row.update(static)
-        rows[jur] = row
+    for batch in batches:
+        builders, static_rows, names, source_kind, batch_note = BATCHES[batch]
+        for jur, build in builders.items():
+            if args.only and jur not in args.only:
+                continue
+            docs, info = build()
+            if not docs:
+                print(f"{jur}: no documents found; index layout changed?", file=sys.stderr)
+                return 1
+            paths = [d["citation_path"] for d in docs]
+            if len(set(paths)) != len(paths):
+                dupes = sorted({p for p in paths if paths.count(p) > 1})
+                print(f"{jur}: duplicate citation paths {dupes}", file=sys.stderr)
+                return 1
+            stem = f"{jur}-medicaid-eligibility-manual"
+            (ROOT / "manifests" / f"{stem}.yaml").write_text(
+                yaml.safe_dump({"version": VERSION, "documents": docs}, sort_keys=False, allow_unicode=True, width=120))
+            found = sum(f["found"] for f in info["families"].values())
+            taken = sum(f["taken"] for f in info["families"].values())
+            summary[jur] = {"documents": len(docs), **info}
+            row = rows.get(jur) or {"jurisdiction": jur, "name": names[jur], "lead_counts": {}, "candidate_sources": []}
+            row.update({
+                "name": names[jur], "queue_status": "agent_ready", "source_kind": source_kind[jur],
+                "primary_source_url": docs[0]["source_url"], "target_manifest": f"manifests/{stem}.yaml",
+                "target_scope": {"jurisdiction": jur, "document_class": "manual", "version": VERSION},
+                "index_url": info["index_url"], "index_document_count": found, "taken_count": taken,
+                "index_families": info["families"],
+                "notes": (f"Batch {batch} (2026-09-10): {len(docs)} manual documents taken from the publisher's own index ({found} documents inventoried "
+                          f"across {len(info['families'])} families; {taken} taken). Extraction proven with the official-documents extractor; "
+                          f"see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-{batch}.md."),
+            })
+            rows[jur] = row
+            print(f"{jur}: {len(docs)} documents; index families {info['families']}")
+        for jur, static in static_rows.items():
+            row = rows.get(jur) or {"jurisdiction": jur, "name": names.get(jur, "Federal"), "lead_counts": {}, "candidate_sources": []}
+            row.update(static)
+            rows[jur] = row
+        if batch == "2":
+            for jur, detail in BATCH1_RETRY_DETAILS.items():
+                note = RETRY_NOTE.format(detail=detail)
+                if jur in rows and note not in rows[jur]["notes"]:
+                    rows[jur]["notes"] = rows[jur]["notes"] + note
+        notes = queue.setdefault("policy", {}).setdefault("notes", [])
+        if batch_note not in notes:
+            notes.append(batch_note)
     queue["states"] = [rows[j] for j in sorted(rows, key=lambda j: (j != "us", j))]
     queue["status_counts"] = {}
     for s in queue["states"]:
         queue["status_counts"][s["queue_status"]] = queue["status_counts"].get(s["queue_status"], 0) + 1
     queue["queue_status"] = "in_progress"
-    batch_note = ("Batch 1 (2026-09-10): the two queued state rows plus the eight largest states by population; done-already states "
-                  "are replaced by the next largest. Generator: scripts/build_medicaid_state_eligibility_manual_manifests.py.")
-    notes = queue.setdefault("policy", {}).setdefault("notes", [])
-    if batch_note not in notes:
-        notes.append(batch_note)
     QUEUE.write_text(yaml.safe_dump(queue, sort_keys=False, allow_unicode=True, width=120))
     print(json.dumps(summary, indent=1))
     print(f"queue {queue['status_counts']}")
