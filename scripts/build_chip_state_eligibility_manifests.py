@@ -11,6 +11,7 @@ are recorded on the queue rows only; no manifest is written for them.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import yaml
@@ -1660,14 +1661,946 @@ DONE_BATCH3: dict[str, dict] = {
 }
 
 
+
+# --- batch 4, retry from a US network (docs/ingest-runs/2026-09-10-chip-state-eligibility-manuals-batch-4-retry.md)
+# Every blocked_primary_source row (FL, KS, LA, WI, CA, OH, AZ, SC, OR, NE, HI, NH, UT, MT) was
+# retried once plain and once chrome120 (20 s timeouts) from a US exit; the publishers that
+# answered were inventoried and extracted here, and the five never-queued jurisdictions (AK, DC,
+# ND, VT, WY) were probed. CA, MT and FL still block; DC and WY publish rule text only behind
+# ASP.NET postbacks; WI, LA, OH, SC, KS and AZ are covered by the parallel Medicaid run's scopes
+# (discovery/ingest-medicaid, same corpus root) and are done by pointer.
+
+BATCH4_DISCOVERED_VIA = (
+    "manual-review:chip-agent-queue batch 4 (US-network retry); publisher index confirmed by agent 2026-09-10"
+)
+RETRIED_AT_BATCH4 = "2026-09-10T21:35Z"
+
+NEW_ROW_NAMES_BATCH4: dict[str, str] = {
+    "us-ak": "Alaska",
+    "us-dc": "District of Columbia",
+    "us-nd": "North Dakota",
+    "us-vt": "Vermont",
+    "us-wy": "Wyoming",
+}
+
+# Still-blocked rows: appended to the existing note (same shape as RETRY_NOTES).
+RETRY_NOTES_BATCH4: dict[str, str] = {
+    "us-ca": (
+        f"retried {RETRIED_AT_BATCH4} from US network, same failure (HTTP 200 with an Incapsula "
+        "'Request unsuccessful' JavaScript-challenge iframe, 843-byte body, plain and chrome120; no "
+        "MEPM index reachable)."
+    ),
+    "us-mt": (
+        f"retried {RETRIED_AT_BATCH4} from US network, same failure (rules.mt.gov now answers HTTP 405 "
+        "with a 'Human Verification' CAPTCHA page requiring JavaScript, plain and chrome120)."
+    ),
+    "us-fl": (
+        f"retried {RETRIED_AT_BATCH4} from US network, different failure (ahca.myflorida.com now answers; "
+        "the Florida KidCare page returns HTTP 404 'WebContentNotFound' at /medicaid/florida-kidcare, "
+        "/medicaid/florida-kidcare.html and under medicaid-policy-quality-and-operations; the Medicaid and "
+        "Medicaid Policy, Quality and Operations pages carry no KidCare or Title XXI eligibility manual or "
+        "rule link). No eligibility manual located; still blocked_primary_source."
+    ),
+}
+
+UT_CHIP_BASE = "https://oepmanuals-chip.dhhs.utah.gov/"
+AK_MAGI_BASE = "http://dpaweb.hss.state.ak.us/manuals/MAGI2/"
+ND_ACA_BASE = "https://www.nd.gov/dhs/policymanuals/51003/Content/"
+ROBOHELP_TOPIC_EXTRACTION = {
+    "html_content_selector": "body",
+    "html_drop_selectors": ["div.topic-header", "div.topic-header-shadow"],
+}
+OR_OAR_DIVISION_EXTRACTION = {
+    "html_content_selector": "#content",
+    "segmentation": "labeled_sections",
+    "section_heading_pattern": r"^(?P<label>410-200-\d{4})\s+(?P<heading>[A-Z].*?)\.?$",
+}
+NE_477_EXTRACTION = {
+    "segmentation": "labeled_sections",
+    "normalize_parenthetical_label_components": True,
+    "section_heading_pattern": (
+        r"^(?P<label>0\d{2}(?:\.\d{1,2})?(?:\([A-Za-z0-9]+\))*)\.?\s+"
+        r"(?P<heading>[A-Z][A-Z0-9 ’'&,/()\-–‑§]+?(?:\.(?=\s|$)|$))(?:\s+(?P<body>.*))?$"
+    ),
+    "heading_continuation_pattern": (
+        r"^(?P<heading>[A-Z][A-Z0-9 ’'&,/()\-–‑§$]+?(?:\.(?=\s|$)|$))(?:\s+(?P<body>.*))?$"
+    ),
+}
+NH_HE_W_EXTRACTION = {
+    "html_content_selector": ".WordSection1",
+    "segmentation": "labeled_sections",
+    "section_heading_pattern": (
+        r"^(?P<prefix>He-W)\s+(?P<part>\d+)\s*\.\s*(?P<section>\d+)\s*(?:[-–]\s*)?"
+        r"(?P<heading>.*?)(?:\s+\.\s+(?P<body>.+))?\.?$"
+    ),
+    "section_label_template": "{prefix} {part}.{section}",
+    "stop_text_pattern": "^APPENDIX A",
+}
+VT_HBEE_DROP = [
+    r"^\s*Agency of Human Services\s*$",
+    r"^\s*Health Benefits Eligibility and Enrollment\s*$",
+    r"^\s*(?:Eligibility Standards|Financial Methodologies)\s*$",
+    r"^\s*Part \d – Page \d+ \(Sec\.[^)]*\)\s*$",
+]
+VT_HBEE_EXTRACTION = {
+    "segmentation": "labeled_sections",
+    "start_page": 3,
+    "section_heading_pattern": r"^\s*(?P<label>\d{1,2}\.\d\d)\s+(?P<heading>[A-Z].*?)\s*\(\d\d/\d\d/\d{4}, GCR [\d-]+\)\s*$",
+    "section_label_template": "{label}",
+    "heading_continuation_pattern": NEVER_CONTINUE,
+    "drop_line_patterns": VT_HBEE_DROP,
+}
+
+
+def _topic_slug(path: str) -> str:
+
+    stem = path.rsplit("/", 1)[-1]
+    stem = stem[:-4] if stem.lower().endswith(".htm") else stem
+    return re.sub(r"[^A-Za-z0-9]+", "-", stem).strip("-").lower()
+
+
+def _ut_topic_doc(path: str, name: str) -> dict:
+    slug = _topic_slug(path)
+    return doc(
+        "us-ut", f"ut-dhhs-chip-{slug}", name, UT_CHIP_BASE + path,
+        f"us-ut/manual/dhhs/chip/{slug}", "html", SOURCE_AS_OF,
+        subtype="agency_eligibility_manual_topic",
+        authority="Utah Department of Health and Human Services, Office of Eligibility Policy (CHIP Policy Manual)",
+        extraction=ROBOHELP_TOPIC_EXTRACTION,
+        metadata={"manual_section": name.split(" ", 1)[0], "manual_effective_date": "2024-05-01",
+                  "discovered_via": BATCH4_DISCOVERED_VIA},
+    )
+
+
+def _ak_topic_doc(path: str, name: str) -> dict:
+    slug = _topic_slug(path)
+    return doc(
+        "us-ak", f"ak-dpa-magi-{slug}", name, AK_MAGI_BASE + path,
+        f"us-ak/manual/dpa/magi-medicaid/{slug}", "html", SOURCE_AS_OF,
+        subtype="agency_eligibility_manual_topic",
+        authority="Alaska Department of Health, Division of Public Assistance (MAGI Medicaid Eligibility Manual)",
+        extraction=ROBOHELP_TOPIC_EXTRACTION,
+        metadata={"state_program": "Denali KidCare", "discovered_via": BATCH4_DISCOVERED_VIA},
+    )
+
+
+def _nd_topic_doc(filename: str, name: str) -> dict:
+    num = filename[:-4]
+    return doc(
+        "us-nd", f"nd-hhs-{num}", name, ND_ACA_BASE + filename,
+        f"us-nd/manual/hhs/aca-medicaid/{num}", "html", "2026-05-15",
+        subtype="agency_eligibility_manual_topic",
+        authority="North Dakota Health and Human Services, Medical Services Division (Service Chapter 510-03 ACA Medicaid)",
+        extraction={"html_content_selector": "#mc-main-content"},
+        metadata={"service_chapter_section": num, "manual_release": "26.3 (published 2026-05-15)",
+                  "state_program": "Healthy Steps (Medicaid-expansion CHIP)", "discovered_via": BATCH4_DISCOVERED_VIA},
+    )
+
+
+UT_CHIP_TOPICS: tuple[tuple[str, str], ...] = (
+    ('100_General_Provisions/100_General_Provisions.htm', '100 General Provisions'),
+    ('100_General_Provisions/101_Enrollee_Rights.htm', '101 Enrollee Rights'),
+    ('100_General_Provisions/102_Enrollee_Responsibilities.htm', '102 Enrollee Responsibilities'),
+    ('100_General_Provisions/102-1_Completion_of_an_Application.htm', '102-1 Completion of an Application'),
+    ('100_General_Provisions/102-2_Verification.htm', '102-2 Verification'),
+    ('100_General_Provisions/102-3_Report_Changes.htm', '102-3 Report Changes'),
+    ('100_General_Provisions/102-5_Cooperate_with_Quality_Reviews.htm', '102-5 Cooperate with Quality Reviews'),
+    ('100_General_Provisions/103_Worker_Responsibilities.htm', '103 Worker Responsibilities'),
+    ('100_General_Provisions/103-1_Prohibited_Action.htm', '103-1 Prohibited Action'),
+    ('100_General_Provisions/104_Authority_of_the_Office_Director.htm', '104 Authority of the Office Director'),
+    ('100_General_Provisions/110_Safeguarding_Information.htm', '110 Safeguarding Information'),
+    ('100_General_Provisions/110-1_Safeguards_of_Income_Match_Data.htm', '110-1 Safeguards of Income Match Data'),
+    ('100_General_Provisions/101-2_Special_Safeguards_for_IRS_Income_Match_Data.htm', '110-2 Special Safeguards for IRS Income Match Data'),
+    ('100_General_Provisions/101-3_Who_May_Have_Access_to_Income_Match_Records.htm', '110-3 Who May Have Access to Income Match Records'),
+    ('100_General_Provisions/111_Confidential_Information.htm', '111 Confidential Information'),
+    ('100_General_Provisions/111-1_Releasing_Information_to_the_Enrollee.htm', '111-1 Releasing Information to the Enrollee'),
+    ('100_General_Provisions/111-2_Use_of_Confidential_Information.htm', '111-2 Use of Confidential Information'),
+    ('100_General_Provisions/111-3_Releasing_Information_to_Others.htm', '111-3 Releasing Information to Others'),
+    ('100_General_Provisions/120_Complaints.htm', '120 Complaints'),
+    ('100_General_Provisions/120-1_Agency_Conferences.htm', '120-1 Agency Conferences'),
+    ('100_General_Provisions/120-2_Fair_Hearings.htm', '120-2 Fair Hearings'),
+    ('100_General_Provisions/120-3_Fair_Hearing_Requests.htm', '120-3 Fair Hearing Requests'),
+    ('100_General_Provisions/120-4_The_Hearing.htm', '120-4 The Hearing'),
+    ('100_General_Provisions/120-5_Benefits_Pending_A_Hearing_Decision.htm', '120-5 Benefits Pending A Hearing Decision'),
+    ('100_General_Provisions/120-6_What_Happens_During_a_Fair_Hearing.htm', '120-6 What Happens During a Fair Hearing'),
+    ('100_General_Provisions/120-8_Fair_Hearing_Decisions.htm', '120-8 Fair Hearing Decisions'),
+    ('100_General_Provisions/120-9_How_to_Appeal_A_Decision.htm', '120-9 What Records Are Kept of Hearing Decisions and Who Can See Them'),
+    ('100_General_Provisions/130_HIPAA_(Health_Insurance_Portability_and_Accountability_Act_of_1996).htm', '130 HIPAA (Health Insurance Portability and Accountability Act of 1996)'),
+    ('200_Program_Standards/200_Program_Standards.htm', '200 Program Standards'),
+    ('200_Program_Standards/201_Medicaid_Eligibility.htm', '201 Medicaid Eligibility'),
+    ('200_Program_Standards/201-1_Screening_for_Medicaid_Eligibility.htm', '201-1 Screening for Medicaid Eligibility'),
+    ('200_Program_Standards/202_Citizenship_and_Non-Citizen_Status_Requirements.htm', '202 Citizenship and Non-Citizen Status Requirements'),
+    ('200_Program_Standards/202-1_U.S._Citizens.htm', '202-1 U.S. Citizens'),
+    ('200_Program_Standards/202-2_Qulaified_Non-Citizen.htm', '202-2 Qualified Non-Citizen'),
+    ('200_Program_Standards/202-2.1_Lawfully_Present_Children.htm', '202-2.1 Lawfully Present Children'),
+    ('200_Program_Standards/202-3_Verification_of_Non-Citizen_Status.htm', '202-3 Verification of Non-Citizen Status'),
+    ('200_Program_Standards/202-4_Sponsored_Non-Citizens.htm', '202-4 Sponsored Non-Citizens'),
+    ('200_Program_Standards/203_Utah_Residence.htm', '203 Utah Residence'),
+    ('200_Program_Standards/203-1_Determining_Residency.htm', '203-1 Determining Residency'),
+    ('200_Program_Standards/203-2_Who_is_Capable_of_Expressing_Intent_.htm', '203-2 Who is Capable of Expressing Intent?'),
+    ('200_Program_Standards/203-4_Determining_Residency_for_Individuals_Under_21.htm', '203-4 Determining Residency for Individuals Under 21'),
+    ('200_Program_Standards/203-5_Factors_Indicating_No_Intent_to_Reside_in_Utah.htm', '203-5 Factors Indicating No Intent to Reside in Utah'),
+    ('200_Program_Standards/203-6_Moving_From_State_to_State.htm', '203-6 Moving From State to State'),
+    ('200_Program_Standards/204_Residents_of_Institutions.htm', '204 Residents of Institutions'),
+    ('200_Program_Standards/204-1_What_is_an_Institution_.htm', '204-1 What is an Institution?'),
+    ('200_Program_Standards/204-2_What_is_a_Public_Non-Medical_Institution_.htm', '204-2 What is a Public Non-Medical Institution?'),
+    ('200_Program_Standards/204-3_Who_is_a_Resident_of_a_Household_.htm', '204-3 Who is a “Resident” of a Household?'),
+    ('200_Program_Standards/204-4_Who_is_a_Resident_of_an_Institution_.htm', '204-4 Who is a “Resident” of an Institution?'),
+    ('200_Program_Standards/210_Age_of_a_Child.htm', '210 Age of a Child'),
+    ('200_Program_Standards/211_Social_Security_Numbers_(SSN).htm', '211 Social Security Numbers (SSN)'),
+    ('200_Program_Standards/211-1_Verifying_Social_Security_Numbers.htm', '211-1 Verifying Social Security Numbers'),
+    ('200_Program_Standards/211-2_Applying_for_a_Social_Security_Number.htm', '211-2 Applying for a Social Security Number'),
+    ('200_Program_Standards/211-3_Who_Does_Not_Have_to_Provide_a_Social_Security_Number.htm', '211-3 Who Does Not Have to Provide a Social Security Number'),
+    ('200_Program_Standards/211-4_Good_Cause_for_Not_Applying_For_the_SSN_Card.htm', '211-4 Good Cause for Not Applying For the SSN Card'),
+    ('200_Program_Standards/215_Relationship.htm', '215 Relationship'),
+    ('200_Program_Standards/215-1_Parent.htm', '215-1 Parent'),
+    ('200_Program_Standards/215-3_When_Unrelated_Adults_Live_in_the_Home..htm', '215-3 When Unrelated Adults Live in the Home.'),
+    ('200_Program_Standards/220_Health_Insurance_Coverage.htm', '220 Health Insurance'),
+    ('200_Program_Standards/220-1_Definitions.htm', '220-1 Definitions'),
+    ('200_Program_Standards/220-2_Coverage_Under_a_Health_Insurance_Plan.htm', '220-2 Coverage Under a Health Insurance Plan'),
+    ('200_Program_Standards/220-3_Coverage_Only_Under_a_Limited_Coverage_Plan.htm', '220-3 Coverage Only Under a Limited Coverage Plan'),
+    ('200_Program_Standards/220-4_Access_to_Employer-Sponsored_Health_Insurance.htm', '220-4 Access to Employer-Sponsored Health Insurance'),
+    ('200_Program_Standards/220-5_Health_Insurance_Coverage_through_a_Non-Custodial_Parent.htm', '220-5 Health Insurance Coverage through a Non-Custodial Parent'),
+    ('200_Program_Standards/220-6_Coverage_or_Access_to_Coverage_Under_a_State_Employees_Group_Health_Plan.htm', '220-6 Coverage or Access to Coverage Under a State Employee’s Group Health Plan'),
+    ('200_Program_Standards/220-7_Coverage_Under_Indian_Health_Services.htm', '220-7 Coverage Under Indian Health Services'),
+    ('200_Program_Standards/220-8_Termination_of_Health_Insurance_Coverage.htm', '220-8 Termination of Health Insurance Coverage'),
+    ('200_Program_Standards/220-9_Coordination_With_the_Federally_Facilitated_Marketplace_(FFM).htm', '220-9 Coordination With the Federally Facilitated Marketplace (FFM)'),
+    ('200_Program_Standards/222_Pregnancy_and_Postpartum.htm', '222 Pregnancy and Postpartum'),
+    ('200_Program_Standards/222-1_Deemed_Newborn.htm', '222-1 Deemed Newborn'),
+    ('200_Program_Standards/245_Child_Support_Services.htm', '245 Child Support Services'),
+    ('400_Income_Standards_and_Household_Composition/400_Income_Standards_and_Household_Composition.htm', '400 Income Standards and Household Composition'),
+    ('400_Income_Standards_and_Household_Composition/400-1_Joint_Custody_and_Temporary_Absence.htm', '400-1 Joint Custody and Temporary Absence'),
+    ('400_Income_Standards_and_Household_Composition/401_MAGI_Household_Composition.htm', '401 MAGI Household Composition'),
+    ('400_Income_Standards_and_Household_Composition/401-1_The_MAGI_Household.htm', '401-1 The MAGI Household'),
+    ('400_Income_Standards_and_Household_Composition/401-2_Tax_Filer_s_MAGI_Household.htm', "401-2 Tax Filer's MAGI Household"),
+    ('400_Income_Standards_and_Household_Composition/401-3_Non-Tax_Filer’s_MAGI_Household.htm', '401-3 Non-Tax Filer’s MAGI Household'),
+    ('400_Income_Standards_and_Household_Composition/413_Introduction_to_Types_of_Income.htm', '413 Introduction to Types of Income'),
+    ('400_Income_Standards_and_Household_Composition/413-1_What_is_Income_.htm', '413-1 What is Income?'),
+    ('400_Income_Standards_and_Household_Composition/413-4_Ownership_of_Income.htm', '413-4 Ownership of Income'),
+    ('400_Income_Standards_and_Household_Composition/413-5_Deposits_to_Joint_Checking_and__or_Savings_Accounts.htm', '413-5 Deposits to Joint Checking and/ or Savings Accounts'),
+    ('400_Income_Standards_and_Household_Composition/413-6_What_is_Not_Income_.htm', '413-6 What is Not Income?'),
+    ('400_Income_Standards_and_Household_Composition/415_Unearned_Income.htm', '415 Unearned Income'),
+    ('400_Income_Standards_and_Household_Composition/415-1_Examples_of_Unearned_Income.htm', '415-1 Examples of Unearned Income'),
+    ('400_Income_Standards_and_Household_Composition/415-2_Veterans_Administration_Benefits.htm', '415-2 Veterans Administration Benefits'),
+    ('400_Income_Standards_and_Household_Composition/415-3_When_the_Entitlement_Amount_Differs_from_the_Payment_Amount.htm', '415-3 When the Entitlement Amount Differs from the Payment Amount'),
+    ('400_Income_Standards_and_Household_Composition/415-4_Income_from_Rental_Property.htm', '415-4 Income from Rental Property'),
+    ('400_Income_Standards_and_Household_Composition/415-5_Child_Support_Payments.htm', '415-5 Child Support Payments'),
+    ('400_Income_Standards_and_Household_Composition/415-6_Educational_Assistance.htm', '415-6 Educational Assistance'),
+    ('400_Income_Standards_and_Household_Composition/415-7_Certain_Interest_or_Dividend_Income,_Irregular_and_Infrequent_Income.htm', '415-7 Certain Interest or Dividend Income, Irregular and Infrequent Income'),
+    ('400_Income_Standards_and_Household_Composition/415-8_Sales_Contracts.htm', '415-8 Sales Contracts'),
+    ('400_Income_Standards_and_Household_Composition/415-9_Payments_to_Replace_or_Repair_Lost,_Stolen,_or_Damaged_Property.htm', '415-9 Payments to Replace or Repair Lost, Stolen, or Damaged Property'),
+    ('400_Income_Standards_and_Household_Composition/415-12_Personal_Injury_and_TPL_Settlements.htm', '415-12 Personal Injury and TPL Settlements'),
+    ('400_Income_Standards_and_Household_Composition/415-13_Countable_Payments_to_American_Indians_Alaska_Natives.htm', '415-13 Countable Payments to American Indians/Alaska Natives'),
+    ('400_Income_Standards_and_Household_Composition/417_Unearned_Income_Exclusions.htm', '417 Unearned Income Exclusions'),
+    ('400_Income_Standards_and_Household_Composition/417-1_Rental_Subsidies_and_Relocation_Assistance.htm', '417-1 Rental Subsidies and Relocation Assistance'),
+    ('400_Income_Standards_and_Household_Composition/417-2_Trust_Funds.htm', '417-2 Trust Funds'),
+    ('400_Income_Standards_and_Household_Composition/417-3_Tax_Refunds_and_Tax_Credits.htm', '417-3 Tax Refunds and Tax Credits'),
+    ('400_Income_Standards_and_Household_Composition/417-4_Transportation_Tickets_for_Domestic_Travel.htm', '417-4 Transportation Tickets for Domestic Travel'),
+    ('400_Income_Standards_and_Household_Composition/417-6_Death_Benefits.htm', '417-6 Death Benefits'),
+    ('400_Income_Standards_and_Household_Composition/417-7_Credit_Life_and_Credit_Disability_Insurance_Benefits.htm', '417-7 Credit Life and Credit Disability Insurance Benefits'),
+    ('400_Income_Standards_and_Household_Composition/417-8_Payments_under_the_National_Flood_Insurance_Program.htm', '417-8 Payments under the National Flood Insurance Program'),
+    ('400_Income_Standards_and_Household_Composition/417-9_Payments_for_Clinical_Trial_Participation.htm', '417-9 Payments for Clinical Trial Participation'),
+    ('400_Income_Standards_and_Household_Composition/417-10_Income_Excluded_Under_a_PASS_Plan.htm', '417-10 Income Excluded Under a PASS Plan'),
+    ('400_Income_Standards_and_Household_Composition/417-11_Home_Produce_for_Consumption.htm', '417-11 Home Produce for Consumption'),
+    ('400_Income_Standards_and_Household_Composition/417-12_Proceeds_from_a_Bona_Fide_Loan.htm', '417-12 Proceeds from a Bona Fide Loan'),
+    ('400_Income_Standards_and_Household_Composition/417-14_Payments_to_American_Indians_Alaska_Natives.htm', '417-14 Payments to American Indians/Alaska Natives'),
+    ('400_Income_Standards_and_Household_Composition/417-15_Gifts_Made_to_a_Child_with_a_Life-Threatening_Disease_by_Non-profit_Organizations.htm', '417-15 Gifts Made to a Child with a Life-Threatening Disease by Non-profit Organizations'),
+    ('400_Income_Standards_and_Household_Composition/417-16_Income_from_Assets.htm', '417-16 Income from Assets'),
+    ('400_Income_Standards_and_Household_Composition/417-17_Public_Assistance_Exclusions.htm', '417-17 Public Assistance Exclusions'),
+    ('400_Income_Standards_and_Household_Composition/417-18_Employment_and_Volunteer_Program_Payments.htm', '417-18 Employment and Volunteer Program Payments'),
+    ('400_Income_Standards_and_Household_Composition/417-19_Reparations_Payments.htm', '417-19 Reparations Payments'),
+    ('400_Income_Standards_and_Household_Composition/417-20_Settlements_Disaster_Relief_Payments.htm', '417-20 Settlements/Disaster Relief Payments'),
+    ('400_Income_Standards_and_Household_Composition/417-21_COVID_19_Recovery_Rebate_Payments.htm', '417-21 COVID 19 Recovery Rebate Payments'),
+    ('400_Income_Standards_and_Household_Composition/419_Earned_Income.htm', '419 Earned Income'),
+    ('400_Income_Standards_and_Household_Composition/419-1_Sources_of_Earned_Income.htm', '419-1 Sources of Earned Income'),
+    ('400_Income_Standards_and_Household_Composition/419-2_Income_Received_from_a_Business.htm', '419-2 Income Received from a Business'),
+    ('400_Income_Standards_and_Household_Composition/419-3_Self-Employment_Income.htm', '419-3 Self-Employment Income'),
+    ('400_Income_Standards_and_Household_Composition/419-4_Self-Employment_Expenses.htm', '419-4 Self-Employment Expenses'),
+    ('400_Income_Standards_and_Household_Composition/419-5_Earned_Income_Exclusions.htm', '419-5 Earned Income Exclusions'),
+    ('400_Income_Standards_and_Household_Composition/421_Lump_Sum_Payments.htm', '421 Lump Sum Payments'),
+    ('400_Income_Standards_and_Household_Composition/425-2_Deeming_from_a_Non-Citizen’s_Sponsor.htm', '425-2 Deeming from a Non-Citizen’s Sponsor'),
+    ('400_Income_Standards_and_Household_Composition/435_Budgeting_Income.htm', '435 Budgeting Income'),
+    ('400_Income_Standards_and_Household_Composition/435-1_Definitions.htm', '435-1 Definitions'),
+    ('400_Income_Standards_and_Household_Composition/435-2_Determine_a_Best_Estimate_of_Income.htm', '435-2 Determine a Best Estimate of Income'),
+    ('400_Income_Standards_and_Household_Composition/440_Determine_Countable_Income.htm', '440 Determine Countable Income'),
+    ('400_Income_Standards_and_Household_Composition/440-1_MAGI_Methodology_General_Rules.htm', '440-1 MAGI Methodology General Rules'),
+    ('400_Income_Standards_and_Household_Composition/440-2_MAGI-Based_Income_Requirements.htm', '440-2 MAGI-Based Income Requirements'),
+    ('400_Income_Standards_and_Household_Composition/440-3_Income_for_MAGI_Methodology.htm', '440-3 Income for MAGI Methodology'),
+    ('400_Income_Standards_and_Household_Composition/440-4_Specific_Treatment_of_Income_for_MAGI-Based_Programs.htm', '440-4 Specific Treatment of Income for MAGI-Based Programs'),
+    ('400_Income_Standards_and_Household_Composition/440-5_Calculating_Income_for_MAGI-Based_Programs.htm', '440-5 Calculating Income for MAGI-Based Programs'),
+    ('400_Income_Standards_and_Household_Composition/440-6_Whose_Income_Counts_for_MAGI_Household_.htm', '440-6 Whose Income Counts for MAGI Household?'),
+    ('600_Program_Benefits/600_Program_Benefits.htm', '600 Program Benefits'),
+    ('600_Program_Benefits/601_Health_Plan_Selections_and_Education.htm', '601 Health Plan Selection and Education'),
+    ('600_Program_Benefits/602_Cost_Sharing_Requirements.htm', '602 Cost Sharing Requirements'),
+    ('600_Program_Benefits/603_CHIP_Member_ID_Cards.htm', '603 CHIP Member ID Cards'),
+    ('600_Program_Benefits/604_Suspension_of_Benefits.htm', '604 Suspension of Benefits'),
+    ('700_Eligibility_Determination_and_Redetermination/700_Eligibility_Determination_and_Redetermination.htm', '700 Eligibility Determination and Redetermination'),
+    ('700_Eligibility_Determination_and_Redetermination/701_Application.htm', '701 Application'),
+    ('700_Eligibility_Determination_and_Redetermination/701-1_What_is_an_Application_.htm', '701-1 What is an Application?'),
+    ('700_Eligibility_Determination_and_Redetermination/701-2_Date_of_Application.htm', '701-2 Date of Application'),
+    ('700_Eligibility_Determination_and_Redetermination/701-3_Effective_Dates_of_Certification.htm', '701-3 Effective Dates of Certification'),
+    ('700_Eligibility_Determination_and_Redetermination/701-4_What_to_do_with_an_Application.htm', '701-4 What to do with an Application'),
+    ('700_Eligibility_Determination_and_Redetermination/701-5_Eligibility_Decisions.htm', '701-5 Eligibility Decisions'),
+    ('700_Eligibility_Determination_and_Redetermination/701-6_Incarcerated_Individuals_in_Jail_or_Prison.htm', '701-6 Incarcerated Individuals in Jail or Prison'),
+    ('700_Eligibility_Determination_and_Redetermination/702_Re-Opening_CHIP.htm', '702 Re-Opening CHIP'),
+    ('700_Eligibility_Determination_and_Redetermination/702-1_Transitions_Between_CHIP,_UPP_and_Medicaid.htm', '702-1 Transitions Between CHIP, UPP and Medicaid'),
+    ('700_Eligibility_Determination_and_Redetermination/703_Certification_Period.htm', '703 Certification Period'),
+    ('700_Eligibility_Determination_and_Redetermination/703-1_Length_of_the_Certification_Period.htm', '703-1 Length of the Certification Period'),
+    ('700_Eligibility_Determination_and_Redetermination/704_Eligibility_Review.htm', '704 Eligibility Review'),
+    ('700_Eligibility_Determination_and_Redetermination/704-1_Ex_Parte_Reviews_(Reviews_Not_requiring_Member_Participation).htm', '704-1 Ex Parte Reviews (Reviews Not requiring Member Participation)'),
+    ('700_Eligibility_Determination_and_Redetermination/704-2_Reviews_Requiring_Member_Participation.htm', '704-2 Reviews Requiring Member Participation'),
+    ('700_Eligibility_Determination_and_Redetermination/705_Verification.htm', '705 Verification'),
+    ('700_Eligibility_Determination_and_Redetermination/705-2_What_is_Acceptable_Verification_.htm', '705-2 What is Acceptable Verification'),
+    ('700_Eligibility_Determination_and_Redetermination/705-4_Verification_from_Collateral_Contacts.htm', '705-4 Verification from Collateral Contacts'),
+    ('700_Eligibility_Determination_and_Redetermination/705-6_Verification_of_SSA_Benefits.htm', '705-6 Verification of SSA Benefits'),
+    ('700_Eligibility_Determination_and_Redetermination/706_Income_Match.htm', '706 Income Match'),
+    ('700_Eligibility_Determination_and_Redetermination/706-1_Sources_of_IEVS_Data.htm', '706-1 Sources of IEVS Data'),
+    ('700_Eligibility_Determination_and_Redetermination/706-2_Special_Rules_for_Income_Matches_When_Enrollees_Apply.htm', '706-2 Special Rules for Income Matches When Enrollees Apply'),
+    ('700_Eligibility_Determination_and_Redetermination/706-3_What_to_Do_With_Match_Reports.htm', '706-3 What to Do With Match Reports'),
+    ('700_Eligibility_Determination_and_Redetermination/706-4_Taking_Actions_on_Responses.htm', '706-4 Taking Actions on Responses'),
+    ('700_Eligibility_Determination_and_Redetermination/706-5_What_To_Do_With_An_Ineligible_Case.htm', '706-5 What To Do With An Ineligible Case'),
+    ('700_Eligibility_Determination_and_Redetermination/706-6_Special_Rule_for_the_IRS_Match.htm', '706-6 Special Rule for the IRS Match'),
+    ('800_Records_and_Case_Management/800_Records_and_Case_Management.htm', '800 Records and Case Management'),
+    ('800_Records_and_Case_Management/801_Case_Records.htm', '801 Case Records'),
+    ('800_Records_and_Case_Management/801-1_Creating_and_Maintaining_Case_Records.htm', '801-1 Creating and Maintaining Case Records'),
+    ('800_Records_and_Case_Management/801-2_Removing_Old_Material_From_the_Case_Record.htm', '801-2 Removing Old Material From the Case Record'),
+    ('800_Records_and_Case_Management/802_Case_Numbers_and_Member_Identification_Numbers.htm', '802 Case Numbers and Member Identification Numbers'),
+    ('800_Records_and_Case_Management/803_Notification.htm', '803 Notification'),
+    ('800_Records_and_Case_Management/803-2_Returned_Mail.htm', '803-2 Returned Mail'),
+    ('800_Records_and_Case_Management/804_Changes.htm', '804 Changes'),
+    ('800_Records_and_Case_Management/804-1_Change_of_Address.htm', '804-1 Change of Address'),
+    ('800_Records_and_Case_Management/804-2_Change_in_Access_to_Health_Insurance.htm', '804-2 Change in Access to Health Insurance'),
+    ('800_Records_and_Case_Management/804-3_Adding_Eligible_Children_to_Open_CHIP_Cases.htm', '804-3 Adding Eligible Children to Open CHIP Cases'),
+    ('800_Records_and_Case_Management/804-4_Removing_Children_From_CHIP.htm', '804-4 Removing Children From CHIP'),
+    ('800_Records_and_Case_Management/804-5_Income_Changes.htm', '804-5 Income Changes'),
+    ('800_Records_and_Case_Management/805_Case_Closure.htm', '805 Case Closure'),
+    ('800_Records_and_Case_Management/806_Improper_CHIP_Coverage.htm', '806 Improper CHIP Coverage'),
+    ('800_Records_and_Case_Management/806-1_Causes_of_Improper_CHIP_Coverage.htm', '806-1 Causes of Improper CHIP Coverage'),
+    ('800_Records_and_Case_Management/806-2_What_to_do_When_Improper_CHIP_Coverage_Occurs.htm', '806-2 What to do When Improper CHIP Coverage Occurs'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1000_State_Children_s_Health_Insurance_Program_(CHIP).htm', "1000 State Children's Health Insurance Program (CHIP)"),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1200_Program_Standards.htm', '1200 Program Standards'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1202_Citizenship_Status_Requirements.htm', '1202 Citizenship Status Requirements'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1203_Utah_Residence.htm', '1203 Utah Residence'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1203-1_Verification_of_Utah_Residence.htm', '1203-1 Verification of Utah Residence'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1211_Social_Security_Numbers.htm', '1211 Social Security Numbers'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1230_Employment_Requirement.htm', '1230 Employment Requirement'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1250_Open_Enrollment_Periods.htm', '1250 Open Enrollment Periods'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1700_Eligibility_Determination_and_Redetermination.htm', '1700 Eligibility Determination and Redetermination'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1701_Application.htm', '1701 Application'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1701-1_What_is_an_Application_.htm', '1701-1 What is an Application?'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1701-2_Date_of_Application.htm', '1701-2 Date of Application'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1701-3_Effective_Dates_of_Certification.htm', '1701-3 Effective Dates of Certification'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1701-4_What_to_do_with_an_Application.htm', '1701-4 What to do with an Application'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1702_Re-Opening_State_CHIP.htm', '1702 Re-Opening State CHIP'),
+    ('1000_State_Children_s_Health_Insurance_Program_(CHIP)/1702-1_Transitions_Between_State_CHIP_and_UPP.htm', '1702-1 Transitions Between State CHIP and UPP'),
+    ('Tables/Table_I_-_Income_Limits.htm', 'Table I - Income Limits'),
+    ('Tables/Table_I-A_-_5__Federal_Poverty_Level_Deduction_Amount.htm', 'Table I-A - 5% Federal Poverty Level Deduction Amount'),
+    ('Tables/Table_I-B_-_State_CHIP_Maximum_Out_of_Pocket.htm', 'Table I-B - State CHIP Maximum Out of Pocket'),
+    ('Tables/TABLE_III_-_172_Hour_Rule.htm', 'TABLE III - 172 Hour Rule'),
+    ('Tables/TABLE_IV_-_Proof_of_U.S._Citizenship_and_Identification.htm', 'TABLE IV - Proof of U.S. Citizenship and Identification'),
+    ('Tables/Table_V_-_Telephone_Numbers.htm', 'Table V - Telephone Numbers'),
+    ('Tables/Table_VI_-_Verification_and_Interface_Match.htm', 'Table VI - Verification and Interface Match'),
+    ('Tables/Table_VII_-_Approved_Halfway_Houses.htm', 'Table VII - Approved Halfway Houses'),
+    ('Tables/Table_VII-A.htm', 'Table VII-A Participating Facilities and Organizations for Pre-Release Services'),
+    ('Tables/Table_VII-B_Facilities_Reporting_Data_to_CCJJ.htm', 'Table VII-B Facilities Reporting Data to CCJJ'),
+    ('Tables/Table_VIII__Data_Retention.htm', 'Table VIII Data Retention'),
+)
+
+AK_MAGI_TOPICS: tuple[tuple[str, str], ...] = (
+    ('magi_medicaid_eligibility_manual/magi_medicaid_eligibility_manual.htm', 'MAGI Medicaid Eligibility Manual'),
+    ('800_introduction_to_medicaid/800_introduction_to_medicaid.htm', '800 Introduction to Medicaid'),
+    ('800_introduction_to_medicaid/800-1_purpose.htm', '800-1 Purpose'),
+    ('801_general_medicaid_provisions/a._freedom_of_choice_provisions.htm', '801 General Medicaid Provisions'),
+    ('802_notices/802_notice_of_decision_required.htm', '802 Notices'),
+    ('802_notices/802-1_adequate_notice.htm', '802-1 Adequate Notice'),
+    ('802_notices/802-2_timely_notice_requirement.htm', '802-2 Timely Notice Requirement'),
+    ('802_notices/802-3_other_notice_requirements.htm', '802-3 Other Notice Requirements'),
+    ('803_fraud/a._eligibility_technician_responsibilities.htm', '803 Fraud'),
+    ('804_right_to_fair_hearing/804_right_to_fair_hearing.htm', '804 Right to Fair Hearing'),
+    ('805_medicaid_recipient_id_card/805_medicaid_recipient_id_card.htm', '805 Medicaid Recipient ID Card'),
+    ('806_application_and_renewal_process/application_and_renewal_process.htm', '806 Application and Renewal Process'),
+    ('806_application_and_renewal_process/806-1_the_application.htm', '806-1 The Application'),
+    ('806_application_and_renewal_process/806-2_actions_taken_on_the_application.htm', '806-2 Actions Taken on the Application'),
+    ('806_application_and_renewal_process/renewal_requirements.htm', '806- 3 Renewal Requirements'),
+    ('807_non_financial_factors_of_eligibility/807_non-financial_factors.htm', '807 Non Financial Factors of Eligibility'),
+    ('808_us_citizenship_and_eligible_alien_status/808_us_citizenship_and_eligibile_alien_status.htm', '808 US Citizenship and Eligible Alien Status'),
+    ('809_alaska_residency/809_alaska_residency.htm', '809 Alaska Residency'),
+    ('810_social_security_enumeration/810_social_security_enumeration.htm', '810 Social Security Enumeration'),
+    ('811_assignment_of_rights/811_assignment_of_rights.htm', '811 Assignment of Rights'),
+    ('812_medical_support_assignment/812_medical_support_assignment.htm', '812 Medical Support Assignment'),
+    ('813_development_of_income/development_of_income.htm', '813 Development of Income'),
+    ('814_tpl_and_recovery/814_tpl_and_recovery.htm', '814 TPL and Recovery'),
+    ('815_residents_of_institutions/815_residents_of_institutions.htm', '815 Residents of Institutions'),
+    ('816_magi_medicaid_categories/806_magi_medicaid_categories.htm', '816 MAGI Medicaid Categories'),
+    ('817_determining_magi_medicaid_household/817_magi_medicaid_household_composition.htm', '817 Determining MAGI Medicaid Household'),
+    ('818_magi_medicaid_income/818_magi_medicaid_income.htm', '818 MAGI Medicaid Income'),
+    ('819_types_of_income/819_types_of_income.htm', '819 Types of Income'),
+    ('820_budgeting_income/820_budgeting_income.htm', '820 Budgeting Income'),
+    ('821_budgeting_self-employment_income/821_budgeting_self-employment_income.htm', '821 Budgeting Self-Employment Income'),
+    ('822_resources/822_resources.htm', '822 Resources'),
+    ('823_verification_and_documentation/823_verification_and_documentation.htm', '823 Verification and Documentation'),
+    ('824_magi_medicaid_change_reporting_requirements/824_magi_medicaid_change_reporting_requirements.htm', '824 MAGI Medicaid Change Reporting Requirements'),
+    ('825_coordination_with_the_federally_facilitated_marketplace/825_coordination_with_the_federally_facilitated_marketplace.htm', '825 Coordination With the Federally Facilitated Marketplace'),
+    ('826_home_and_community_based_waiver_services/826_home_and_community_based_waiver_services.htm', '826 Home and Community Based Waiver Services'),
+    ('827_retroactive_medicaid/825_retroactive_medicaid.htm', '827 Retroactive Medicaid'),
+    ('828_transitional_medicaid/828_transitional_medicaid.htm', '828 Transitional Medicaid'),
+    ('829_title_iv-e_foster_care_and_adoption_assistance/829_title_iv-e_foster_care_and_adoption_assistance.htm', '829 Title IV-E Foster Care and Adoption Assistance'),
+    ('830_eligibility_under_adoption_assistance/830_eligibility_under_adoption_assistance.htm', '830 Eligibility Under Adoption Assistance'),
+    ('831_emergency_treatment_for_aliens/831_emergency_treatment_for_aliens.htm', '831 Emergency Treatment for Aliens'),
+    ('832_post_medicaid_increased_spousal_support/832_post_medicaid_increased_spousal_support.htm', '832 Post Medicaid Increased Spousal Support'),
+    ('833_hospital_presumptive_eligibility/833_hosptial_presumptive_eligibility_determination.htm', '833 Hospital Presumptive Eligibility'),
+    ('808_us_citizenship_and_eligible_alien_status/808-1_united_states_citizens_and_nationals.htm', '808-1 United States Citizens and Nationals'),
+    ('808_us_citizenship_and_eligible_alien_status/808-2_qualified_aliens.htm', '808-2 Qualified Aliens'),
+    ('808_us_citizenship_and_eligible_alien_status/808-3_native_americans_born_outside_the_united_states.htm', '808-3 Native Americans Born Outside the United States'),
+    ('808_us_citizenship_and_eligible_alien_status/808-4_five_year_waiting_period.htm', '808-4 Five Year Waiting Period'),
+    ('808_us_citizenship_and_eligible_alien_status/808-5_non_qualified_aliens.htm', '808-5 Non Qualified Aliens'),
+    ('808_us_citizenship_and_eligible_alien_status/808-6_proof_of_united_states_citizenship_and_qualified_alien_status.htm', '808-6 Proof of United States Citizenship and Qualified Alien Status'),
+    ('808_us_citizenship_and_eligible_alien_status/808-7_reasonable_opportunity_period.htm', '808-7 Reasonable Opportunity Period'),
+    ('812_medical_support_assignment/812-1_informing_about_medical_support_orders.htm', '812-1 Informing About Medical Support Orders'),
+    ('812_medical_support_assignment/812-2_assignment_of_medical_support_rights.htm', '812-2 Assignment of Medical Support Rights'),
+    ('812_medical_support_assignment/812-3_how_a_caretaker_cooperates_with_cssd.htm', '812-3 How a Caretaker Cooperates with CSSD'),
+    ('812_medical_support_assignment/812-4_failure_to_cooperate_with_cssd.htm', '812-4 Failure to Cooperate With CSSD'),
+    ('812_medical_support_assignment/812-5_procedures_for_exchanging_info.htm', '812-5 Procedures For Exchanging Info'),
+    ('815_residents_of_institutions/815-1_children_living_in_residential_treatment_centers_over_30_days.htm', '815-1 Hospitalized Children Receiving Treatment Over 30 Days'),
+    ('816_magi_medicaid_categories/816-1_magi_category_eligibility_factors.htm', '816-1 MAGI Medicaid Category Eligibility Factors'),
+    ('817_determining_magi_medicaid_household/817-1_construct_a_magi_household_for_each_applicant.htm', '817-1 Construct a MAGI Household for Each Applicant'),
+    ('817_determining_magi_medicaid_household/817-2_examples_of_income_counting_for_magi_medicaid_household_compositions.htm', '817-2 Examples of Income Counting for MAGI Medicaid Household Compositions'),
+    ('820_budgeting_income/820-1_estimation_the_household_s_monthly_income.htm', "820-1 Estimation The Household's Monthly Income"),
+    ('820_budgeting_income/820-2_calculating_a_monthly_income_amount.htm', '820-2 Calculating a Monthly Income Amount'),
+    ('820_budgeting_income/820-3_full_month_s_income.htm', "820-3 Full Month's Income"),
+    ('820_budgeting_income/820-4_not_a_full_month_s_income.htm', "820-4 Not a Full Month's Income"),
+    ('820_budgeting_income/820-5_irregular_income.htm', '820-5 Irregular Income'),
+    ('820_budgeting_income/820-6_specialized_budgeting.htm', '820-6 Specialized Budgeting'),
+)
+
+ND_ACA_TOPICS: tuple[tuple[str, str], ...] = (
+    ('510-03-05.htm', 'Definitions 510-03-05'),
+    ('510-03-07-05.htm', 'General Statement 510-03-07-05'),
+    ('510-03-07-10.htm', 'Purpose and Objective 510-03-07-10'),
+    ('510-03-10-05.htm', 'General Information 510-03-10-05'),
+    ('510-03-10-10.htm', 'Nondiscrimination in Federally Assisted Programs 510-03-10-10'),
+    ('510-03-10-15.htm', 'Confidentiality 510-03-10-15'),
+    ('510-03-10-20.htm', 'Assignment of Rights to Recover Medical Costs 510-03-10-20'),
+    ('510-03-10-25.htm', 'Suspected Fraud 510-03-10-25'),
+    ('510-03-10-30.htm', 'Liens and Recoveries 510-03-10-30'),
+    ('510-03-100-05.htm', 'Family Planning Program 510-03-100-05'),
+    ('510-03-100-10.htm', 'WIC Program 510-03-100-10'),
+    ('510-03-100-15.htm', 'DN 143, "Your Civil Rights Brochure" 510-03-100-15'),
+    ('510-03-100-20.htm', 'DN 555, "Medicaid Program Brochure" 510-03-100-20'),
+    ('510-03-100-25.htm', 'DN 538, "ND Health Tracks" 510-03-100-25'),
+    ('510-03-100-30.htm', 'SFN 20, “Surveillance & Utilization Review Section (SURS) Referral” 510-03-100-30'),
+    ('510-03-100-35.htm', 'SFN 162, Request for Hearing 510-03-100-35'),
+    ('510-03-100-40.htm', 'SFN 443, "Notice of Right to Claim \'Good Cause\'" 510-03-100-40'),
+    ('510-03-100-45.htm', 'SFN 446, "Request to Claim \'Good Cause" 510-03-100-45'),
+    ('510-03-100-50.htm', 'SFN 451, "Eligibility Report on Disability/Incapacity" 510-03-100-50'),
+    ('510-03-100-55.htm', 'SFN 560, "Assignment of Benefits" 510-03-100-55'),
+    ('510-03-100-60.htm', 'SFN 566, “Medicaid Questionnaire and Assignment” 510-03-100-60'),
+    ('510-03-100-65.htm', 'SFN 691, “Affidavit of Identity For Children” 510-03-100-65'),
+    ('510-03-100-70.htm', 'SFN 706, "Affidavit of Explanation why Citizenship Cannot be Supplied” 510-03-100-70'),
+    ('510-03-100-75.htm', 'SFN 707, "Citizen Affidavit’ 510-03-100-75'),
+    ('510-03-100-80.htm', 'SFN 817, "Health Insurance Cost-Effectiveness Review" 510-03-100-80'),
+    ('510-03-100-85.htm', 'SFN 828, “Credit Form” 510-03-100-85'),
+    ('510-03-100-90.htm', 'SFN 1598, “Medically Frail Questionnaire” 510-03-100-90'),
+    ('510-03-105-05.htm', 'Coverage Hierarchy Order 510-03-105-05'),
+    ('510-03-105-10.htm', 'Medicaid Living Arrangement Reference Hard Card 510-03-105-10'),
+    ('510-03-105-15.htm', 'Lottery and Gambling Winnings Income Table 510-03-105-15'),
+    ('510-03-110-20.htm', 'Medicaid Coverage for Inmates Residing in Corrections-related Supervised Community Residential Facilities 510-03-110-20'),
+    ('510-03-12-05.htm', 'Cooperation - Third Party Liability 510-03-12-05'),
+    ('510-03-12-10.htm', '"Good Cause" - Third Party Liability 510-03-12-10'),
+    ('510-03-20-05.htm', 'General Information 510-03-20-05'),
+    ('510-03-20-10.htm', 'Definitions (Cost Effective Health Insurance) 510-03-20-10'),
+    ('510-03-20-15.htm', "Applicant's and Recipient's Responsibility 510-03-20-15"),
+    ('510-03-20-20.htm', 'Cost-effectiveness Determination 510-03-20-20'),
+    ('510-03-25-05.htm', 'Application and Review 510-03-25-05'),
+    ('510-03-25-10.htm', 'Eligibility - Current and Retroactive 510-03-25-10'),
+    ('510-03-25-15.htm', 'Duty to Establish Eligibility 510-03-25-15'),
+    ('510-03-25-20.htm', 'Medicaid Brochures 510-03-25-20'),
+    ('510-03-25-25.htm', 'Decision and Notice 510-03-25-25'),
+    ('510-03-25-27.htm', 'Electronic Narratives 510-03-25-27'),
+    ('510-03-25-30.htm', 'Appeals 510-03-25-30'),
+    ('510-03-30-05.htm', 'Groups Covered Under ACA Medicaid 510-03-30-05'),
+    ('510-03-30-10.htm', "Applicant's Choice of Category 510-03-30-10"),
+    ('510-03-30-15.htm', 'Assigning Category of Eligibility 510-03-30-15'),
+    ('510-03-35-05.htm', 'ACA Medicaid Household 510-03-35-05'),
+    ('510-03-35-10.htm', 'Deprivation 510-03-35-10'),
+    ('510-03-35-100.htm', 'Disability and Medically Frail 510-03-35-100'),
+    ('510-03-35-105.htm', 'Incapacity of a Parent 510-03-35-105'),
+    ('510-03-35-15.htm', 'Caretaker Relatives 510-03-35-15'),
+    ('510-03-35-20.htm', 'Relative Responsibility 510-03-35-20'),
+    ('510-03-35-35.htm', 'Need 510-03-35-35'),
+    ('510-03-35-40.htm', 'Age and Identity 510-03-35-40'),
+    ('510-03-35-45.htm', 'Citizenship and Immigration 510-03-35-45'),
+    ('510-03-35-50.htm', 'American Indians Born in Canada 510-03-35-50'),
+    ('510-03-35-55.htm', 'Ineligible Non- Citizens 510-03-35-55'),
+    ('510-03-35-58.htm', 'Qualified Non- Citizens 510-03-35-58'),
+    ('510-03-35-60.htm', 'Non-Citizens Lawfully Admitted for Permanent Residence before August 22, 1996 510-03-35-60'),
+    ('510-03-35-65.htm', 'Non-Citizens Lawfully Admitted for Permanent Residence on or after August 22, 1996 510-03-35-65'),
+    ('510-03-35-70.htm', 'Emergency Services for Non-Citizens 510-03-35-70'),
+    ('510-03-35-80.htm', 'Social Security Numbers 510-03-35-80'),
+    ('510-03-35-85.htm', 'State Residence 510-03-35-85'),
+    ('510-03-35-90.htm', 'Application for Other Benefits 510-03-35-90'),
+    ('510-03-35-95-05-05.htm', 'General Statement (Coverage for Inmates Receiving Inpatient Care in Certain Medical Institiutions) 510-03-35-95-05-05'),
+    ('510-03-35-95-05-10.htm', 'Definitions for Coverage for Inmates Receiving Inpatient Care in Certain Medical Institutions 510-03-35-95-05-10'),
+    ('510-03-35-95-05-15.htm', 'Individuals Covered (Coverage for Inmates Receiving Inpatient Care in Certain Medical Institutions) 510-03-35-95-05-15'),
+    ('510-03-35-95-05-20.htm', 'Asset Considerations (Coverage for Inmates Receiving Inpatient Care in Certain Medical Institutions) 510-03-35-95-05-20'),
+    ('510-03-35-95-05-25.htm', 'Income Considerations (Coverage for Inmates who are Inpatients in a Hospital Setting) 510-03-35-95-05-25'),
+    ('510-03-35-95-05-30.htm', 'Income Levels (Coverage for Inmates who are Inpatients in a Hospital Setting) 510-03-35-95-05-30'),
+    ('510-03-35-95-05-35.htm', 'Budgeting (Coverage for Inmates who are Inpatients in a Hospital Setting) 510-03-35-95-05-35'),
+    ('510-03-35-95-10.htm', 'Coverage for Inmates Residing in Corrections-related Supervised Community Residential Facilities 510-03-35-95-10'),
+    ('510-03-35-95-15.htm', 'Medicaid Eligibility for Incarcerated Individuals 510-03-35-95-15'),
+    ('510-03-35-95.htm', 'Public Institutions 510-03-35-95'),
+    ('510-03-35-97.htm', 'Institutions for Mental Disease (IMD) 510-03-35-97'),
+    ('510-03-40-05.htm', 'Paternity 510-03-40-05'),
+    ('510-03-40-10.htm', 'Medical Support 510-03-40-10'),
+    ('510-03-40-15.htm', 'Cooperation - Child Support 510-03-40-15'),
+    ('510-03-40-20.htm', '"Good Cause" - Child Support 510-03-40-20'),
+    ('510-03-45-05.htm', 'Extended Medicaid for Pregnant Women and Newborns 510-03-45'),
+    ('510-03-45-10.htm', 'Extended Medicaid for Children born to Pregnant Women 510-03-45-10'),
+    ('510-03-50-05.htm', 'Transitional Medicaid Benefits 510-03-50-05'),
+    ('510-03-50-10.htm', 'Extended Medicaid Benefits 510-03-50-10'),
+    ('510-03-53-05.htm', 'General Statement 510-03-53-05'),
+    ('510-03-53-10.htm', 'Individuals Covered 510-03-53-10'),
+    ('510-03-53-15.htm', 'Continuous Eligibility Periods 510-03-53-15'),
+    ('510-03-53-20.htm', 'Continuously Eligible Individuals Moving Out of the ACA Medicaid Household 510-03-53-20'),
+    ('510-03-55-05.htm', 'Foster Care 510-03-55-05'),
+    ('510-03-55-10.htm', 'Former Foster Care Children through Age 26 510-03-55-10-05'),
+    ('510-03-55-15.htm', 'Volunteer Placement Program 510-03-55-15'),
+    ('510-03-55-20.htm', 'Subsidized Guardianship Project 510-03-55-20'),
+    ('510-03-60-05.htm', 'General Statement (Hospital Presumptive Eligibility (HPE) 510-03-60-05'),
+    ('510-03-60-10.htm', 'Application and Review for Hospital Presumptive Eligibility (HPE) 510-03-60-10'),
+    ('510-03-60-15.htm', 'Individuals Covered Under Hospital Presumptive Eligibility (HPE) 510-03-60-15'),
+    ('510-03-60-20.htm', 'Eligibility Requirements for Hospital Presumptive Eligibility (HPE) 510-03-60-20'),
+    ('510-03-60-25.htm', 'Budgeting for Individuals Applying for Hospital Presumptive Eligibility (HPE) 510-03-60-25'),
+    ('510-03-60-30.htm', 'Hospital Presumptive Eligibility (HPE) Periods 510-03-60-30'),
+    ('510-03-60-35.htm', 'Coverage under Hospital Presumptive Eligibility (HPE) 510-03-60-35'),
+    ('510-03-60-40.htm', 'Three Months Prior Coverage Under Hospital Presumptive Eligibility (HPE) 510-03-60-40'),
+    ('510-03-60-45.htm', 'Appealing a Hospital Presumptive Eligibility (HPE) Determination 510-03-60-45'),
+    ('510-03-60-50.htm', 'Hospital Responsibility under Hospital Presumptive Eligibility (HPE) 510-03-60-50'),
+    ('510-03-70-05.htm', 'General Information 510-03-70-05'),
+    ('510-03-75-05.htm', 'Ownership in a Partnership or Corporation 510-03-75-05'),
+    ('510-03-75-10.htm', 'Treatment of Conservation Reserve Program Property and Payments 510-03-75-10'),
+    ('510-03-75-15.htm', 'Communal Colonies 510-03-75-15'),
+    ('510-03-85-05.htm', 'Income Considerations 510-03-85-05'),
+    ('510-03-85-10.htm', 'Determining Ownership of Income 510-03-85-10'),
+    ('510-03-85-13.htm', 'ACA Income Methodologies 510-03-85-13'),
+    ('510-03-85-15.htm', 'Countable Income 510-03-85-15'),
+    ('510-03-85-20.htm', 'Income Conversion 510-03-85-20'),
+    ('510-03-85-25.htm', 'Income Compatibility 510-03-85-25'),
+    ('510-03-85-30.htm', 'Disregarded Income 510-03-85-30'),
+    ('510-03-85-35.htm', 'Income Deductions 510-03-85-35'),
+    ('510-03-85-40.htm', 'Income Levels 510-03-85-40'),
+    ('510-03-90-05.htm', 'Definitions 510-03-90-05'),
+    ('510-03-90-10.htm', '10-10-10 Rule 510-03-90-10'),
+    ('510-03-90-15.htm', 'Guidelines for Anticipating Income 510-03-90-15'),
+    ('510-03-90-17.htm', 'Client Share (Recipient Liability) 510-03-90-17'),
+    ('510-03-90-20.htm', 'Computing Client Share (Recipient Liability) 510-03-90-20'),
+    ('510-03-90-23.htm', 'Offset of Client Share (Recipient Liability) 510-03-90-23'),
+    ('510-03-90-25.htm', 'Budgeting Procedures for Pregnant Women 510-03-90-25'),
+    ('510-03-90-30.htm', 'Budgeting Procedures When Adding and Deleting Individuals 510-03-90-30'),
+    ('510-03-90-45.htm', 'Budgeting Procedures for SSI Recipients 510-03-90-45'),
+    ('510-03-90-50.htm', 'Budgeting Procedures for Medically Needy under ACA Medicaid 510-03-90-50'),
+    ('510-03-90-55.htm', 'Budgeting Procedures for Continuous Eligibility for Children Under Age 19 510-03-90-55'),
+    ('510-03-90-60.htm', 'Budgeting Procedures for Three Prior Months (THMP) 510-03-90-60'),
+    ('510-03-90-65.htm', 'Action on Reported Changes 510-03-90-65'),
+    ('510-03-95-05.htm', 'General Information 510-03-95-05'),
+    ('510-03-95-20.htm', 'Refugee Medical Assistance Program 510-03-95-20'),
+    ('510-03-95-40.htm', 'Special Health Services 510-03-95-40'),
+    ('510-03-95-45.htm', 'Coordinated Services Program 510-03-95-45'),
+    ('510-03-95-50.htm', 'North Dakota Health Tracks 510-03-95-50'),
+)
+
+CONFIRMED_BATCH4: dict[str, dict] = {
+    "us-or": {
+        "name": "Oregon",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_html",
+        "index_url": "https://secure.sos.state.or.us/oard/displayDivisionRules.action?selectedDivision=1742",
+        "index_document_count": 40,
+        "index_families": {"oar_rule_in_division_200": 40},
+        "primary_source_url": "https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=87",
+        "notes": (
+            "Retried from a US network 2026-09-10T21:35Z: the oregon.gov zone resolves and the OARD answers "
+            "(plain client HTTP 200; the chrome120 client receives only a 5 KB shell, so no impersonation). "
+            "Batch 3's selectedChapter=94 was Oregon State Police; OAR chapter 410 (OHA Health Systems "
+            "Division: Medical Assistance Programs) is selectedChapter=87 with 39 divisions, and Division 200 "
+            "Eligibility for Health Systems Division Medical Programs (selectedDivision=1742) lists 40 rules "
+            "410-200-0010 to 410-200-0521 with full text on one page (latest effective 2026-03-01). Oregon's "
+            "CHIP is Medicaid-expansion OHP coverage under these rules. Taken 1: the division page, 40 "
+            "labeled rule sections."
+        ),
+        "documents": [
+            doc(
+                "us-or", "or-oard-oar-410-division-200",
+                "OAR Chapter 410 Division 200 Eligibility for Health Systems Division Medical Programs",
+                "https://secure.sos.state.or.us/oard/displayDivisionRules.action?selectedDivision=1742",
+                "us-or/regulation/chapter-410/division-200", "html", "2026-03-01",
+                document_class="regulation",
+                subtype="administrative_rule_division",
+                authority="Oregon Health Authority, Health Systems Division (OAR 410), published by the Secretary of State Oregon Administrative Rules Database",
+                extraction=OR_OAR_DIVISION_EXTRACTION,
+                metadata={"legal_identifier": "OAR 410-200", "chapter_id": "87", "division_id": "1742",
+                          "rule_count": 40, "discovered_via": BATCH4_DISCOVERED_VIA},
+            )
+        ],
+    },
+    "us-ne": {
+        "name": "Nebraska",
+        "document_class": "regulation",
+        "source_kind": "official_filed_regulation_pdf",
+        "index_url": "https://rules.nebraska.gov/api/chapter/GetByTitleId/232",
+        "index_document_count": 29,
+        "index_families": {"nac_477_chapter_pdf": 29},
+        "primary_source_url": "https://rules.nebraska.gov/rules?agencyId=37&titleId=232",
+        "notes": (
+            "Retried from a US network 2026-09-10T21:35Z: dhhs.ne.gov answers (the old Medicaid-Regulations "
+            "page is HTTP 404); rules.nebraska.gov (Secretary of State) answers HTTP 200 once the chain is "
+            "completed with the committed DigiCert Global G2 intermediate via REQUESTS_CA_BUNDLE (TLS "
+            "verification never disabled), and its chapter API (same mechanism as us-ne-snap-rules.yaml) lists "
+            "Title 477 Medicaid Eligibility (titleId 232, agency 37): 29 chapters. Nebraska's CHIP (599 CHIP) is "
+            "Medicaid-expansion coverage governed by 477 NAC 14-19 (MAGI-based programs). Taken 1: 477 NAC 19 "
+            "Modified Adjusted Gross Income (MAGI)-Based Programs (effective 2020-07-29), 42 labeled sections. "
+            "Not taken: chapters 14-18 (2018 filings using the older 15-004-style numbering) and the non-MAGI "
+            "chapters."
+        ),
+        "documents": [
+            doc(
+                "us-ne", "ne-dhhs-title-477-chapter-19",
+                "Nebraska Title 477 NAC Chapter 19: Modified Adjusted Gross Income (MAGI)-Based Programs",
+                "https://rules.nebraska.gov/api/fileStorage/GetAsByteArray/chapter-pdfs/477%20NAC%2019%20%2807-29-2020%29.pdf",
+                "us-ne/regulation/title-477/chapter-19", "pdf", "2020-07-29",
+                document_class="regulation",
+                subtype="official_filed_administrative_regulation_chapter",
+                authority="Nebraska Department of Health and Human Services (477 NAC), filed with the Secretary of State",
+                extraction=NE_477_EXTRACTION,
+                metadata={"rules_landing_page": "https://rules.nebraska.gov/rules?agencyId=37&titleId=232",
+                          "rules_api_url": "https://rules.nebraska.gov/api/chapter/GetByTitleId/232",
+                          "agency_id": 37, "title_id": 232, "title_number": 477, "chapter_id": 1759,
+                          "chapter_number": "19", "effective_date": "2020-07-29",
+                          "pdf_blob_name": "477 NAC 19 (07-29-2020).pdf", "state_program": "599 CHIP",
+                          "discovered_via": BATCH4_DISCOVERED_VIA},
+            )
+        ],
+    },
+    "us-hi": {
+        "name": "Hawaii",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_pdf",
+        "index_url": "https://humanservices.hawaii.gov/admin-rules-2/admin-rules-for-programs/",
+        "index_document_count": 140,
+        "index_families": {"har_title_17_med_quest_chapter_pdf_17xx": 49, "har_title_17_other_chapter_pdf": 91},
+        "primary_source_url": "https://humanservices.hawaii.gov/wp-content/uploads/2016/12/HAR-17-1715-CHILDREN-GROUP-Final-10-31-16-1.pdf",
+        "notes": (
+            "Retried from a US network 2026-09-10T21:35Z: medquest.hawaii.gov answers (the old har.html page is "
+            "HTTP 404; its Rules & Policies page links the DHS Hawaii Administrative Rules index). DHS index "
+            "humanservices.hawaii.gov/admin-rules-2/admin-rules-for-programs/: 140 chapter PDFs, 49 of them "
+            "Med-QUEST subtitle 12 chapters 17-1700.1 to 17-1739. Hawaii's CHIP is Medicaid-expansion QUEST "
+            "coverage for the Children Group. Taken 2: HAR 17-1715 Children Group (8 pages) and HAR 17-1724.2 "
+            "MAGI-Based Income Methodology (15 pages), both amended and compiled 2016-11-10 (scanned PDFs with "
+            "an OCR text layer, so page-level provisions as in us-nv). Not taken: 17-1714.1 general "
+            "eligibility, 17-1711.1 application processing, the income standards charts on the Med-QUEST page."
+        ),
+        "documents": [
+            doc(
+                "us-hi", f"hi-dhs-har-{cid}", f"HAR Title 17 Chapter {ch} {title}", url,
+                f"us-hi/regulation/har/17/{cid.split('-', 1)[1]}", "pdf", "2016-11-10",
+                document_class="regulation",
+                subtype="administrative_rule_chapter",
+                authority="Hawaii Department of Human Services, Med-QUEST Division (HAR Title 17 Subtitle 12)",
+                extraction=PAGES,
+                metadata={"legal_identifier": f"HAR 17-{ch}", "compiled": "2016-11-10", "pages": pages,
+                          "discovered_via": BATCH4_DISCOVERED_VIA},
+            )
+            for cid, ch, title, url, pages in (
+                ("17-1715", "1715", "Children Group",
+                 "https://humanservices.hawaii.gov/wp-content/uploads/2016/12/HAR-17-1715-CHILDREN-GROUP-Final-10-31-16-1.pdf", 8),
+                ("17-1724-2", "1724.2", "Modified Adjusted Gross Income (MAGI) Based Income Methodology",
+                 "https://humanservices.hawaii.gov/wp-content/uploads/2016/12/HAR-17-1724.2-MAGI-Final-10-31-16-1.pdf", 15),
+            )
+        ],
+    },
+    "us-nh": {
+        "name": "New Hampshire",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_html",
+        "index_url": "https://gc.nh.gov/rules/state_agencies/he-w800.html",
+        "index_document_count": 1,
+        "index_families": {"he_w_chapter_html": 1},
+        "primary_source_url": "https://gc.nh.gov/rules/state_agencies/he-w800.html",
+        "notes": (
+            "Retried from a US network 2026-09-10T21:35Z: gencourt.state.nh.us answers HTTP 200 (plain and "
+            "chrome120; it now redirects to gc.nh.gov, the host us-nh-snap-rules.yaml uses). The Office of "
+            "Legislative Services publishes Chapter He-W 800 Eligibility for Medical Assistance as one HTML "
+            "document (33 parts, latest amendment effective 2025-10-01). New Hampshire's CHIP is "
+            "Medicaid-expansion coverage governed by this chapter. Taken 1, labeled sections He-W 8xx.yy as "
+            "in the He-W 700 SNAP scope (156 sections), stopping at Appendix A."
+        ),
+        "documents": [
+            doc(
+                "us-nh", "nh-gencourt-he-w-800",
+                "New Hampshire Code of Administrative Rules Chapter He-W 800 Eligibility for Medical Assistance",
+                "https://gc.nh.gov/rules/state_agencies/he-w800.html",
+                "us-nh/regulation/he-w-800", "html", "2025-10-01",
+                document_class="regulation",
+                subtype="administrative_code",
+                authority="New Hampshire General Court, Office of Legislative Services Administrative Rules (DHHS He-W 800)",
+                extraction=NH_HE_W_EXTRACTION,
+                metadata={"legal_identifier": "He-W 800", "latest_effective": "2025-10-01",
+                          "discovered_via": BATCH4_DISCOVERED_VIA},
+            )
+        ],
+    },
+    "us-ut": {
+        "name": "Utah",
+        "document_class": "manual",
+        "source_kind": "official_agency_manual_html",
+        "index_url": "https://oepmanuals-chip.dhhs.utah.gov/whxdata/toc.new.js",
+        "index_document_count": 909,
+        "index_families": {"chip_manual_topic_html": 206, "obsolete_policy_topic_html": 697,
+                           "faq_topic_html": 3, "glossary_topic_html": 1, "welcome_and_whats_new_html": 2},
+        "primary_source_url": "https://oepmanuals-chip.dhhs.utah.gov/Welcome_page.htm",
+        "notes": (
+            "Retried from a US network 2026-09-10T21:35Z: oepmanuals-chip.dhhs.utah.gov answers HTTP 200 "
+            "(plain and chrome120). The DHHS Office of Eligibility Policy CHIP Policy Manual (separate CHIP; "
+            "manual effective 2024-05-01, What's New through September 2026) is a RoboHelp site whose table of "
+            "contents (whxdata/toc.new.js and 63 nested toc files) lists 909 topic pages: 206 current manual "
+            "topics (100 General Provisions 28, 200 Program Standards 42, 400 Income Standards and Household "
+            "Composition 61, 600 Program Benefits 5, 700 Eligibility Determination and Redetermination 26, 800 "
+            "Records and Case Management 17, 1000 State CHIP 16, Tables 11), 697 Obsolete topics, 3 FAQ, "
+            "Glossary, Welcome, What's New. Taken 206 (every current manual topic, one HTML document each, body "
+            "with the RoboHelp topic header dropped); each topic states its own Effective Date in its text, so "
+            "expression_date is source_as_of."
+        ),
+        "documents": [_ut_topic_doc(path, name) for path, name in UT_CHIP_TOPICS],
+    },
+    "us-ak": {
+        "name": "Alaska",
+        "document_class": "manual",
+        "source_kind": "official_agency_manual_html",
+        "index_url": "http://dpaweb.hss.state.ak.us/manuals/MAGI2/whdata/whtdata0.htm",
+        "index_document_count": 64,
+        "index_families": {"magi_manual_topic_html": 64},
+        "primary_source_url": "http://dpaweb.hss.state.ak.us/manuals/MAGI2/index.htm",
+        "notes": (
+            "Never queued before. Alaska's CHIP (Denali KidCare) is Medicaid-expansion coverage determined "
+            "under the Division of Public Assistance MAGI Medicaid Eligibility Manual "
+            "(dpaweb.hss.state.ak.us/manuals/MAGI2/, HTTP only, the host of us-ak-snap-manual.yaml). Its "
+            "WebHelp table of contents (whdata/whtdata0-14.htm, 108 entries) lists 64 topic pages, sections "
+            "800-833 (816 MAGI Medicaid Categories names Denali KidCare). Taken 64 (every topic, one HTML "
+            "document each, body with the topic header dropped). The manual publishes no manual-wide date, so "
+            "expression_date is source_as_of. health.alaska.gov's policy-manuals page is HTTP 404."
+        ),
+        "documents": [_ak_topic_doc(path, name) for path, name in AK_MAGI_TOPICS],
+    },
+    "us-nd": {
+        "name": "North Dakota",
+        "document_class": "manual",
+        "source_kind": "official_agency_manual_html",
+        "index_url": "https://www.nd.gov/dhs/policymanuals/51003/Data/Tocs/Master_Chunk0.js",
+        "index_document_count": 141,
+        "index_families": {"service_chapter_510_03_topic_html": 133, "archive_or_site_page_html": 8},
+        "primary_source_url": "https://www.nd.gov/dhs/policymanuals/51003/51003.htm",
+        "notes": (
+            "Never queued before. North Dakota's CHIP (Healthy Steps) is Medicaid-expansion coverage "
+            "determined under Service Chapter 510-03 Eligibility Factors for ACA Medicaid (the Healthy Steps "
+            "manual is archived inside it), published by HHS on the state's MadCap policy-manual site "
+            "(www.nd.gov/dhs/policymanuals/51003/, release 26.3 published 2026-05-15; hhs.nd.gov's own manual "
+            "URLs are 404). The table of contents lists 141 entries: 133 policy topics 510-03-05 to "
+            "510-03-105-15 plus 8 archive/site pages. Taken 133 (every policy topic, one HTML document each, "
+            "#mc-main-content); expression_date 2026-05-15 (last published)."
+        ),
+        "documents": [_nd_topic_doc(filename, name) for filename, name in ND_ACA_TOPICS],
+    },
+    "us-vt": {
+        "name": "Vermont",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_pdf",
+        "index_url": "https://humanservices.vermont.gov/rules-policies/health-care-rules/health-benefits-eligibility-and-enrollment-rules-hbee",
+        "index_document_count": 26,
+        "index_families": {"hbee_adopted_part_pdf": 8, "hbee_combined_pdf": 1, "hbee_gcr_pdf": 1,
+                           "hbee_proposed_pdf": 10, "repealed_legacy_rule_pdf": 5, "other_pdf": 1},
+        "primary_source_url": "https://humanservices.vermont.gov/sites/ahsnew/files/documents/HBEE-Part-2-Eligibility-Standards.pdf",
+        "notes": (
+            "Never queued before. Vermont's CHIP (Dr. Dynasaur) is determined under the Agency of Human "
+            "Services Health Benefits Eligibility and Enrollment (HBEE) Rules; the AHS HBEE page lists 26 "
+            "PDFs (8 adopted parts, the combined rules of 2025-12-17, one ARPA GCR, 10 proposed drafts, 5 "
+            "repealed legacy rules, one other). Taken 2: Part 2 Eligibility Standards (27 sections, latest "
+            "GCR effective 2026-01-01) and Part 5 Financial Methodologies (26 sections, 2026-01-01), labeled "
+            "sections from the first body page with the running header dropped. Not taken: parts 1, 3, 4, 6, "
+            "7, 8 and the combined PDF (same text)."
+        ),
+        "documents": [
+            doc(
+                "us-vt", f"vt-ahs-hbee-part-{num}", f"Health Benefits Eligibility and Enrollment Rules, Part {num} {title}",
+                f"https://humanservices.vermont.gov/sites/ahsnew/files/documents/HBEE-Part-{num}-{fname}.pdf",
+                f"us-vt/regulation/ahs/hbee/part-{num}", "pdf", "2026-01-01",
+                document_class="regulation",
+                subtype="adopted_administrative_rule_part",
+                authority="Vermont Agency of Human Services (Health Benefits Eligibility and Enrollment Rules)",
+                extraction=VT_HBEE_EXTRACTION,
+                metadata={"legal_identifier": f"HBEE Part {num}", "state_program": "Dr. Dynasaur",
+                          "latest_gcr_effective": "2026-01-01", "discovered_via": BATCH4_DISCOVERED_VIA},
+            )
+            for num, title, fname in (("2", "Eligibility Standards", "Eligibility-Standards"),
+                                      ("5", "Financial Methodologies", "Financial-Methodologies"))
+        ],
+    },
+}
+
+BLOCKED_BATCH4: dict[str, dict] = {
+    "us-dc": {
+        "name": "District of Columbia",
+        "index_url": "https://dcregs.dc.gov/Common/DCMR/RuleList.aspx?ChapterNum=29-95",
+        "index_document_count": 19,
+        "primary_source_url": "https://dcregs.dc.gov/Common/DCMR/RuleList.aspx?ChapterNum=29-95",
+        "notes": (
+            "Blocked. DC's CHIP (DC Healthy Families) is Medicaid-expansion coverage governed by 29 DCMR "
+            "Chapter 95 Medicaid Eligibility, published by the Office of Documents at dcregs.dc.gov: the chapter "
+            "list (19 sections 29-9500 to 29-9599, HTTP 200) and the section pages (SectionList.aspx, "
+            "RuleDetail.aspx, e.g. R0054304 effective 2024-03-08) answer, but every rule text and PDF is served "
+            "only through ASP.NET __doPostBack form posts with no GET URL, which the official-documents "
+            "extractor cannot fetch and this run will not emulate. dhcf.dc.gov requires JavaScript and publishes "
+            "no eligibility manual. 0 taken."
+        ),
+    },
+    "us-wy": {
+        "name": "Wyoming",
+        "index_url": "https://rules.wyo.gov/Search.aspx?mode=1&AgencyId=48",
+        "index_document_count": None,
+        "primary_source_url": "https://health.wyo.gov/healthcarefin/chip/",
+        "notes": (
+            "Blocked. Wyoming's separate CHIP (Kid Care CHIP) eligibility rules are Department of Health rules "
+            "filed with the Secretary of State at rules.wyo.gov (agency 048): the site answers HTTP 200 but its "
+            "agency listing, search and rule downloads are ASP.NET postbacks with no GET listing or file URL, so "
+            "the rules cannot be confirmed from a fetchable index. health.wyo.gov/healthcarefin/chip/ (HTTP 200) "
+            "publishes only member pages (Does My Child Qualify, copays, renewal, FAQ, handbooks) and no "
+            "eligibility manual or rule text; the programs-and-eligibility page is 404. 0 taken."
+        ),
+    },
+}
+
+DONE_BATCH4: dict[str, dict] = {
+    "us-la": {
+        "name": "Louisiana",
+        "index_url": "https://ldh.la.gov/page/medicaid-eligibility-manual",
+        "index_document_count": 99,
+        "target_manifest": f"discovery/ingest-medicaid: us-la/manual {MEDICAID_RUN_VERSION}",
+        "target_scope": {"jurisdiction": "us-la", "document_class": "manual", "version": MEDICAID_RUN_VERSION},
+        "pointer": "us-la/manual/ldh/medicaid/h-3030, h-3040, h-3050, z-2500 (LDH Medicaid Eligibility Manual, all 99 PDFs, 891 provisions)",
+        "notes": (
+            "Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: ldh.la.gov "
+            "answers (chrome120 HTTP 200 on the index, plain HTTP 200 on the PDFs); the LDH Medicaid "
+            "Eligibility Manual index lists 99 PDFs and LaCHIP is determined under H-3030 Children Under Age "
+            "19 Group - LaCHIP, H-3040 LaCHIP Affordable Plan, H-3050 LaCHIP Phase IV and Z-2500 premium "
+            "program FPIG. The parallel Medicaid run ingested the whole manual (99 documents, 891 provisions) "
+            "on 2026-09-10 at us-la/manual/ldh/medicaid/*, version " + MEDICAID_RUN_VERSION + ", including "
+            "those four documents at the same citation paths; a CHIP extraction of the four made in this run "
+            "collided with them and was deleted. " + MEDICAID_RUN_NOTE + " Nothing separate to add."
+        ),
+    },
+    "us-oh": {
+        "name": "Ohio",
+        "index_url": "https://codes.ohio.gov/ohio-administrative-code/chapter-5160:1-4",
+        "index_document_count": 6,
+        "target_manifest": f"discovery/ingest-medicaid: us-oh/manual {MEDICAID_RUN_VERSION}",
+        "target_scope": {"jurisdiction": "us-oh", "document_class": "manual", "version": MEDICAID_RUN_VERSION},
+        "pointer": "us-oh/manual/odm/medicaid/5160-1-4-01 ... 5160-1-4-06 (OAC 5160:1 eligibility rules, 96 rule documents, 192 provisions)",
+        "notes": (
+            "Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: codes.ohio.gov "
+            "answers HTTP 200 (plain and chrome120); the LSC index for OAC Chapter 5160:1-4 MAGI-based "
+            "medicaid lists 6 rules (5160:1-4-01 to -06; -01 to -03 effective 2026-06-01, -04 2024-03-01, -05 "
+            "2025-10-06, -06 2024-01-01), which govern Ohio's Medicaid-expansion CHIP. The parallel Medicaid "
+            "run ingested all OAC 5160:1 eligibility rules (96 documents, 192 provisions) on 2026-09-10 at "
+            "us-oh/manual/odm/medicaid/5160-1-*, version " + MEDICAID_RUN_VERSION + ", including all six; a "
+            "regulation-scope extraction of the six made in this run was deleted as duplicate text. "
+            + MEDICAID_RUN_NOTE + " Nothing separate to add."
+        ),
+    },
+    "us-sc": {
+        "name": "South Carolina",
+        "index_url": "https://img1.scdhhs.gov/mppm/",
+        "index_document_count": 19,
+        "target_manifest": f"discovery/ingest-medicaid: us-sc/manual {MEDICAID_RUN_VERSION}",
+        "target_scope": {"jurisdiction": "us-sc", "document_class": "manual", "version": MEDICAID_RUN_VERSION},
+        "pointer": "us-sc/manual/scdhhs/medicaid/section-200 (MPPM Section 200 MAGI Related Programs, chapter-level; 18 MPPM documents, 68 provisions)",
+        "notes": (
+            "Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: "
+            "img1.scdhhs.gov answers HTTP 200 (plain and chrome120) once the chain is completed with the "
+            "committed Go Daddy G2 intermediate via REQUESTS_CA_BUNDLE (TLS verification never disabled); the "
+            "MPPM index lists 19 documents and Partners for Healthy Children (Medicaid-expansion CHIP) is "
+            "Chapter 204.03 of Section 200 MAGI Related Programs (latest revision 2026-08-01). The parallel "
+            "Medicaid run ingested the 18 MPPM sections and chapters (68 provisions, chapter level) on "
+            "2026-09-10 at us-sc/manual/scdhhs/medicaid/*, version " + MEDICAID_RUN_VERSION + ", including "
+            "Section 200; a 139-section labeled extraction of Section 200 made in this run was deleted as "
+            "duplicate text (a reviewer wanting section granularity can re-run it: the docx heading pattern "
+            "is recorded in the batch-4 run note). " + MEDICAID_RUN_NOTE + " Nothing separate to add."
+        ),
+    },
+    "us-ks": {
+        "name": "Kansas",
+        "index_url": "https://www.kancare.ks.gov/data-policy/policy/eligibility/manuals",
+        "index_document_count": 30,
+        "target_manifest": f"discovery/ingest-medicaid: us-ks/manual {MEDICAID_RUN_VERSION}",
+        "target_scope": {"jurisdiction": "us-ks", "document_class": "manual", "version": MEDICAID_RUN_VERSION},
+        "pointer": "us-ks/manual/kdhe/medicaid/kfmam-01000 ... kfmam-08000 (Kansas Family Medical Assistance Manual, 117 documents, 757 provisions)",
+        "notes": (
+            "Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: "
+            "www.kancare.ks.gov answers the chrome120 client (plain HTTP 403; the old eligibility-policy URL "
+            "is 404) and its Policy Manuals page lists the July 2026 KFMAM (khap.kdhe.ks.gov/kfmam/, plain "
+            "HTTP 200) and 29 MKEESM releases. CHIP is section 1102 and the family medical determinations "
+            "throughout the KFMAM. The parallel Medicaid run ingested the KFMAM (117 documents, 757 "
+            "provisions) on 2026-09-10 at us-ks/manual/kdhe/medicaid/kfmam-*, version " + MEDICAID_RUN_VERSION
+            + "; a 389-section extraction of the full-manual page made in this run was deleted as duplicate "
+            "text. " + MEDICAID_RUN_NOTE + " Nothing separate to add."
+        ),
+    },
+    "us-az": {
+        "name": "Arizona",
+        "index_url": "https://epm.azahcccs.gov/EligibilityPolicyManual/index.html",
+        "index_document_count": 743,
+        "target_manifest": f"discovery/ingest-medicaid: us-az/manual {MEDICAID_RUN_VERSION}",
+        "target_scope": {"jurisdiction": "us-az", "document_class": "manual", "version": MEDICAID_RUN_VERSION},
+        "pointer": "us-az/manual/ahcccs/medicaid/policy-chapter-400-ahcccs-medical-assistance-programs-ma0408 (408 KidsCare; also 528 B, 1204, 1308; AHCCCS Eligibility Policy Manual, 743 documents, 4712 provisions)",
+        "notes": (
+            "Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: "
+            "epm.azahcccs.gov answers HTTP 200 (plain and chrome120) but its root serves only a 158-byte stub; "
+            "the manual lives at /EligibilityPolicyManual/index.html, from which the parallel Medicaid run "
+            "ingested the whole AHCCCS Eligibility Policy Manual (743 topic documents, 4712 provisions) on "
+            "2026-09-10 at us-az/manual/ahcccs/medicaid/*, version " + MEDICAID_RUN_VERSION + ", including "
+            "408 KidsCare, 528 B Premium Payment for KidsCare, 1204 KidsCare Premiums and 1308 KidsCare "
+            "Application Process. " + MEDICAID_RUN_NOTE + " apps.azsos.gov (A.A.C. 9-31) still returns the "
+            "Cloudflare challenge. Nothing separate to add."
+        ),
+    },
+    "us-wi": {
+        "name": "Wisconsin",
+        "index_url": "https://www.emhandbooks.wisconsin.gov/bcplus/bcplus.htm",
+        "index_document_count": 53,
+        "target_manifest": f"discovery/ingest-medicaid: us-wi/manual {MEDICAID_RUN_VERSION}",
+        "target_scope": {"jurisdiction": "us-wi", "document_class": "manual", "version": MEDICAID_RUN_VERSION},
+        "pointer": "us-wi/manual/dhs/medicaid/badgercare-plus-handbook-release-26-03 (BadgerCare Plus Eligibility Handbook Release 26-03 PDF p10171-26-03, 330 page provisions; also meh-release-26-03, 503)",
+        "notes": (
+            "Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: "
+            "www.emhandbooks.wisconsin.gov answers HTTP 200 (plain and chrome120); the BadgerCare Plus "
+            "Eligibility Handbook table of contents (whxdata/toc.new.js) lists 53 chapters in 6 books. "
+            "Wisconsin's CHIP is BadgerCare Plus (Medicaid-expansion CHIP) and the same handbook, as the DHS "
+            "publication PDF p10171-26-03 (Release 26-03), was ingested in full by the parallel Medicaid run "
+            "on 2026-09-10 at us-wi/manual/dhs/medicaid/badgercare-plus-handbook-release-26-03 (330 page "
+            "provisions, version " + MEDICAID_RUN_VERSION + "), alongside the Medicaid Eligibility Handbook "
+            "p10030-26-03. " + MEDICAID_RUN_NOTE + " Nothing separate to add."
+        ),
+    },
+}
+
+
+
 def main() -> int:
     queue = yaml.safe_load(QUEUE.read_text())
     rows = {s["jurisdiction"]: s for s in queue["states"]}
-    for jur, name in {**NEW_ROW_NAMES, **NEW_ROW_NAMES_BATCH3}.items():
+    for jur, name in {**NEW_ROW_NAMES, **NEW_ROW_NAMES_BATCH3, **NEW_ROW_NAMES_BATCH4}.items():
         rows.setdefault(jur, {"jurisdiction": jur, "name": name, "lead_counts": {},
                               "candidate_sources": []})
     written: list[str] = []
-    for jur, spec in {**CONFIRMED, **CONFIRMED_BATCH2, **CONFIRMED_BATCH3}.items():
+    for jur, spec in {**CONFIRMED, **CONFIRMED_BATCH2, **CONFIRMED_BATCH3, **CONFIRMED_BATCH4}.items():
         stem = f"{jur}-chip-state-eligibility-manual"
         manifest = {"version": VERSION, "documents": spec["documents"]}
         (ROOT / "manifests" / f"{stem}.yaml").write_text(
@@ -1688,7 +2621,9 @@ def main() -> int:
         })
         if "index_families" in spec:
             row["index_families"] = spec["index_families"]
-    for jur, spec in {**BLOCKED, **BLOCKED_BATCH2, **BLOCKED_BATCH3}.items():
+    for jur, spec in {**BLOCKED, **BLOCKED_BATCH2, **BLOCKED_BATCH3, **BLOCKED_BATCH4}.items():
+        if jur in CONFIRMED_BATCH4 or jur in DONE_BATCH4:
+            continue  # unblocked by the batch-4 US-network retry
         row = rows[jur]
         row.update({
             "queue_status": "blocked_primary_source",
@@ -1699,9 +2634,10 @@ def main() -> int:
             "index_url": spec["index_url"],
             "index_document_count": spec["index_document_count"],
             "taken_count": 0,
-            "notes": spec["notes"] + (f" {RETRY_NOTES[jur]}" if jur in RETRY_NOTES else ""),
+            "notes": spec["notes"] + (f" {RETRY_NOTES[jur]}" if jur in RETRY_NOTES else "")
+            + (f" {RETRY_NOTES_BATCH4[jur]}" if jur in RETRY_NOTES_BATCH4 else ""),
         })
-    for jur, spec in {**DONE, **DONE_BATCH2, **DONE_BATCH3}.items():
+    for jur, spec in {**DONE, **DONE_BATCH2, **DONE_BATCH3, **DONE_BATCH4}.items():
         row = rows[jur]
         row.update({
             "queue_status": "done",

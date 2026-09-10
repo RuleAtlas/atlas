@@ -29,9 +29,9 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  done: 8
-  agent_ready: 25
-  blocked_primary_source: 14
+  done: 14
+  agent_ready: 33
+  blocked_primary_source: 5
 states:
 - jurisdiction: us
   name: Federal
@@ -300,6 +300,29 @@ states:
   index_url: https://www.medicaid.gov/chip
   index_document_count: 15
   taken_count: 0
+- jurisdiction: us-ak
+  name: Alaska
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_agency_manual_html
+  primary_source_url: http://dpaweb.hss.state.ak.us/manuals/MAGI2/index.htm
+  target_manifest: manifests/us-ak-chip-state-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-ak
+    document_class: manual
+    version: 2026-09-10-chip-state-eligibility-manual
+  index_url: http://dpaweb.hss.state.ak.us/manuals/MAGI2/whdata/whtdata0.htm
+  index_document_count: 64
+  taken_count: 64
+  notes: Never queued before. Alaska's CHIP (Denali KidCare) is Medicaid-expansion coverage determined under the Division
+    of Public Assistance MAGI Medicaid Eligibility Manual (dpaweb.hss.state.ak.us/manuals/MAGI2/, HTTP only, the host of us-ak-snap-manual.yaml).
+    Its WebHelp table of contents (whdata/whtdata0-14.htm, 108 entries) lists 64 topic pages, sections 800-833 (816 MAGI Medicaid
+    Categories names Denali KidCare). Taken 64 (every topic, one HTML document each, body with the topic header dropped).
+    The manual publishes no manual-wide date, so expression_date is source_as_of. health.alaska.gov's policy-manuals page
+    is HTTP 404.
+  index_families:
+    magi_manual_topic_html: 64
 - jurisdiction: us-al
   name: Alabama
   queue_status: agent_ready
@@ -369,21 +392,26 @@ states:
   name: Arizona
   lead_counts: {}
   candidate_sources: []
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
-  primary_source_url: https://epm.azahcccs.gov/
-  target_manifest: null
+  queue_status: done
+  source_kind: already_in_corpus
+  primary_source_url: https://epm.azahcccs.gov/EligibilityPolicyManual/index.html
+  target_manifest: 'discovery/ingest-medicaid: us-az/manual 2026-09-10-medicaid-state-eligibility-manual'
   target_scope:
     jurisdiction: us-az
     document_class: manual
-    version: null
-  index_url: https://epm.azahcccs.gov/
-  index_document_count: null
+    version: 2026-09-10-medicaid-state-eligibility-manual
+  index_url: https://epm.azahcccs.gov/EligibilityPolicyManual/index.html
+  index_document_count: 743
   taken_count: 0
-  notes: Blocked. AHCCCS publishes the Medical Assistance Eligibility Policy Manual (KidsCare is its chapter 408) at epm.azahcccs.gov;
-    that host, www.azahcccs.gov (AMPM index, program pages) and the site root all return HTTP 403 Forbidden to plain, WebFetch
-    and chrome120 clients. The adopted KidsCare rule A.A.C. Title 9 Chapter 31 at the Arizona Secretary of State (apps.azsos.gov/public_services/Title_09/9-31.pdf)
-    returns a Cloudflare JavaScript challenge ('Just a moment...', HTTP 403). 0 taken.
+  notes: 'Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: epm.azahcccs.gov answers HTTP
+    200 (plain and chrome120) but its root serves only a 158-byte stub; the manual lives at /EligibilityPolicyManual/index.html,
+    from which the parallel Medicaid run ingested the whole AHCCCS Eligibility Policy Manual (743 topic documents, 4712 provisions)
+    on 2026-09-10 at us-az/manual/ahcccs/medicaid/*, version 2026-09-10-medicaid-state-eligibility-manual, including 408 KidsCare,
+    528 B Premium Payment for KidsCare, 1204 KidsCare Premiums and 1308 KidsCare Application Process. Manifest lives on the
+    parallel Medicaid branch (discovery/ingest-medicaid); artifacts share data/corpus in the main checkout. apps.azsos.gov
+    (A.A.C. 9-31) still returns the Cloudflare challenge. Nothing separate to add.'
+  pointer: us-az/manual/ahcccs/medicaid/policy-chapter-400-ahcccs-medical-assistance-programs-ma0408 (408 KidsCare; also 528
+    B, 1204, 1308; AHCCCS Eligibility Policy Manual, 743 documents, 4712 provisions)
 - jurisdiction: us-ca
   name: California
   lead_counts: {}
@@ -403,7 +431,9 @@ states:
     MCAP and county CCHIP; the eligibility manual is the DHCS Medi-Cal Eligibility Procedures Manual. www.dhcs.ca.gov returns
     HTTP 403 with an empty 772-byte body for the MEPM index and for the site root, to a plain client, the WebFetch client
     and the chrome120 browser-impersonation client. 22 CCR is vendor-hosted (Westlaw) and was not used. No existing us-ca
-    scope carries Medi-Cal or CHIP eligibility text. 0 taken.
+    scope carries Medi-Cal or CHIP eligibility text. 0 taken. retried 2026-09-10T21:35Z from US network, same failure (HTTP
+    200 with an Incapsula 'Request unsuccessful' JavaScript-challenge iframe, 843-byte body, plain and chrome120; no MEPM
+    index reachable).
 - jurisdiction: us-co
   name: Colorado
   lead_counts: {}
@@ -472,6 +502,27 @@ states:
   index_url: https://portal.ct.gov/dss/find-benefits-and-support/healthcare-coverage
   index_document_count: 9
   taken_count: 2
+- jurisdiction: us-dc
+  name: District of Columbia
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_publisher_blocked
+  primary_source_url: https://dcregs.dc.gov/Common/DCMR/RuleList.aspx?ChapterNum=29-95
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-dc
+    document_class: manual
+    version: null
+  index_url: https://dcregs.dc.gov/Common/DCMR/RuleList.aspx?ChapterNum=29-95
+  index_document_count: 19
+  taken_count: 0
+  notes: 'Blocked. DC''s CHIP (DC Healthy Families) is Medicaid-expansion coverage governed by 29 DCMR Chapter 95 Medicaid
+    Eligibility, published by the Office of Documents at dcregs.dc.gov: the chapter list (19 sections 29-9500 to 29-9599,
+    HTTP 200) and the section pages (SectionList.aspx, RuleDetail.aspx, e.g. R0054304 effective 2024-03-08) answer, but every
+    rule text and PDF is served only through ASP.NET __doPostBack form posts with no GET URL, which the official-documents
+    extractor cannot fetch and this run will not emulate. dhcf.dc.gov requires JavaScript and publishes no eligibility manual.
+    0 taken.'
 - jurisdiction: us-de
   name: Delaware
   queue_status: agent_ready
@@ -540,7 +591,10 @@ states:
     requirements, FAQs, board, media, partner resources, notices, required reporting, contact) publishes no eligibility manual
     or adopted rule; the DCF ESS manual already in the corpus (us-fl/manual) has no KidCare chapter. Candidate follow-up:
     s. 409.814 F.S. from the Florida Legislature. retried 2026-09-10T18:39Z, same failure (HTTP 403 Cloudflare ''Attention
-    Required!'' plain and chrome120).'
+    Required!'' plain and chrome120). retried 2026-09-10T21:35Z from US network, different failure (ahca.myflorida.com now
+    answers; the Florida KidCare page returns HTTP 404 ''WebContentNotFound'' at /medicaid/florida-kidcare, /medicaid/florida-kidcare.html
+    and under medicaid-policy-quality-and-operations; the Medicaid and Medicaid Policy, Quality and Operations pages carry
+    no KidCare or Title XXI eligibility manual or rule link). No eligibility manual located; still blocked_primary_source.'
   index_url: https://www.floridakidcare.org/
   index_document_count: 14
   taken_count: 0
@@ -602,20 +656,27 @@ states:
   name: Hawaii
   lead_counts: {}
   candidate_sources: []
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
-  primary_source_url: https://medquest.hawaii.gov/en/plans-providers/har.html
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_adopted_rule_pdf
+  primary_source_url: https://humanservices.hawaii.gov/wp-content/uploads/2016/12/HAR-17-1715-CHILDREN-GROUP-Final-10-31-16-1.pdf
+  target_manifest: manifests/us-hi-chip-state-eligibility-manual.yaml
   target_scope:
     jurisdiction: us-hi
-    document_class: manual
-    version: null
-  index_url: https://medquest.hawaii.gov/en/plans-providers/har.html
-  index_document_count: null
-  taken_count: 0
-  notes: Blocked. Hawaii's CHIP is Medicaid-expansion QUEST coverage governed by Med-QUEST Division administrative rules (HAR
-    Title 17); medquest.hawaii.gov returned HTTP 522 (Cloudflare origin timeout, empty body, ~20 s) to plain and chrome120
-    clients. 0 taken.
+    document_class: regulation
+    version: 2026-09-10-chip-state-eligibility-manual
+  index_url: https://humanservices.hawaii.gov/admin-rules-2/admin-rules-for-programs/
+  index_document_count: 140
+  taken_count: 2
+  notes: 'Retried from a US network 2026-09-10T21:35Z: medquest.hawaii.gov answers (the old har.html page is HTTP 404; its
+    Rules & Policies page links the DHS Hawaii Administrative Rules index). DHS index humanservices.hawaii.gov/admin-rules-2/admin-rules-for-programs/:
+    140 chapter PDFs, 49 of them Med-QUEST subtitle 12 chapters 17-1700.1 to 17-1739. Hawaii''s CHIP is Medicaid-expansion
+    QUEST coverage for the Children Group. Taken 2: HAR 17-1715 Children Group (8 pages) and HAR 17-1724.2 MAGI-Based Income
+    Methodology (15 pages), both amended and compiled 2016-11-10 (scanned PDFs with an OCR text layer, so page-level provisions
+    as in us-nv). Not taken: 17-1714.1 general eligibility, 17-1711.1 application processing, the income standards charts
+    on the Med-QUEST page.'
+  index_families:
+    har_title_17_med_quest_chapter_pdf_17xx: 49
+    har_title_17_other_chapter_pdf: 91
 - jurisdiction: us-ia
   name: Iowa
   queue_status: agent_ready
@@ -744,14 +805,14 @@ states:
   taken_count: 2
 - jurisdiction: us-ks
   name: Kansas
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
-  primary_source_url: https://www.kancare.ks.gov/policies-and-reports/eligibility-policy
-  target_manifest: null
+  queue_status: done
+  source_kind: already_in_corpus
+  primary_source_url: https://www.kancare.ks.gov/data-policy/policy/eligibility/manuals
+  target_manifest: 'discovery/ingest-medicaid: us-ks/manual 2026-09-10-medicaid-state-eligibility-manual'
   target_scope:
     jurisdiction: us-ks
     document_class: manual
-    version: null
+    version: 2026-09-10-medicaid-state-eligibility-manual
   lead_counts:
     ready_for_manifest: 1
   candidate_sources:
@@ -765,13 +826,21 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/ks/hhs/chip/premium.yaml
     - policyengine-us#variables/gov/states/ks/hhs/chip/ks_chip_premium.py
-  notes: Blocked. The Kansas Family Medical Assistance Manual (KFMAM) publisher www.kancare.ks.gov returns HTTP 403 'Access
-    Denied' for the eligibility-policy index, the KFMAM page and the site root, to plain, curl and chrome120-impersonated
-    clients; www.kdhe.ks.gov also returns 403. The existing us-ks KEESM scope (DCF) is SNAP/TANF and has no CHIP chapter.
-    retried 2026-09-10T18:39Z, same failure (HTTP 403 'Access Denied' plain and chrome120).
-  index_url: https://www.kancare.ks.gov/policies-and-reports/eligibility-policy
-  index_document_count: null
+  notes: 'Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: www.kancare.ks.gov answers the
+    chrome120 client (plain HTTP 403; the old eligibility-policy URL is 404) and its Policy Manuals page lists the July 2026
+    KFMAM (khap.kdhe.ks.gov/kfmam/, plain HTTP 200) and 29 MKEESM releases. CHIP is section 1102 and the family medical determinations
+    throughout the KFMAM. The parallel Medicaid run ingested the KFMAM (117 documents, 757 provisions) on 2026-09-10 at us-ks/manual/kdhe/medicaid/kfmam-*,
+    version 2026-09-10-medicaid-state-eligibility-manual; a 389-section extraction of the full-manual page made in this run
+    was deleted as duplicate text. Manifest lives on the parallel Medicaid branch (discovery/ingest-medicaid); artifacts share
+    data/corpus in the main checkout. Nothing separate to add.'
+  index_url: https://www.kancare.ks.gov/data-policy/policy/eligibility/manuals
+  index_document_count: 30
   taken_count: 0
+  index_families:
+    kfmam_manual_site: 1
+    mkeesm_manual_release: 29
+  pointer: us-ks/manual/kdhe/medicaid/kfmam-01000 ... kfmam-08000 (Kansas Family Medical Assistance Manual, 117 documents,
+    757 provisions)
 - jurisdiction: us-ky
   name: Kentucky
   lead_counts: {}
@@ -796,14 +865,14 @@ states:
     kar_regulation_html: 2
 - jurisdiction: us-la
   name: Louisiana
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
+  queue_status: done
+  source_kind: already_in_corpus
   primary_source_url: https://ldh.la.gov/page/medicaid-eligibility-manual
-  target_manifest: null
+  target_manifest: 'discovery/ingest-medicaid: us-la/manual 2026-09-10-medicaid-state-eligibility-manual'
   target_scope:
     jurisdiction: us-la
     document_class: manual
-    version: null
+    version: 2026-09-10-medicaid-state-eligibility-manual
   lead_counts:
     needs_review: 1
   candidate_sources:
@@ -817,13 +886,23 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/la/hhs/chip/premium.yaml
     - policyengine-us#variables/gov/states/la/hhs/chip/la_chip_premium.py
-  notes: Blocked. ldh.la.gov (Louisiana Medicaid Eligibility Manual, LaCHIP) returns HTTP 403 (Cloudflare 'Attention Required!')
-    for the manual page and the site root, to plain, curl and chrome120-impersonated clients. The existing us-la SNAP manual
-    came from public.powerdms.com (DCFS), which does not host the LDH Medicaid manual. retried 2026-09-10T18:39Z, same failure
-    (HTTP 403 Cloudflare 'Attention Required!' plain and chrome120).
+  notes: 'Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: ldh.la.gov answers (chrome120
+    HTTP 200 on the index, plain HTTP 200 on the PDFs); the LDH Medicaid Eligibility Manual index lists 99 PDFs and LaCHIP
+    is determined under H-3030 Children Under Age 19 Group - LaCHIP, H-3040 LaCHIP Affordable Plan, H-3050 LaCHIP Phase IV
+    and Z-2500 premium program FPIG. The parallel Medicaid run ingested the whole manual (99 documents, 891 provisions) on
+    2026-09-10 at us-la/manual/ldh/medicaid/*, version 2026-09-10-medicaid-state-eligibility-manual, including those four
+    documents at the same citation paths; a CHIP extraction of the four made in this run collided with them and was deleted.
+    Manifest lives on the parallel Medicaid branch (discovery/ingest-medicaid); artifacts share data/corpus in the main checkout.
+    Nothing separate to add.'
   index_url: https://ldh.la.gov/page/medicaid-eligibility-manual
-  index_document_count: null
+  index_document_count: 99
   taken_count: 0
+  index_families:
+    eligibility_determination_chapter_pdf_h: 38
+    eligibility_factor_chapter_pdf_i: 25
+    chart_pdf_z: 17
+    other_section_pdf: 19
+  pointer: us-la/manual/ldh/medicaid/h-3030, h-3040, h-3050, z-2500 (LDH Medicaid Eligibility Manual, all 99 PDFs, 891 provisions)
 - jurisdiction: us-ma
   name: Massachusetts
   queue_status: agent_ready
@@ -1089,7 +1168,9 @@ states:
     at rules.mt.gov. The site (plain client HTTP 200) is now the Esper ''policy-library-public'' single-page application:
     the HTML shell carries no rule text, its search API returns HTTP 403 AccessDenied to the plain client and the HTML shell
     to the chrome120 client, and no document endpoint is discoverable. dphhs.mt.gov/hmk answers (HTTP 200) but publishes only
-    the member guide and evidence of coverage, not an eligibility manual or rule. 0 taken.'
+    the member guide and evidence of coverage, not an eligibility manual or rule. 0 taken. retried 2026-09-10T21:35Z from
+    US network, same failure (rules.mt.gov now answers HTTP 405 with a ''Human Verification'' CAPTCHA page requiring JavaScript,
+    plain and chrome120).'
 - jurisdiction: us-nc
   name: North Carolina
   lead_counts: {}
@@ -1112,45 +1193,76 @@ states:
     artifacts share data/corpus in the main checkout. policies.ncdhhs.gov returns HTTP 403 to the WebFetch client; the index
     count is the Medicaid run's inventory. Nothing separate to add.
   pointer: us-nc/manual/dhb/medicaid/ma-3xxx (Family and Children's Medicaid manual, 64 documents incl. fcm table of contents)
+- jurisdiction: us-nd
+  name: North Dakota
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_agency_manual_html
+  primary_source_url: https://www.nd.gov/dhs/policymanuals/51003/51003.htm
+  target_manifest: manifests/us-nd-chip-state-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-nd
+    document_class: manual
+    version: 2026-09-10-chip-state-eligibility-manual
+  index_url: https://www.nd.gov/dhs/policymanuals/51003/Data/Tocs/Master_Chunk0.js
+  index_document_count: 141
+  taken_count: 133
+  notes: 'Never queued before. North Dakota''s CHIP (Healthy Steps) is Medicaid-expansion coverage determined under Service
+    Chapter 510-03 Eligibility Factors for ACA Medicaid (the Healthy Steps manual is archived inside it), published by HHS
+    on the state''s MadCap policy-manual site (www.nd.gov/dhs/policymanuals/51003/, release 26.3 published 2026-05-15; hhs.nd.gov''s
+    own manual URLs are 404). The table of contents lists 141 entries: 133 policy topics 510-03-05 to 510-03-105-15 plus 8
+    archive/site pages. Taken 133 (every policy topic, one HTML document each, #mc-main-content); expression_date 2026-05-15
+    (last published).'
+  index_families:
+    service_chapter_510_03_topic_html: 133
+    archive_or_site_page_html: 8
 - jurisdiction: us-ne
   name: Nebraska
   lead_counts: {}
   candidate_sources: []
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
-  primary_source_url: https://dhhs.ne.gov/Pages/Medicaid-Regulations.aspx
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_filed_regulation_pdf
+  primary_source_url: https://rules.nebraska.gov/rules?agencyId=37&titleId=232
+  target_manifest: manifests/us-ne-chip-state-eligibility-manual.yaml
   target_scope:
     jurisdiction: us-ne
-    document_class: manual
-    version: null
-  index_url: https://rules.nebraska.gov/rules?agencyId=41
-  index_document_count: null
-  taken_count: 0
-  notes: Blocked. Nebraska's CHIP is Medicaid-expansion coverage under 477 NAC (DHHS Medicaid eligibility regulations). dhhs.ne.gov
-    did not accept TCP connections on 443 (ConnectTimeout 20 s plain; curl (28) 20 s chrome120). The Secretary of State's
-    Nebraska Administrative Code site rules.nebraska.gov serves its leaf certificate without the DigiCert Global G2 TLS RSA
-    SHA256 2020 CA1 intermediate; with the already-committed data/certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem in
-    REQUESTS_CA_BUNDLE the chain verifies, after which the site root and the agency listing return HTTP 403 to plain and chrome120
-    clients. TLS verification was never disabled. 0 taken.
+    document_class: regulation
+    version: 2026-09-10-chip-state-eligibility-manual
+  index_url: https://rules.nebraska.gov/api/chapter/GetByTitleId/232
+  index_document_count: 29
+  taken_count: 1
+  notes: 'Retried from a US network 2026-09-10T21:35Z: dhhs.ne.gov answers (the old Medicaid-Regulations page is HTTP 404);
+    rules.nebraska.gov (Secretary of State) answers HTTP 200 once the chain is completed with the committed DigiCert Global
+    G2 intermediate via REQUESTS_CA_BUNDLE (TLS verification never disabled), and its chapter API (same mechanism as us-ne-snap-rules.yaml)
+    lists Title 477 Medicaid Eligibility (titleId 232, agency 37): 29 chapters. Nebraska''s CHIP (599 CHIP) is Medicaid-expansion
+    coverage governed by 477 NAC 14-19 (MAGI-based programs). Taken 1: 477 NAC 19 Modified Adjusted Gross Income (MAGI)-Based
+    Programs (effective 2020-07-29), 42 labeled sections. Not taken: chapters 14-18 (2018 filings using the older 15-004-style
+    numbering) and the non-MAGI chapters.'
+  index_families:
+    nac_477_chapter_pdf: 29
 - jurisdiction: us-nh
   name: New Hampshire
   lead_counts: {}
   candidate_sources: []
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
-  primary_source_url: https://www.gencourt.state.nh.us/rules/state_agencies/he-w800.html
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_adopted_rule_html
+  primary_source_url: https://gc.nh.gov/rules/state_agencies/he-w800.html
+  target_manifest: manifests/us-nh-chip-state-eligibility-manual.yaml
   target_scope:
     jurisdiction: us-nh
-    document_class: manual
-    version: null
-  index_url: https://www.gencourt.state.nh.us/rules/state_agencies/he-w800.html
-  index_document_count: null
-  taken_count: 0
-  notes: 'Blocked. New Hampshire''s CHIP eligibility rules are DHHS He-W 800 (medical assistance) published by the Office
-    of Legislative Services at gencourt.state.nh.us: HTTP 403 ''Error 403'' to the plain client; the chrome120 request was
-    closed abruptly (curl 56). 0 taken.'
+    document_class: regulation
+    version: 2026-09-10-chip-state-eligibility-manual
+  index_url: https://gc.nh.gov/rules/state_agencies/he-w800.html
+  index_document_count: 1
+  taken_count: 1
+  notes: 'Retried from a US network 2026-09-10T21:35Z: gencourt.state.nh.us answers HTTP 200 (plain and chrome120; it now
+    redirects to gc.nh.gov, the host us-nh-snap-rules.yaml uses). The Office of Legislative Services publishes Chapter He-W
+    800 Eligibility for Medical Assistance as one HTML document (33 parts, latest amendment effective 2025-10-01). New Hampshire''s
+    CHIP is Medicaid-expansion coverage governed by this chapter. Taken 1, labeled sections He-W 8xx.yy as in the He-W 700
+    SNAP scope (156 sections), stopping at Appendix A.'
+  index_families:
+    he_w_chapter_html: 1
 - jurisdiction: us-nj
   name: New Jersey
   lead_counts: {}
@@ -1319,24 +1431,27 @@ states:
   name: Ohio
   lead_counts: {}
   candidate_sources: []
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
+  queue_status: done
+  source_kind: already_in_corpus
   primary_source_url: https://codes.ohio.gov/ohio-administrative-code/chapter-5160:1-4
-  target_manifest: null
+  target_manifest: 'discovery/ingest-medicaid: us-oh/manual 2026-09-10-medicaid-state-eligibility-manual'
   target_scope:
     jurisdiction: us-oh
     document_class: manual
-    version: null
+    version: 2026-09-10-medicaid-state-eligibility-manual
   index_url: https://codes.ohio.gov/ohio-administrative-code/chapter-5160:1-4
-  index_document_count: null
+  index_document_count: 6
   taken_count: 0
-  notes: 'Blocked. Ohio''s CHIP is Medicaid-expansion CHIP whose eligibility rules are the adopted rules in OAC Chapter 5160:1-4
-    (MAGI-based Medicaid: children, families and adults) published by the Legislative Service Commission at codes.ohio.gov.
-    codes.ohio.gov did not accept TCP connections on 443 during this run (requests ConnectTimeout after 25 s plain; curl (28)
-    connection timed out after 25 s with chrome120 impersonation; WebFetch ECONNREFUSED 198.234.74.32:443), and emanuals.jfs.ohio.gov
-    timed out the same way. medicaid.ohio.gov answered (HTTP 200) but publishes no eligibility manual, only consumer coverage
-    pages and managed-care policy. codes.ohio.gov served us-oh-snap-rules.yaml (OAC 5101:4) in July 2026, so this is probably
-    transient; retry before treating the block as durable. 0 taken.'
+  notes: 'Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: codes.ohio.gov answers HTTP 200
+    (plain and chrome120); the LSC index for OAC Chapter 5160:1-4 MAGI-based medicaid lists 6 rules (5160:1-4-01 to -06; -01
+    to -03 effective 2026-06-01, -04 2024-03-01, -05 2025-10-06, -06 2024-01-01), which govern Ohio''s Medicaid-expansion
+    CHIP. The parallel Medicaid run ingested all OAC 5160:1 eligibility rules (96 documents, 192 provisions) on 2026-09-10
+    at us-oh/manual/odm/medicaid/5160-1-*, version 2026-09-10-medicaid-state-eligibility-manual, including all six; a regulation-scope
+    extraction of the six made in this run was deleted as duplicate text. Manifest lives on the parallel Medicaid branch (discovery/ingest-medicaid);
+    artifacts share data/corpus in the main checkout. Nothing separate to add.'
+  index_families:
+    oac_rule_html: 6
+  pointer: us-oh/manual/odm/medicaid/5160-1-4-01 ... 5160-1-4-06 (OAC 5160:1 eligibility rules, 96 rule documents, 192 provisions)
 - jurisdiction: us-ok
   name: Oklahoma
   lead_counts: {}
@@ -1370,22 +1485,25 @@ states:
   name: Oregon
   lead_counts: {}
   candidate_sources: []
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
-  primary_source_url: https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=94
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_adopted_rule_html
+  primary_source_url: https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=87
+  target_manifest: manifests/us-or-chip-state-eligibility-manual.yaml
   target_scope:
     jurisdiction: us-or
-    document_class: manual
-    version: null
-  index_url: https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=94
-  index_document_count: null
-  taken_count: 0
-  notes: 'Blocked. Oregon''s CHIP is Medicaid-expansion Oregon Health Plan coverage governed by OAR chapter 410 division 200
-    (OHA Health Systems Division, published by the Secretary of State''s OARD). On 2026-09-10 the oregon.gov DNS zone did
-    not resolve: secure.sos.state.or.us and www.oregon.gov returned SERVFAIL from the authoritative servers (dig @1.1.1.1
-    and @8.8.8.8, NS lookup for oregon.gov SERVFAIL), so both the plain and chrome120 probes failed with name resolution errors
-    after 20 s. Probably transient; retry before treating as durable. 0 taken.'
+    document_class: regulation
+    version: 2026-09-10-chip-state-eligibility-manual
+  index_url: https://secure.sos.state.or.us/oard/displayDivisionRules.action?selectedDivision=1742
+  index_document_count: 40
+  taken_count: 1
+  notes: 'Retried from a US network 2026-09-10T21:35Z: the oregon.gov zone resolves and the OARD answers (plain client HTTP
+    200; the chrome120 client receives only a 5 KB shell, so no impersonation). Batch 3''s selectedChapter=94 was Oregon State
+    Police; OAR chapter 410 (OHA Health Systems Division: Medical Assistance Programs) is selectedChapter=87 with 39 divisions,
+    and Division 200 Eligibility for Health Systems Division Medical Programs (selectedDivision=1742) lists 40 rules 410-200-0010
+    to 410-200-0521 with full text on one page (latest effective 2026-03-01). Oregon''s CHIP is Medicaid-expansion OHP coverage
+    under these rules. Taken 1: the division page, 40 labeled rule sections.'
+  index_families:
+    oar_rule_in_division_200: 40
 - jurisdiction: us-pa
   name: Pennsylvania
   lead_counts: {}
@@ -1441,24 +1559,32 @@ states:
   name: South Carolina
   lead_counts: {}
   candidate_sources: []
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
+  queue_status: done
+  source_kind: already_in_corpus
   primary_source_url: https://img1.scdhhs.gov/mppm/
-  target_manifest: null
+  target_manifest: 'discovery/ingest-medicaid: us-sc/manual 2026-09-10-medicaid-state-eligibility-manual'
   target_scope:
     jurisdiction: us-sc
     document_class: manual
-    version: null
+    version: 2026-09-10-medicaid-state-eligibility-manual
   index_url: https://img1.scdhhs.gov/mppm/
-  index_document_count: null
+  index_document_count: 19
   taken_count: 0
-  notes: Blocked. South Carolina's CHIP (Partners for Healthy Children) is Medicaid-expansion CHIP governed by the SCDHHS
-    Medicaid Policy and Procedures Manual (MPPM; Chapter 204 Healthy Connections Plans for Children), published at img1.scdhhs.gov/mppm/
-    and www1.scdhhs.gov/mppm/. Both hosts present their leaf certificate without the issuing intermediate (Go Daddy Secure
-    Certificate Authority - G2); the chain was repaired with the publisher's public intermediate fetched from the leaf's AIA
-    URL (data/certs/godaddy-secure-certificate-authority-g2.pem) via REQUESTS_CA_BUNDLE, TLS verification never disabled.
-    With the chain verified, both hosts return HTTP 403 'Error Page' to plain and chrome120 clients, and www.scdhhs.gov (CloudFront)
-    returns HTTP 403 'The request could not be satisfied' for its policy index pages. 0 taken.
+  notes: 'Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: img1.scdhhs.gov answers HTTP 200
+    (plain and chrome120) once the chain is completed with the committed Go Daddy G2 intermediate via REQUESTS_CA_BUNDLE (TLS
+    verification never disabled); the MPPM index lists 19 documents and Partners for Healthy Children (Medicaid-expansion
+    CHIP) is Chapter 204.03 of Section 200 MAGI Related Programs (latest revision 2026-08-01). The parallel Medicaid run ingested
+    the 18 MPPM sections and chapters (68 provisions, chapter level) on 2026-09-10 at us-sc/manual/scdhhs/medicaid/*, version
+    2026-09-10-medicaid-state-eligibility-manual, including Section 200; a 139-section labeled extraction of Section 200 made
+    in this run was deleted as duplicate text (a reviewer wanting section granularity can re-run it: the docx heading pattern
+    is recorded in the batch-4 run note). Manifest lives on the parallel Medicaid branch (discovery/ingest-medicaid); artifacts
+    share data/corpus in the main checkout. Nothing separate to add.'
+  index_families:
+    mppm_section_docx: 4
+    mppm_chapter_docx: 14
+    miap_manual_docx: 1
+  pointer: us-sc/manual/scdhhs/medicaid/section-200 (MPPM Section 200 MAGI Related Programs, chapter-level; 18 MPPM documents,
+    68 provisions)
 - jurisdiction: us-sd
   name: South Dakota
   lead_counts: {}
@@ -1551,23 +1677,31 @@ states:
   name: Utah
   lead_counts: {}
   candidate_sources: []
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
+  queue_status: agent_ready
+  source_kind: official_agency_manual_html
   primary_source_url: https://oepmanuals-chip.dhhs.utah.gov/Welcome_page.htm
-  target_manifest: null
+  target_manifest: manifests/us-ut-chip-state-eligibility-manual.yaml
   target_scope:
     jurisdiction: us-ut
     document_class: manual
-    version: null
-  index_url: https://oepmanuals-chip.dhhs.utah.gov/Welcome_page.htm
-  index_document_count: null
-  taken_count: 0
-  notes: Blocked. Utah DHHS Office of Eligibility Policy publishes a separate CHIP eligibility policy manual at oepmanuals-chip.dhhs.utah.gov
-    (effective 2024-05-01); the host returns HTTP 403 AccessDenied (111-byte XML) to plain and chrome120 clients for the welcome
-    page and the site root. The former Medicaid eligibility manual hosts medicaidpolicy.utah.gov and bepmanuals.health.utah.gov
-    are NXDOMAIN. The adopted rule R382-10 lives only in the Office of Administrative Rules eRules single-page app (adminrules.utah.gov;
-    plain client 404, no public rule endpoint found in its bundle), and medicaid.utah.gov publishes no eligibility manual.
-    The existing us-ut/manual DWS Eligibility Manual scope has no CHIP chapter. 0 taken.
+    version: 2026-09-10-chip-state-eligibility-manual
+  index_url: https://oepmanuals-chip.dhhs.utah.gov/whxdata/toc.new.js
+  index_document_count: 909
+  taken_count: 206
+  notes: 'Retried from a US network 2026-09-10T21:35Z: oepmanuals-chip.dhhs.utah.gov answers HTTP 200 (plain and chrome120).
+    The DHHS Office of Eligibility Policy CHIP Policy Manual (separate CHIP; manual effective 2024-05-01, What''s New through
+    September 2026) is a RoboHelp site whose table of contents (whxdata/toc.new.js and 63 nested toc files) lists 909 topic
+    pages: 206 current manual topics (100 General Provisions 28, 200 Program Standards 42, 400 Income Standards and Household
+    Composition 61, 600 Program Benefits 5, 700 Eligibility Determination and Redetermination 26, 800 Records and Case Management
+    17, 1000 State CHIP 16, Tables 11), 697 Obsolete topics, 3 FAQ, Glossary, Welcome, What''s New. Taken 206 (every current
+    manual topic, one HTML document each, body with the RoboHelp topic header dropped); each topic states its own Effective
+    Date in its text, so expression_date is source_as_of.'
+  index_families:
+    chip_manual_topic_html: 206
+    obsolete_policy_topic_html: 697
+    faq_topic_html: 3
+    glossary_topic_html: 1
+    welcome_and_whats_new_html: 2
 - jurisdiction: us-va
   name: Virginia
   lead_counts: {}
@@ -1589,6 +1723,33 @@ states:
     2026-09-10-medicaid-state-eligibility-manual). Manifest lives on the parallel Medicaid branch (discovery/ingest-medicaid);
     artifacts share data/corpus in the main checkout. Nothing separate to add.
   pointer: us-va/manual/dmas/medicaid/m21 (Chapter M21 FAMIS, 22 provisions; also m22 FAMIS MOMS, m23 FAMIS Prenatal)
+- jurisdiction: us-vt
+  name: Vermont
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_adopted_rule_pdf
+  primary_source_url: https://humanservices.vermont.gov/sites/ahsnew/files/documents/HBEE-Part-2-Eligibility-Standards.pdf
+  target_manifest: manifests/us-vt-chip-state-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-vt
+    document_class: regulation
+    version: 2026-09-10-chip-state-eligibility-manual
+  index_url: https://humanservices.vermont.gov/rules-policies/health-care-rules/health-benefits-eligibility-and-enrollment-rules-hbee
+  index_document_count: 26
+  taken_count: 2
+  notes: 'Never queued before. Vermont''s CHIP (Dr. Dynasaur) is determined under the Agency of Human Services Health Benefits
+    Eligibility and Enrollment (HBEE) Rules; the AHS HBEE page lists 26 PDFs (8 adopted parts, the combined rules of 2025-12-17,
+    one ARPA GCR, 10 proposed drafts, 5 repealed legacy rules, one other). Taken 2: Part 2 Eligibility Standards (27 sections,
+    latest GCR effective 2026-01-01) and Part 5 Financial Methodologies (26 sections, 2026-01-01), labeled sections from the
+    first body page with the running header dropped. Not taken: parts 1, 3, 4, 6, 7, 8 and the combined PDF (same text).'
+  index_families:
+    hbee_adopted_part_pdf: 8
+    hbee_combined_pdf: 1
+    hbee_gcr_pdf: 1
+    hbee_proposed_pdf: 10
+    repealed_legacy_rule_pdf: 5
+    other_pdf: 1
 - jurisdiction: us-wa
   name: Washington
   lead_counts: {}
@@ -1616,14 +1777,14 @@ states:
     magi_client_notice_chapter: 4
 - jurisdiction: us-wi
   name: Wisconsin
-  queue_status: blocked_primary_source
-  source_kind: official_publisher_blocked
+  queue_status: done
+  source_kind: already_in_corpus
   primary_source_url: https://www.emhandbooks.wisconsin.gov/bcplus/bcplus.htm
-  target_manifest: null
+  target_manifest: 'discovery/ingest-medicaid: us-wi/manual 2026-09-10-medicaid-state-eligibility-manual'
   target_scope:
     jurisdiction: us-wi
     document_class: manual
-    version: null
+    version: 2026-09-10-medicaid-state-eligibility-manual
   lead_counts:
     ready_for_manifest: 1
   candidate_sources:
@@ -1637,14 +1798,18 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/wi/hhs/chip/premium/per_child.yaml
     - policyengine-us#variables/gov/states/wi/hhs/chip/wi_chip_premium.py
-  notes: 'Blocked. The BadgerCare Plus Eligibility Handbook host www.emhandbooks.wisconsin.gov (165.189.157.19) did not accept
-    TCP connections on 443 or 80 during this run (curl: (28) connection timeout after 20-60 s on three attempts; WebFetch
-    ECONNREFUSED); www.dhs.wisconsin.gov answered normally. The same host served the FoodShare handbook for us-wi-foodshare-manual.yaml
-    in July 2026, so this may be transient; retry before treating as a durable block. retried 2026-09-10T18:39Z, same failure
-    (TCP connect timeout after 25 s on 443, plain and chrome120).'
+  notes: 'Done by pointer (reviewer judgment). Retried from a US network 2026-09-10T21:35Z: www.emhandbooks.wisconsin.gov
+    answers HTTP 200 (plain and chrome120); the BadgerCare Plus Eligibility Handbook table of contents (whxdata/toc.new.js)
+    lists 53 chapters in 6 books. Wisconsin''s CHIP is BadgerCare Plus (Medicaid-expansion CHIP) and the same handbook, as
+    the DHS publication PDF p10171-26-03 (Release 26-03), was ingested in full by the parallel Medicaid run on 2026-09-10
+    at us-wi/manual/dhs/medicaid/badgercare-plus-handbook-release-26-03 (330 page provisions, version 2026-09-10-medicaid-state-eligibility-manual),
+    alongside the Medicaid Eligibility Handbook p10030-26-03. Manifest lives on the parallel Medicaid branch (discovery/ingest-medicaid);
+    artifacts share data/corpus in the main checkout. Nothing separate to add.'
   index_url: https://www.emhandbooks.wisconsin.gov/bcplus/bcplus.htm
-  index_document_count: null
+  index_document_count: 53
   taken_count: 0
+  pointer: us-wi/manual/dhs/medicaid/badgercare-plus-handbook-release-26-03 (BadgerCare Plus Eligibility Handbook Release
+    26-03 PDF p10171-26-03, 330 page provisions; also meh-release-26-03, 503)
 - jurisdiction: us-wv
   name: West Virginia
   lead_counts: {}
@@ -1667,3 +1832,23 @@ states:
     Nothing separate to add.
   pointer: us-wv/manual/bfa/income-maintenance-manual (Income Maintenance Manual effective 2026-07-01, 2276 page provisions;
     WVCHIP eligibility chapters included)
+- jurisdiction: us-wy
+  name: Wyoming
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_publisher_blocked
+  primary_source_url: https://health.wyo.gov/healthcarefin/chip/
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-wy
+    document_class: manual
+    version: null
+  index_url: https://rules.wyo.gov/Search.aspx?mode=1&AgencyId=48
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked. Wyoming''s separate CHIP (Kid Care CHIP) eligibility rules are Department of Health rules filed with the
+    Secretary of State at rules.wyo.gov (agency 048): the site answers HTTP 200 but its agency listing, search and rule downloads
+    are ASP.NET postbacks with no GET listing or file URL, so the rules cannot be confirmed from a fetchable index. health.wyo.gov/healthcarefin/chip/
+    (HTTP 200) publishes only member pages (Does My Child Qualify, copays, renewal, FAQ, handbooks) and no eligibility manual
+    or rule text; the programs-and-eligibility page is 404. 0 taken.'
