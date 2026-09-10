@@ -1,5 +1,5 @@
 """Build the tax-year-2025 individual income tax form/instruction manifests (federal
-IRS core plus the batch-1 and batch-2 states), the state guidance manifests for
+IRS core plus the batch-1, batch-2 and batch-3 retry states), the state guidance manifests for
 jurisdictions that publish no TY2025 resident return (NH, WA), and the 2026 IRS
 inflation-adjustment guidance manifest, then update ``manifests/tax-agent-queue.yaml``.
 
@@ -39,6 +39,8 @@ FEDERAL_FORMS_VERSION = "2026-09-10-tax-irs-forms-ty2025"
 FEDERAL_GUIDANCE_VERSION = "2026-09-10-tax-irs-guidance"
 STATE_FORMS_VERSION = "2026-09-10-tax-state-forms-ty2025"
 STATE_GUIDANCE_VERSION = "2026-09-10-tax-state-guidance-ty2025"
+# Batch-3 retry of the publisher-blocked CO/IN/UT hosts from a US network exit.
+US_NETWORK_RETRY = "2026-09-10T21:35:30Z"
 
 IRS_FORMS_INDEX = "https://www.irs.gov/forms-instructions"
 IRS_1040_INDEX = "https://www.irs.gov/forms-pubs/about-form-1040"
@@ -240,15 +242,35 @@ STATES: dict[str, dict[str, Any]] = {
         "name": "Colorado",
         "agency": "cdor",
         "authority": "Colorado Department of Revenue",
-        "index_url": "https://tax.colorado.gov/individual-income-tax-forms",
-        "blocked": (
-            "tax.colorado.gov returns HTTP 403 'ERROR: The request could not be satisfied ... The Amazon "
-            "CloudFront distribution is configured to block access from your country' for the site root, "
-            "the individual income tax forms index, and the DR 0104 Book PDF path, with the corpus user "
-            "agent, a browser user agent, and curl_cffi chrome120 impersonation (2026-09-10). No "
-            "workaround attempted; retry from a US network or request the publisher's bulk export."
+        "batch": 1,
+        "retry_batch": 3,
+        "request": BROWSER_IMPERSONATION,
+        "index_url": "https://tax.colorado.gov/2025-individual-income-tax-forms",
+        "index_document_count": 45,
+        "index_families": [
+            "main returns (5): DR 0104 Book, DR 0104, DR 0104EZ, DR 0104X, DR 8454",
+            "tax and voluntary schedules (5): DR 0104AMT, DR 0104CH, DR 0104EE, DR 0104PN, DR 0104US",
+            "payment forms (8): DR 0900, DR 0900F, DR 0204, DR 0104EP, DR 0104BEP, DR 0105EP, DR 0158-I, DR 0158-F",
+            "credit, subtraction and deduction forms (27): DR 0104AD, DR 0104CR; parents and workers DR 0104CN, DR 0104TN, DR 0347; child care contribution DR 1317, DR 1318; contaminated land DR 0348P/T, DR 0349; enterprise and CHIPS zones DR 0078, DR 1366, DR 1370; conservation easement DR 1305/E/F/G; innovative motor vehicle DR 0617, DR 0618; other DR 0113, DR 0289, DR 0366, DR 1307, DR 1316, DR 1322, DR 1330, DR 1703",
+            "individual-income-tax-forms landing page: 2025 tab (10 quick links), Helpful Forms (13), tax-year tabs 2022-2024 and the prior-year archive",
+        ],
+        "inventory": (
+            "Individual Income Tax Forms landing page (tax-year tabs 2022-2025, Helpful Forms) links the 2025 Income "
+            "Tax Forms page, which lists 45 DR-form landing pages under Main Returns (5), Tax & Voluntary Schedules (5), "
+            "Payment Forms (8) and Credit, Subtraction & Deduction Forms (27); each landing page carries the 2025 and "
+            "2024 PDF links. Taken: DR 0104 Book (2025 Colorado Individual Income Tax Filing Guide, Book104_2025.pdf, "
+            "88 pages, rev. 10/29/25: instructions, DR 0104 and related forms) and DR 0104 (2025 Colorado Individual "
+            "Income Tax Return, form only, 8 pages, rev. 10/03/25). Colorado lists no separate TY2025 rate schedule "
+            "(flat rate stated in the booklet); DR 0104EP (2025 estimated tax payment form with worksheet) is a "
+            "payment form and was not taken, as with the NJ/NM/VT estimated vouchers. Access: tax.colorado.gov answers "
+            "HTTP 403 (CloudFront) to plain requests with the corpus user agent and serves to a chrome120 TLS "
+            "fingerprint; the batch-1 and batch-2 attempts (403 in every mode from a European network) were retried "
+            f"{US_NETWORK_RETRY} from a US network, where the index, landing pages and PDFs serve to the impersonated request."
         ),
-        "retries": ("2026-09-10T18:35:21Z",),
+        "documents": [
+            ("dr-0104", "DR 0104, Colorado Individual Income Tax Return (2025)", "https://tax.colorado.gov/sites/tax/files/documents/DR0104_2025.pdf", "form", "https://tax.colorado.gov/DR0104"),
+            ("dr-0104-book", "DR 0104 Book, Colorado Individual Income Tax Filing Guide (2025)", "https://tax.colorado.gov/sites/tax/files/documents/Book104_2025.pdf", "instructions", "https://tax.colorado.gov/DR0104Booklet"),
+        ],
     },
     "us-dc": {
         "name": "District of Columbia",
@@ -334,19 +356,33 @@ STATES: dict[str, dict[str, Any]] = {
         "name": "Indiana",
         "agency": "dor",
         "authority": "Indiana Department of Revenue",
+        "batch": 1,
+        "retry_batch": 3,
         "index_url": "https://www.in.gov/dor/tax-forms/individual/current/",
-        "index_document_count": 62,
-        "blocked": (
-            "The DOR Current Year Individual Tax Forms index (62 form links: IT-40 booklet, IT-40 form, "
-            "Schedules 1-7, IN-DEP, IN-W, CT-40, IT-40PNR family, credit schedules, ES-40, IT-2210) "
-            "renders, but every download is served by forms.in.gov/Download.aspx?id=..., which answers "
-            "HTTP 403 with a Cloudflare 'Sorry, you have been blocked ... You are unable to access in.gov' "
-            "page for the corpus user agent, a Chrome user agent, and curl_cffi chrome120 impersonation "
-            "(HEAD and GET, 2026-09-10); forms.in.gov root also 403s. No in.gov-hosted copy of the IT-40 "
-            "booklet was found. The existing us-in guidance scope (2026-07-24-in-2026-individual-income-tax-"
-            "source-hold) already records the portal listing; retry the file host from a US network."
+        "index_document_count": 54,
+        "index_families": [
+            "Indiana full-year residents (14 rows): IT-40 Booklet (SP 265), IT-40 Form (154), Schedules 1-7, Schedule 5/IN-DONATE, IN-DEP, IN-DEP-A, IN-W, CT-40, IT-40 Booklet Spanish (SP 270)",
+            "Indiana part-year residents and full-year nonresidents (15 rows): IT-40PNR Booklet (SP 258), IT-40PNR Form (472), Schedules A-H, IN-DEP, IN-DEP-A, IN-PRO, IN-DONATE, IN-W, CT-40PNR, IT-40RNR",
+            "other individual tax forms/schedules (31 rows): CC-40, ES-40, FCD-A, IN-ABLE, IN-CR, IN-EDGE, IN-EDGE R, IN-EIC, IN-H, IN-OCC, IN-OPT, IN-PAT, IN-529, IN-2058SP, IT-2210, IT-2210A, IT-2440, IT-40NOL, IT-40PNRA, IT-9, SC-40, IT-40QEC, NOL-MOD, IH-5, GA-110L, IN-40PA, POA-1, POA-R",
+        ],
+        "inventory": (
+            "DOR Current Year Individual Tax Forms index: 58 forms.in.gov/Download.aspx links, 54 unique (IN-DEP, IN-DEP-A, "
+            "IN-W and ES-40 are listed twice), in three tables (full-year residents 14, part-year/nonresidents 15, other "
+            "31) plus the ES-40 heading. Taken: 2025 IT-40 Form (State Form 154, R24 / 9-25, 2 pages) and the 2025 "
+            "IT-40 Full-Year Resident Individual Income Tax Booklet (SP 265, 12-25, 56 pages; instructions, county tax "
+            "rates, no form or schedules). Indiana lists no separate TY2025 rate schedule (flat rate and county rates "
+            "are in the booklet); ES-40 (estimated tax payment form with worksheet) is a payment voucher and was not "
+            "taken, as with the NJ/NM/VT estimated vouchers; Schedules 3, 7 and CT-40, which the IT-40 requires, are "
+            "schedules and were not taken (DC/MS/MT precedent). Access: the index serves to the corpus user agent; "
+            "forms.in.gov (Cloudflare), which answered HTTP 403 'Sorry, you have been blocked' in every mode from a "
+            f"European network in batches 1 and 2, serves the PDFs plainly (200, application/pdf) on the {US_NETWORK_RETRY} "
+            "retry from a US network. The file host names files by content-disposition (IT-40 (9-25) Fillable.pdf, "
+            "IT-40 Instructions (12-25).pdf); the index page is recorded as source_url."
         ),
-        "retries": ("2026-09-10T18:35:21Z",),
+        "documents": [
+            ("it-40", "Form IT-40, Indiana Full-Year Resident Individual Income Tax Return (2025)", "https://forms.in.gov/Download.aspx?id=16914", "form", "https://www.in.gov/dor/tax-forms/individual/current/"),
+            ("it-40-booklet", "IT-40 Booklet, Indiana Full-Year Resident Individual Income Tax Booklet (2025)", "https://forms.in.gov/Download.aspx?id=16915", "instructions", "https://www.in.gov/dor/tax-forms/individual/current/"),
+        ],
     },
     "us-ms": {
         "name": "Mississippi",
@@ -387,7 +423,8 @@ STATES: dict[str, dict[str, Any]] = {
         ],
     },
     # -----------------------------------------------------------------------
-    # States, batch 2 (the seven states left in the queue, NH onward). Rows may
+    # States, batch 2 (the seven states left in the queue, NH onward) and batch 3
+    # (CO, IN, UT: blocked in batches 1/2, retried from a US network). Rows may
     # carry ``batch``, ``document_class`` (guidance scopes for publishers with no
     # TY2025 resident return), ``request`` (applied to every document),
     # ``index_families`` (queue row field), and dict rows for HTML documents.
@@ -504,17 +541,32 @@ STATES: dict[str, dict[str, Any]] = {
         "agency": "ustc",
         "authority": "Utah State Tax Commission",
         "batch": 2,
-        "index_url": "https://tax.utah.gov/forms",
-        "blocked": (
-            "tax.utah.gov answers HTTP 403 with a Cloudflare JavaScript challenge ('Just a moment... Enable JavaScript "
-            "and cookies to continue', header cf-mitigated: challenge) for the forms index and the TC-40 PDF paths "
-            "(/forms/current/tc-40.pdf, tc-40inst.pdf) with the corpus user agent, a Chrome user agent, and curl_cffi "
-            "chrome120 impersonation (2026-09-10). The commission's file host files.tax.utah.gov, which its "
-            "incometax.utah.gov instruction site links for tc-40.pdf, tc-40inst.pdf, tc-40-fullpacket.pdf and "
-            "tc-40a.pdf, answers HTTP 404 (S3 'Page Not Found') for every path and the root in all three modes. "
-            "Not worked around. incometax.utah.gov (the commission's HTML TC-40 instructions) serves to the corpus "
-            "user agent and is left for the reviewer as a possible instructions-only source."
+        "retry_batch": 3,
+        "index_url": "https://tax.utah.gov/forms-pubs/",
+        "index_document_count": 517,
+        "index_families": [
+            "Individual Income, current (21 rows): TC-40 Forms (tc-40full), TC-40 Basic (tc-40), TC-40 Instructions, TC-40 Mini Packet, TC-40 Full Packet, TC-40A, TC-40AC, TC-40B, TC-40R, TC-40S, TC-40T, TC-40TS, TC-40W, TC-131, TC-546, TC-547, TC-804, TC-831, TC-8857, Pub 33, Pub 57",
+            "Individual Income, prior years (82 rows): TC-40, TC-40 Instructions, TC-40A/B/C/D/LI/LIC/LIS/S/V/W 2015-2024",
+            "other tax types, all years (515 rows): Corporate Income 108, Sales 83, DMV and MVED 74, Fiduciary 49, Other Taxes 43, Partnership/LLP/LLC 38, Fuel 24, Tobacco 23, Withholding 22, Insurance 16, Oil/Gas/Severance 14, Property 11, Beer 7, Cannabinoid Tobacco 3",
+        ],
+        "inventory": (
+            "Current Forms & Publications index (tax.utah.gov/forms redirects 301 to /forms-pubs/): one table of 618 rows "
+            "with 517 unique PDF links on the commission's file host files.tax.utah.gov/tax/forms/<year or current>/; "
+            "231 links are 'current', 103 rows are tax type Individual Income (21 current). Taken: TC-40 Basic (Utah "
+            "Individual Income Tax Return 2025, tc-40.pdf, 3 pages) and TC-40 Instructions (Utah 2025 TC-40 Forms and "
+            "Instructions booklet, tc-40inst.pdf, 34 pages). Utah lists no separate TY2025 rate schedule (single rate "
+            "stated in the instructions); TC-40 Forms (tc-40full: TC-40 with schedules), the Mini and Full Packets "
+            "(compilations without instructions) and the TC-546 prepayment coupon were not taken. Access: the index and "
+            "the file host serve to the corpus user agent (index via Cloudflare 200; PDFs from S3); chrome120 "
+            "impersonation of tax.utah.gov gets the Cloudflare 403 challenge, so no browser_impersonation is configured "
+            "(DC precedent). Batch 2 probed files.tax.utah.gov/forms/current/ (404): the host's real path is "
+            f"/tax/forms/current/, as the index links it; tax.utah.gov/forms/current/tc-40.pdf 301s there. Retried {US_NETWORK_RETRY} "
+            "from a US network."
         ),
+        "documents": [
+            ("tc-40", "Form TC-40, Utah Individual Income Tax Return (2025)", "https://files.tax.utah.gov/tax/forms/current/tc-40.pdf", "form", "https://tax.utah.gov/forms-pubs/"),
+            ("tc-40-instructions", "TC-40 Forms and Instructions, Utah Individual Income Tax Return Instructions (2025)", "https://files.tax.utah.gov/tax/forms/current/tc-40inst.pdf", "instructions", "https://tax.utah.gov/forms-pubs/"),
+        ],
     },
     "us-vt": {
         "name": "Vermont",
@@ -577,9 +629,13 @@ STATES: dict[str, dict[str, Any]] = {
 
 BATCH_1 = tuple(j for j, s in STATES.items() if s.get("batch", 1) == 1)  # AL .. MT in queue order
 BATCH_2 = tuple(j for j, s in STATES.items() if s.get("batch") == 2)  # NH, NJ, NM, OK, UT, VT, WA
+# Batch 3 re-ran the batch-1/2 states whose publishers blocked the European exit;
+# ``batch`` keeps their original membership so batch-1/2 rows stay byte-identical.
+BATCH_3 = tuple(j for j, s in STATES.items() if s.get("retry_batch") == 3)  # CO, IN, UT
 BATCH_NOTES = {
     1: "Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: " + ", ".join(BATCH_1) + ".",
     2: "Batch 2 (2026-09-10) = the remaining queue-order states without a current-year resident return ingest, starting at NH: " + ", ".join(BATCH_2) + " (seven; the queue held no further states).",
+    3: "Batch 3 (2026-09-10) = retry of the publisher-blocked batch-1/2 states from a US network: " + ", ".join(BATCH_3) + ".",
 }
 
 # States whose current-year resident individual income tax return material was
@@ -811,7 +867,7 @@ def main() -> int:
             continue
         if jur in STATES:
             state = STATES[jur]
-            batch_note = BATCH_NOTES[state.get("batch", 1)]
+            batch_note = BATCH_NOTES[state.get("retry_batch", state.get("batch", 1))]
             if "blocked" in state:
                 retries = "".join(f" retried {stamp}, same failure" for stamp in state.get("retries", ()))
                 row.update(

@@ -29,9 +29,8 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  agent_ready: 15
+  agent_ready: 18
   done: 34
-  blocked_primary_source: 3
 states:
 - jurisdiction: us
   name: Federal
@@ -4526,14 +4525,14 @@ states:
   taken_count: 0
 - jurisdiction: us-co
   name: Colorado
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   source_kind: official_pdf_forms_instructions
-  primary_source_url: https://tax.colorado.gov/individual-income-tax-forms
-  target_manifest: null
+  primary_source_url: https://tax.colorado.gov/DR0104
+  target_manifest: manifests/us-co-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-co
     document_class: form
-    version: null
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 1
     needs_review: 44
@@ -5260,15 +5259,31 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/co/tax/income/rate.yaml
-  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
-    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. Blocked by the publisher: tax.colorado.gov returns HTTP 403 ''ERROR:
-    The request could not be satisfied ... The Amazon CloudFront distribution is configured to block access from your country''
-    for the site root, the individual income tax forms index, and the DR 0104 Book PDF path, with the corpus user agent, a
-    browser user agent, and curl_cffi chrome120 impersonation (2026-09-10). No workaround attempted; retry from a US network
-    or request the publisher''s bulk export. retried 2026-09-10T18:35:21Z, same failure'
-  index_url: https://tax.colorado.gov/individual-income-tax-forms
-  index_document_count: null
-  taken_count: 0
+  notes: 'Batch 3 (2026-09-10) = retry of the publisher-blocked batch-1/2 states from a US network: us-co, us-in, us-ut. TY2025
+    resident individual income tax return material confirmed from the Colorado Department of Revenue index. Individual Income
+    Tax Forms landing page (tax-year tabs 2022-2025, Helpful Forms) links the 2025 Income Tax Forms page, which lists 45 DR-form
+    landing pages under Main Returns (5), Tax & Voluntary Schedules (5), Payment Forms (8) and Credit, Subtraction & Deduction
+    Forms (27); each landing page carries the 2025 and 2024 PDF links. Taken: DR 0104 Book (2025 Colorado Individual Income
+    Tax Filing Guide, Book104_2025.pdf, 88 pages, rev. 10/29/25: instructions, DR 0104 and related forms) and DR 0104 (2025
+    Colorado Individual Income Tax Return, form only, 8 pages, rev. 10/03/25). Colorado lists no separate TY2025 rate schedule
+    (flat rate stated in the booklet); DR 0104EP (2025 estimated tax payment form with worksheet) is a payment form and was
+    not taken, as with the NJ/NM/VT estimated vouchers. Access: tax.colorado.gov answers HTTP 403 (CloudFront) to plain requests
+    with the corpus user agent and serves to a chrome120 TLS fingerprint; the batch-1 and batch-2 attempts (403 in every mode
+    from a European network) were retried 2026-09-10T21:35:30Z from a US network, where the index, landing pages and PDFs
+    serve to the impersonated request. Extraction proven 2026-09-10.'
+  index_url: https://tax.colorado.gov/2025-individual-income-tax-forms
+  index_document_count: 45
+  taken_count: 2
+  index_families:
+  - 'main returns (5): DR 0104 Book, DR 0104, DR 0104EZ, DR 0104X, DR 8454'
+  - 'tax and voluntary schedules (5): DR 0104AMT, DR 0104CH, DR 0104EE, DR 0104PN, DR 0104US'
+  - 'payment forms (8): DR 0900, DR 0900F, DR 0204, DR 0104EP, DR 0104BEP, DR 0105EP, DR 0158-I, DR 0158-F'
+  - 'credit, subtraction and deduction forms (27): DR 0104AD, DR 0104CR; parents and workers DR 0104CN, DR 0104TN, DR 0347;
+    child care contribution DR 1317, DR 1318; contaminated land DR 0348P/T, DR 0349; enterprise and CHIPS zones DR 0078, DR
+    1366, DR 1370; conservation easement DR 1305/E/F/G; innovative motor vehicle DR 0617, DR 0618; other DR 0113, DR 0289,
+    DR 0366, DR 1307, DR 1316, DR 1322, DR 1330, DR 1703'
+  - 'individual-income-tax-forms landing page: 2025 tab (10 quick links), Helpful Forms (13), tax-year tabs 2022-2024 and
+    the prior-year archive'
 - jurisdiction: us-ct
   name: Connecticut
   queue_status: done
@@ -8614,14 +8629,14 @@ states:
   taken_count: 0
 - jurisdiction: us-in
   name: Indiana
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   source_kind: official_pdf_forms_instructions
   primary_source_url: https://www.in.gov/dor/tax-forms/individual/current/
-  target_manifest: null
+  target_manifest: manifests/us-in-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-in
     document_class: form
-    version: null
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 9
     needs_review: 12
@@ -8902,17 +8917,30 @@ states:
     - policyengine-us#parameters/gov/states/in/tax/income/credits/plan_529/cap.yaml
     - policyengine-us#parameters/gov/states/in/tax/income/credits/plan_529/rate.yaml
     - policyengine-us#variables/gov/states/in/tax/income/credits/plan_529/in_529_plan_credit.py
-  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
-    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. Blocked by the publisher: The DOR Current Year Individual Tax
-    Forms index (62 form links: IT-40 booklet, IT-40 form, Schedules 1-7, IN-DEP, IN-W, CT-40, IT-40PNR family, credit schedules,
-    ES-40, IT-2210) renders, but every download is served by forms.in.gov/Download.aspx?id=..., which answers HTTP 403 with
-    a Cloudflare ''Sorry, you have been blocked ... You are unable to access in.gov'' page for the corpus user agent, a Chrome
-    user agent, and curl_cffi chrome120 impersonation (HEAD and GET, 2026-09-10); forms.in.gov root also 403s. No in.gov-hosted
-    copy of the IT-40 booklet was found. The existing us-in guidance scope (2026-07-24-in-2026-individual-income-tax-source-hold)
-    already records the portal listing; retry the file host from a US network. retried 2026-09-10T18:35:21Z, same failure'
+  notes: 'Batch 3 (2026-09-10) = retry of the publisher-blocked batch-1/2 states from a US network: us-co, us-in, us-ut. TY2025
+    resident individual income tax return material confirmed from the Indiana Department of Revenue index. DOR Current Year
+    Individual Tax Forms index: 58 forms.in.gov/Download.aspx links, 54 unique (IN-DEP, IN-DEP-A, IN-W and ES-40 are listed
+    twice), in three tables (full-year residents 14, part-year/nonresidents 15, other 31) plus the ES-40 heading. Taken: 2025
+    IT-40 Form (State Form 154, R24 / 9-25, 2 pages) and the 2025 IT-40 Full-Year Resident Individual Income Tax Booklet (SP
+    265, 12-25, 56 pages; instructions, county tax rates, no form or schedules). Indiana lists no separate TY2025 rate schedule
+    (flat rate and county rates are in the booklet); ES-40 (estimated tax payment form with worksheet) is a payment voucher
+    and was not taken, as with the NJ/NM/VT estimated vouchers; Schedules 3, 7 and CT-40, which the IT-40 requires, are schedules
+    and were not taken (DC/MS/MT precedent). Access: the index serves to the corpus user agent; forms.in.gov (Cloudflare),
+    which answered HTTP 403 ''Sorry, you have been blocked'' in every mode from a European network in batches 1 and 2, serves
+    the PDFs plainly (200, application/pdf) on the 2026-09-10T21:35:30Z retry from a US network. The file host names files
+    by content-disposition (IT-40 (9-25) Fillable.pdf, IT-40 Instructions (12-25).pdf); the index page is recorded as source_url.
+    Extraction proven 2026-09-10.'
   index_url: https://www.in.gov/dor/tax-forms/individual/current/
-  index_document_count: 62
-  taken_count: 0
+  index_document_count: 54
+  taken_count: 2
+  index_families:
+  - 'Indiana full-year residents (14 rows): IT-40 Booklet (SP 265), IT-40 Form (154), Schedules 1-7, Schedule 5/IN-DONATE,
+    IN-DEP, IN-DEP-A, IN-W, CT-40, IT-40 Booklet Spanish (SP 270)'
+  - 'Indiana part-year residents and full-year nonresidents (15 rows): IT-40PNR Booklet (SP 258), IT-40PNR Form (472), Schedules
+    A-H, IN-DEP, IN-DEP-A, IN-PRO, IN-DONATE, IN-W, CT-40PNR, IT-40RNR'
+  - 'other individual tax forms/schedules (31 rows): CC-40, ES-40, FCD-A, IN-ABLE, IN-CR, IN-EDGE, IN-EDGE R, IN-EIC, IN-H,
+    IN-OCC, IN-OPT, IN-PAT, IN-529, IN-2058SP, IT-2210, IT-2210A, IT-2440, IT-40NOL, IT-40PNRA, IT-9, SC-40, IT-40QEC, NOL-MOD,
+    IH-5, GA-110L, IN-40PA, POA-1, POA-R'
 - jurisdiction: us-ks
   name: Kansas
   queue_status: done
@@ -20671,14 +20699,14 @@ states:
   taken_count: 0
 - jurisdiction: us-ut
   name: Utah
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   source_kind: official_pdf_forms_instructions
-  primary_source_url: https://tax.utah.gov/forms
-  target_manifest: null
+  primary_source_url: https://tax.utah.gov/forms-pubs/
+  target_manifest: manifests/us-ut-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-ut
     document_class: form
-    version: null
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 8
     needs_review: 47
@@ -21266,18 +21294,29 @@ states:
     - policyengine-us#parameters/gov/states/ut/tax/income/credits/at_home_parent/amount.yaml
     - policyengine-us#parameters/gov/states/ut/tax/income/credits/at_home_parent/max_agi.yaml
     - policyengine-us#parameters/gov/states/ut/tax/income/credits/at_home_parent/max_child_age.yaml
-  notes: 'Batch 2 (2026-09-10) = the remaining queue-order states without a current-year resident return ingest, starting
-    at NH: us-nh, us-nj, us-nm, us-ok, us-ut, us-vt, us-wa (seven; the queue held no further states). Blocked by the publisher:
-    tax.utah.gov answers HTTP 403 with a Cloudflare JavaScript challenge (''Just a moment... Enable JavaScript and cookies
-    to continue'', header cf-mitigated: challenge) for the forms index and the TC-40 PDF paths (/forms/current/tc-40.pdf,
-    tc-40inst.pdf) with the corpus user agent, a Chrome user agent, and curl_cffi chrome120 impersonation (2026-09-10). The
-    commission''s file host files.tax.utah.gov, which its incometax.utah.gov instruction site links for tc-40.pdf, tc-40inst.pdf,
-    tc-40-fullpacket.pdf and tc-40a.pdf, answers HTTP 404 (S3 ''Page Not Found'') for every path and the root in all three
-    modes. Not worked around. incometax.utah.gov (the commission''s HTML TC-40 instructions) serves to the corpus user agent
-    and is left for the reviewer as a possible instructions-only source.'
-  index_url: https://tax.utah.gov/forms
-  index_document_count: null
-  taken_count: 0
+  notes: 'Batch 3 (2026-09-10) = retry of the publisher-blocked batch-1/2 states from a US network: us-co, us-in, us-ut. TY2025
+    resident individual income tax return material confirmed from the Utah State Tax Commission index. Current Forms & Publications
+    index (tax.utah.gov/forms redirects 301 to /forms-pubs/): one table of 618 rows with 517 unique PDF links on the commission''s
+    file host files.tax.utah.gov/tax/forms/<year or current>/; 231 links are ''current'', 103 rows are tax type Individual
+    Income (21 current). Taken: TC-40 Basic (Utah Individual Income Tax Return 2025, tc-40.pdf, 3 pages) and TC-40 Instructions
+    (Utah 2025 TC-40 Forms and Instructions booklet, tc-40inst.pdf, 34 pages). Utah lists no separate TY2025 rate schedule
+    (single rate stated in the instructions); TC-40 Forms (tc-40full: TC-40 with schedules), the Mini and Full Packets (compilations
+    without instructions) and the TC-546 prepayment coupon were not taken. Access: the index and the file host serve to the
+    corpus user agent (index via Cloudflare 200; PDFs from S3); chrome120 impersonation of tax.utah.gov gets the Cloudflare
+    403 challenge, so no browser_impersonation is configured (DC precedent). Batch 2 probed files.tax.utah.gov/forms/current/
+    (404): the host''s real path is /tax/forms/current/, as the index links it; tax.utah.gov/forms/current/tc-40.pdf 301s
+    there. Retried 2026-09-10T21:35:30Z from a US network. Extraction proven 2026-09-10.'
+  index_url: https://tax.utah.gov/forms-pubs/
+  index_document_count: 517
+  taken_count: 2
+  index_families:
+  - 'Individual Income, current (21 rows): TC-40 Forms (tc-40full), TC-40 Basic (tc-40), TC-40 Instructions, TC-40 Mini Packet,
+    TC-40 Full Packet, TC-40A, TC-40AC, TC-40B, TC-40R, TC-40S, TC-40T, TC-40TS, TC-40W, TC-131, TC-546, TC-547, TC-804, TC-831,
+    TC-8857, Pub 33, Pub 57'
+  - 'Individual Income, prior years (82 rows): TC-40, TC-40 Instructions, TC-40A/B/C/D/LI/LIC/LIS/S/V/W 2015-2024'
+  - 'other tax types, all years (515 rows): Corporate Income 108, Sales 83, DMV and MVED 74, Fiduciary 49, Other Taxes 43,
+    Partnership/LLP/LLC 38, Fuel 24, Tobacco 23, Withholding 22, Insurance 16, Oil/Gas/Severance 14, Property 11, Beer 7,
+    Cannabinoid Tobacco 3'
 - jurisdiction: us-va
   name: Virginia
   queue_status: done
