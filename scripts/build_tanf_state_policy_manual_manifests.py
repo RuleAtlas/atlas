@@ -1,4 +1,4 @@
-"""Build the TANF state policy manual manifests for batch 1 of the TANF agent queue
+"""Build the TANF state policy manual manifests for the TANF agent queue batches
 and update ``manifests/tanf-agent-queue.yaml``.
 
 Batch rule (recorded in docs/ingest-runs/2026-09-10-tanf-state-policy-manuals-batch-1.md):
@@ -49,8 +49,15 @@ BATCH_1 = ("us-ca", "us-co", "us-dc", "us-mo", "us-ms", "us-mt", "us-nd", "us-ny
 # deferred, then - the queue having no further state rows - the next states in alphabetical order
 # whose TANF policy manual or adopted rule is not already in the corpus, until ten were attempted.
 BATCH_2 = ("us-pa", "us-sc", "us-sd", "us-va", "us-id", "us-ky", "us-la", "us-ne", "us-nh", "us-nm")
-BATCH_LABEL = {**dict.fromkeys(BATCH_1, "Batch 1"), **dict.fromkeys(BATCH_2, "Batch 2")}
-# Rows added to the queue by batch 2 (not on the lead list): name per jurisdiction.
+# Batch 3 (docs/ingest-runs/2026-09-10-tanf-state-policy-manuals-batch-3.md): the last jurisdictions
+# of the 50 states plus DC without a queue row.
+BATCH_3 = ("us-oh", "us-ri", "us-tn", "us-vt", "us-wi")
+BATCH_LABEL = {
+    **dict.fromkeys(BATCH_1, "Batch 1"),
+    **dict.fromkeys(BATCH_2, "Batch 2"),
+    **dict.fromkeys(BATCH_3, "Batch 3"),
+}
+# Rows added to the queue by batches 2 and 3 (not on the lead list): name per jurisdiction.
 NEW_ROWS = {
     "us-ak": "Alaska",
     "us-ar": "Arkansas",
@@ -67,7 +74,12 @@ NEW_ROWS = {
     "us-nh": "New Hampshire",
     "us-nj": "New Jersey",
     "us-nm": "New Mexico",
+    "us-oh": "Ohio",
+    "us-ri": "Rhode Island",
+    "us-tn": "Tennessee",
     "us-ut": "Utah",
+    "us-vt": "Vermont",
+    "us-wi": "Wisconsin",
     "us-wv": "West Virginia",
     "us-wy": "Wyoming",
 }
@@ -287,6 +299,53 @@ BLOCKED: dict[str, dict[str, Any]] = {
         "requests and chrome impersonation with HTTP 403 (Microsoft-Azure-Application-Gateway/v2) '403 - Access Denied / "
         "Forbidden ... You are accessing this site from an IP Address out[side the allowed range]'. No index could be "
         "inventoried; no workaround attempted. Retry from a US network.",
+    },
+    # Batch 3 blocked publishers.
+    "us-oh": {
+        "source_kind": "official_html_manual",
+        "primary_source_url": "https://emanuals.jfs.ohio.gov/CashFoodAssist/CAM/",
+        "index_url": "https://emanuals.jfs.ohio.gov/CashFoodAssist/CAM/",
+        "index_document_count": None,
+        "document_class": "manual",
+        "notes": "BLOCKED 2026-09-10: Ohio Works First policy is published by ODJFS as the Cash Assistance Manual (CAM) on "
+        "its eManuals site (emanuals.jfs.ohio.gov/CashFoodAssist/CAM/) and codified as OAC 5101:1 on codes.ohio.gov "
+        "(Legislative Service Commission; the host of the ingested OAC 5101:4 SNAP scope). Both hosts, probed once each "
+        "at 20:46-20:47Z with 20 s timeouts: plain requests ConnectTimeout (TCP connect never completed) and curl-cffi "
+        "chrome impersonation 'curl: (28) Connection timed out after 20002 milliseconds'. No index could be "
+        "inventoried; no workaround attempted. Retry from another network (codes.ohio.gov answered plain clients in July).",
+    },
+    "us-tn": {
+        "source_kind": "official_pdf_manual_sections",
+        "primary_source_url": "https://www.tn.gov/humanservices/information-and-resources/dhs-publications.html",
+        "index_url": "https://www.tn.gov/humanservices/information-and-resources/dhs-publications.html",
+        "index_document_count": None,
+        "document_class": "manual",
+        "notes": "BLOCKED 2026-09-10: Tennessee DHS publishes the Families First policy manual as section PDFs on "
+        "www.tn.gov (DHS publications page, the landing page of the ingested SNAP policy manual scope "
+        "us-tn-snap-policies). Probed once at 20:47Z with 20 s timeouts (Families First program page "
+        "/humanservices/for-families/families-first-tanf.html): plain requests GET connected but ReadTimeout after 20 s; "
+        "curl-cffi chrome GET 'curl: (28) Connection timed out after 20001 milliseconds'. No index could be inventoried; "
+        "no workaround attempted. The Secretary of State's Families First rule chapters (Tenn. Comp. R. & Regs. "
+        "1240-01-47 through 1240-01-50) are not in the corpus either: the existing us-tn regulation scope holds "
+        "1240-01 chapters 02, 03, 04, 08, 12 and 14 only.",
+    },
+    "us-vt": {
+        "source_kind": "official_pdf_regulation",
+        "primary_source_url": "https://outside.vermont.gov/dept/DCF/Shared%20Documents/ESD/Rules/2200-Reach-Up.pdf",
+        "index_url": "https://dcf.vermont.gov/esd/laws-rules/current",
+        "index_document_count": 12,
+        "document_class": "regulation",
+        "notes": "BLOCKED 2026-09-10: Vermont DCF Economic Services Division publishes Reach Up policy as adopted rules "
+        "linked from its Current ESD Rules page (dcf.vermont.gov/esd/laws-rules/current answers 200 to plain and chrome "
+        "clients). Index inventory: 12 rule PDFs - 2000 All Programs, 2100 Reach First, 2200 Reach Up, 2300 Reach Up "
+        "Services, 2400 Post Secondary Education, 2500 Reach Ahead, 2600 General Assistance, 2700 AABD-EP, 2800 Emergency "
+        "Assistance, 2900 Seasonal Fuel Assistance, 3000 Refugee Cash Assistance, 3100 Crisis Fuel - plus the 3SquaresVT "
+        "manual link (already in the corpus), the Emergency Housing final proposed rules and the rules renumbering "
+        "bulletin. The TANF family is 2000-2500 (6 files). Every rule file is hosted on outside.vermont.gov "
+        "(SharePoint behind an F5 gateway): plain requests GET and curl-cffi chrome HEAD/GET of 2200-Reach-Up.pdf and "
+        "2000-All-Programs.pdf all return HTTP 403 text/html 309-311 bytes 'The requested URL was rejected. Please "
+        "consult with your administrator. Your support ID is ...' (server volt-adc, 'F5 site: fr4-fra') at 20:50-20:51Z. "
+        "No document retrievable; no workaround attempted. Retry from a US network.",
     },
 }
 
@@ -1416,6 +1475,190 @@ def build_la() -> dict[str, Any]:
     }
 
 
+# --------------------------------------------------------------------------- RI
+def build_ri() -> dict[str, Any]:
+    """218-RICR-20-00-2 (Rhode Island Works) from the Department of State's RICR chapter listing and part page."""
+    host = "https://rules.sos.ri.gov"
+    index = host + "/organizations/chapter/218-20"
+    chapter = fetch(index).text
+    subchapters = re.findall(r'onclick="return get_parts\(this\)" id="([^"]+)"', chapter)
+    if not subchapters:
+        raise RuntimeError("no subchapter rows on the RICR chapter 218-20 page")
+    parts: dict[str, str] = {}
+    for sub in subchapters:
+        # the chapter page loads each subchapter's parts table with this XHR
+        listing = fetch(f"{host}/Organizations/get_parts/{sub}").text
+        for href, label in links(listing):
+            if "/Regulations/Part/" in href and not re.match(r"^Part \d+$", label):
+                parts.setdefault(href.rstrip("/").rsplit("/", 1)[1], label)
+    part_id = "218-20-00-2"
+    if part_id not in parts:
+        raise RuntimeError(f"{part_id} not in the chapter listing: {sorted(parts)}")
+    part_url = f"{host}/regulations/part/{part_id}"
+    page = fetch(part_url).text
+    pdfs = sorted(set(re.findall(r"https://risos-apa-production-public\.s3\.amazonaws\.com/[^\"'<>& ]+\.pdf", page)))
+    if len(pdfs) != 1:
+        raise RuntimeError(f"expected one Download Regulation PDF, found {pdfs}")
+
+    def pane(pane_id: str) -> str:
+        match = re.search(rf'class="tab-pane[^"]*"[^>]*id="{pane_id}"[^>]*>(.*?)<div[^>]+class="tab-pane', page, re.S)
+        text = re.sub(r"<[^>]+>", " | ", html.unescape(match.group(1) if match else ""))
+        return re.sub(r"(\s*\|\s*)+", " | ", re.sub(r"\s+", " ", text))
+
+    overview = pane("second")
+
+    def field(label: str) -> str | None:
+        match = re.search(re.escape(label) + r" \| ([^|]+) \|", overview)
+        return match.group(1).strip() if match else None
+
+    filing_type = field("Type of Filing")
+    status = field("Regulation Status")
+    effective_raw = field("Effective")
+    if not effective_raw:
+        raise RuntimeError(f"no effective date in the overview pane: {overview[:300]}")
+    effective = dt.datetime.strptime(effective_raw, "%m/%d/%Y").date().isoformat()
+    history = pane("four")
+    filings = re.findall(r"(ACTIVE RULE|INACTIVE RULE) \| (?:EMERGENCY RULE \| )?([A-Za-z ]+) \| - effective from (\d{2}/\d{2}/\d{4})", history)
+    amendments = [f for f in filings if f[1].strip() == "Amendment"]
+    latest_amendment = (
+        dt.datetime.strptime(amendments[0][2], "%m/%d/%Y").date().isoformat() if amendments else None
+    )
+    doc = base_doc(
+        source_id="us-ri-dhs-riw-218-20-00-2",
+        jurisdiction="us-ri",
+        document_class="regulation",
+        title=f"{parts[part_id]}",
+        source_url=part_url,
+        source_format="pdf",
+        citation_path="us-ri/regulation/218-ricr/20/00/2",
+        expression_date=effective,
+        authority="Rhode Island Department of Human Services",
+        subtype="administrative_regulation",
+        state_program="Rhode Island Works (RIW)",
+        index_url=index,
+        extra={
+            "official_publisher": "Rhode Island Department of State",
+            "legal_identifier": "218-RICR-20-00-2",
+            "filing_type": filing_type,
+            "regulation_status": status,
+            "regulation_effective_date": effective,
+            "latest_amendment_effective_date": latest_amendment,
+            "filing_history_count": len(filings),
+            "pdf_last_modified": last_modified(pdfs[0]),
+            "extraction_granularity": "pdf_page",
+            "extraction_note": "the Download Regulation PDF of the active filing, page-level like the 218-RICR-20-00-1 SNAP scope",
+        },
+    )
+    doc["download_url"] = pdfs[0]
+    listing_text = "; ".join(f"Part {k.rsplit('-', 1)[1]} {v}" for k, v in sorted(parts.items(), key=lambda kv: int(kv[0].rsplit('-', 1)[1])))
+    return {
+        "docs": [doc],
+        "index_url": index,
+        "index_document_count": len(parts),
+        "inventory": (
+            f"RICR Title 218 Chapter 20 (Individual and Family Support Programs), {len(subchapters)} subchapter(s), "
+            f"{len(parts)} parts via the chapter page's get_parts listing ({listing_text}); taken Part 2 "
+            f"({filing_type}, {status}, effective {effective}; {len(filings)} filings in the part's history, latest "
+            f"Amendment effective {latest_amendment}); not taken: the other parts (SNAP already in the corpus as "
+            "218-RICR-20-00-1; GPA, CCAP, SSI/SSP, refugee assistance, social services are other programs)"
+        ),
+        "source_kind": "official_pdf_regulation",
+        "document_class": "regulation",
+        "primary_source_url": part_url,
+    }
+
+
+# --------------------------------------------------------------------------- WI
+def build_wi() -> dict[str, Any]:
+    """DCF Wisconsin Works (W-2) Manual (Adobe RoboHelp 2022 responsive output; TOC in whxdata/toc.new.js + toc<N>.new.js)."""
+    base = "https://dcf.wisconsin.gov/manuals/w-2-manual/Production/"
+    index = base + "default.htm"
+    policies_page = "https://dcf.wisconsin.gov/w2/partners/policy"
+    listing = links(fetch(policies_page).text)
+    manuals = [(h, t) for h, t in listing if "/manuals/" in h]
+    if not any(h.endswith("/manuals/w-2-manual/Production/default.htm") for h, _ in manuals):
+        raise RuntimeError(f"W-2 Manual link not on the DCF policies page: {manuals}")
+    admin_code = [t for h, t in listing if "docs.legis.wisconsin.gov" in h]
+    fetch(index)  # redirect shell; the TOC data files carry the inventory
+
+    def load(key: str) -> list[dict[str, Any]]:
+        js = fetch(base + f"whxdata/{key}.new.js").text
+        match = re.search(r"var toc\s*=\s*(\[.*?\]);\s*window\.rh", js, re.S)
+        if not match:
+            raise RuntimeError(f"unexpected RoboHelp TOC file whxdata/{key}.new.js")
+        return json.loads(match.group(1))
+
+    pages: dict[str, dict[str, Any]] = {}
+    books = 0
+    items = 0
+
+    def walk(key: str, parent: str | None) -> None:
+        nonlocal books, items
+        for entry in load(key):
+            if entry.get("type") == "book":
+                books += 1
+                walk(entry["key"], entry["name"])
+                continue
+            items += 1
+            url = (entry.get("url") or "").split("#")[0]
+            if url and url not in pages:
+                pages[url] = {"name": entry["name"], "parent": parent, "order": len(pages) + 1}
+
+    walk("toc", None)
+    docs = []
+    seen: set[str] = set()
+    for url, info in pages.items():
+        page_slug = slug(re.sub(r"\.htm$", "", url))
+        if page_slug in seen:
+            raise RuntimeError(f"duplicate Wisconsin topic slug {page_slug}")
+        seen.add(page_slug)
+        full = base + url
+        docs.append(
+            base_doc(
+                source_id=f"us-wi-dcf-w2-{page_slug}",
+                jurisdiction="us-wi",
+                document_class="manual",
+                title=f"Wisconsin Works (W-2) Manual: {info['name']}",
+                source_url=full,
+                source_format="html",
+                citation_path=f"us-wi/manual/dcf/w2/{page_slug}",
+                expression_date=last_modified(full),
+                authority="Wisconsin Department of Children and Families, Division of Family and Economic Security",
+                subtype="policy_manual_topic",
+                state_program="Wisconsin Works (W-2)",
+                index_url=index,
+                extra={
+                    "manual_toc_url": base + "whxdata/toc.new.js",
+                    "manual_base_url": base,
+                    "policies_listing_page": policies_page,
+                    "toc_parent": info["parent"],
+                    "toc_order": info["order"],
+                },
+                extraction={
+                    "html_content_selector": "#rh-topic",
+                    # every topic starts with the master page's banner table (agency name and manual title) and
+                    # RoboHelp expand-spots repeat the trigger text in a data-close-text span
+                    "html_drop_selectors": ["#rh-topic > div:first-child > table:has(p.layout)", "span[data-close-text]"],
+                },
+            )
+        )
+    return {
+        "docs": docs,
+        "index_url": index,
+        "index_document_count": len(pages),
+        "inventory": (
+            f"RoboHelp 2022 TOC (whxdata/toc.new.js plus {books} book files) lists {items} items resolving to "
+            f"{len(pages)} topic pages (Welcome, chapters 01 Introduction through 18 Emergency Assistance and related "
+            f"programs, appendices); taken all {len(docs)}. The DCF W-2 policies page also lists the EA Manual and the "
+            f"TJ/TMJ Manual ({len(manuals)} manual links; separate programs) and {len(admin_code)} Wisconsin "
+            "Administrative Code DCF chapter links (legislature host), not taken"
+        ),
+        "source_kind": "official_html_manual",
+        "document_class": "manual",
+        "primary_source_url": index,
+    }
+
+
 BUILDERS = {
     "us-ca": build_ca,
     "us-co": build_co,
@@ -1431,6 +1674,8 @@ BUILDERS = {
     "us-nh": build_nh,
     "us-la": build_la,
     "us-id": build_id,
+    "us-ri": build_ri,
+    "us-wi": build_wi,
 }
 
 
@@ -1455,7 +1700,7 @@ def main() -> int:
                 "target_scope": {"jurisdiction": jur, "document_class": None, "version": None},
                 "lead_counts": None,
                 "candidate_sources": [],
-                "notes": "Row added by batch 2 (not on the policyengine-us lead list).",
+                "notes": f"Row added by {BATCH_LABEL.get(jur, 'batch 2').lower()} (not on the policyengine-us lead list).",
             },
         )
     selected = args.only or list(BUILDERS)

@@ -31,8 +31,8 @@ lead_list:
 status_counts:
   needs_review: 2
   done: 26
-  agent_ready: 14
-  blocked_primary_source: 5
+  agent_ready: 16
+  blocked_primary_source: 8
 states:
 - jurisdiction: us
   name: Federal
@@ -3425,6 +3425,27 @@ states:
   index_url: https://otda.ny.gov/programs/temporary-assistance/
   index_document_count: 1
   taken_count: 0
+- jurisdiction: us-oh
+  name: Ohio
+  queue_status: blocked_primary_source
+  source_kind: official_html_manual
+  primary_source_url: https://emanuals.jfs.ohio.gov/CashFoodAssist/CAM/
+  target_manifest: manifests/us-oh-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-oh
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'BLOCKED 2026-09-10: Ohio Works First policy is published by ODJFS as the Cash Assistance Manual (CAM) on its eManuals
+    site (emanuals.jfs.ohio.gov/CashFoodAssist/CAM/) and codified as OAC 5101:1 on codes.ohio.gov (Legislative Service Commission;
+    the host of the ingested OAC 5101:4 SNAP scope). Both hosts, probed once each at 20:46-20:47Z with 20 s timeouts: plain
+    requests ConnectTimeout (TCP connect never completed) and curl-cffi chrome impersonation ''curl: (28) Connection timed
+    out after 20002 milliseconds''. No index could be inventoried; no workaround attempted. Retry from another network (codes.ohio.gov
+    answered plain clients in July).'
+  index_url: https://emanuals.jfs.ohio.gov/CashFoodAssist/CAM/
+  index_document_count: null
+  taken_count: 0
 - jurisdiction: us-ok
   name: Oklahoma
   queue_status: agent_ready
@@ -3862,6 +3883,31 @@ states:
   index_url: http://services.dpw.state.pa.us/oimpolicymanuals/cash/index.htm
   index_document_count: 365
   taken_count: 365
+- jurisdiction: us-ri
+  name: Rhode Island
+  queue_status: agent_ready
+  source_kind: official_pdf_regulation
+  primary_source_url: https://rules.sos.ri.gov/regulations/part/218-20-00-2
+  target_manifest: manifests/us-ri-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-ri
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 3. Primary source confirmed from the publisher''s own index. Inventory: RICR Title 218 Chapter 20 (Individual
+    and Family Support Programs), 1 subchapter(s), 8 parts via the chapter page''s get_parts listing (Part 1 Supplemental
+    Nutrition Assistance Program (218-RICR-20-00-1); Part 2 Rhode Island Works Program Rules and Regulations (218-RICR-20-00-2);
+    Part 3 General Public Assistance Program; Part 4 Child Care Assistance Program Rules and Regulations (218-RICR-20-00-4);
+    Part 5 Supplemental Security Income and State Supplemental Payment Rules and Regulations (218-RICR-20-00-5); Part 6 REFUGEE
+    ASSISTANCE PROGRAM; Part 7 Social Services (218-RICR-20-00-7); Part 13 Child Care Assistance Program for Child Care Educators
+    and Child Care Staff Rules and Regulations); taken Part 2 (Technical Revision, Active, effective 2025-02-16; 50 filings
+    in the part''s history, latest Amendment effective 2025-02-16); not taken: the other parts (SNAP already in the corpus
+    as 218-RICR-20-00-1; GPA, CCAP, SSI/SSP, refugee assistance, social services are other programs). Extraction proven 2026-09-10
+    (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://rules.sos.ri.gov/organizations/chapter/218-20
+  index_document_count: 8
+  taken_count: 1
 - jurisdiction: us-sc
   name: South Carolina
   queue_status: blocked_primary_source
@@ -4069,6 +4115,28 @@ states:
   index_url: https://sdlegislature.gov/Rules/Administrative/67:10
   index_document_count: 181
   taken_count: 153
+- jurisdiction: us-tn
+  name: Tennessee
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_manual_sections
+  primary_source_url: https://www.tn.gov/humanservices/information-and-resources/dhs-publications.html
+  target_manifest: manifests/us-tn-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-tn
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'BLOCKED 2026-09-10: Tennessee DHS publishes the Families First policy manual as section PDFs on www.tn.gov (DHS
+    publications page, the landing page of the ingested SNAP policy manual scope us-tn-snap-policies). Probed once at 20:47Z
+    with 20 s timeouts (Families First program page /humanservices/for-families/families-first-tanf.html): plain requests
+    GET connected but ReadTimeout after 20 s; curl-cffi chrome GET ''curl: (28) Connection timed out after 20001 milliseconds''.
+    No index could be inventoried; no workaround attempted. The Secretary of State''s Families First rule chapters (Tenn.
+    Comp. R. & Regs. 1240-01-47 through 1240-01-50) are not in the corpus either: the existing us-tn regulation scope holds
+    1240-01 chapters 02, 03, 04, 08, 12 and 14 only.'
+  index_url: https://www.tn.gov/humanservices/information-and-resources/dhs-publications.html
+  index_document_count: null
+  taken_count: 0
 - jurisdiction: us-tx
   name: Texas
   queue_status: done
@@ -4565,6 +4633,31 @@ states:
   index_url: https://www.dss.virginia.gov/relief/tanf/tanf-manual/
   index_document_count: 12
   taken_count: 10
+- jurisdiction: us-vt
+  name: Vermont
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_regulation
+  primary_source_url: https://outside.vermont.gov/dept/DCF/Shared%20Documents/ESD/Rules/2200-Reach-Up.pdf
+  target_manifest: manifests/us-vt-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-vt
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'BLOCKED 2026-09-10: Vermont DCF Economic Services Division publishes Reach Up policy as adopted rules linked from
+    its Current ESD Rules page (dcf.vermont.gov/esd/laws-rules/current answers 200 to plain and chrome clients). Index inventory:
+    12 rule PDFs - 2000 All Programs, 2100 Reach First, 2200 Reach Up, 2300 Reach Up Services, 2400 Post Secondary Education,
+    2500 Reach Ahead, 2600 General Assistance, 2700 AABD-EP, 2800 Emergency Assistance, 2900 Seasonal Fuel Assistance, 3000
+    Refugee Cash Assistance, 3100 Crisis Fuel - plus the 3SquaresVT manual link (already in the corpus), the Emergency Housing
+    final proposed rules and the rules renumbering bulletin. The TANF family is 2000-2500 (6 files). Every rule file is hosted
+    on outside.vermont.gov (SharePoint behind an F5 gateway): plain requests GET and curl-cffi chrome HEAD/GET of 2200-Reach-Up.pdf
+    and 2000-All-Programs.pdf all return HTTP 403 text/html 309-311 bytes ''The requested URL was rejected. Please consult
+    with your administrator. Your support ID is ...'' (server volt-adc, ''F5 site: fr4-fra'') at 20:50-20:51Z. No document
+    retrievable; no workaround attempted. Retry from a US network.'
+  index_url: https://dcf.vermont.gov/esd/laws-rules/current
+  index_document_count: 12
+  taken_count: 0
 - jurisdiction: us-wa
   name: Washington
   queue_status: done
@@ -4785,6 +4878,26 @@ states:
     discovered_via:
     - policyengine-us#variables/gov/states/wa/dshs/tanf/eligibility/wa_tanf_immigration_status_eligible.py
   notes: Washington EA-Z Manual (combined) already ingested. Done per the prior-ingest list.
+- jurisdiction: us-wi
+  name: Wisconsin
+  queue_status: agent_ready
+  source_kind: official_html_manual
+  primary_source_url: https://dcf.wisconsin.gov/manuals/w-2-manual/Production/default.htm
+  target_manifest: manifests/us-wi-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-wi
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 3. Primary source confirmed from the publisher''s own index. Inventory: RoboHelp 2022 TOC (whxdata/toc.new.js
+    plus 119 book files) lists 291 items resolving to 291 topic pages (Welcome, chapters 01 Introduction through 18 Emergency
+    Assistance and related programs, appendices); taken all 291. The DCF W-2 policies page also lists the EA Manual and the
+    TJ/TMJ Manual (3 manual links; separate programs) and 6 Wisconsin Administrative Code DCF chapter links (legislature host),
+    not taken. Extraction proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://dcf.wisconsin.gov/manuals/w-2-manual/Production/default.htm
+  index_document_count: 291
+  taken_count: 291
 - jurisdiction: us-wv
   name: West Virginia
   queue_status: done
