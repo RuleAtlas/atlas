@@ -647,11 +647,454 @@ DONE: dict[str, dict] = {
 }
 
 
+
+# --- batch 2 (2026-09-10): next ten states by population, plus pulls ----------------------
+#
+# Batch 2 took the ten most populous states not yet in the queue (CA, PA, OH, NC, NJ, VA, WA,
+# AZ, TN, MD). NC, NJ and VA were already covered by the combined Medicaid eligibility manuals
+# ingested by the parallel Medicaid run (same corpus root), so CO, MN and SC were pulled next.
+# See docs/ingest-runs/2026-09-10-chip-state-eligibility-manuals-batch-2.md.
+
+BATCH2_DISCOVERED_VIA = (
+    "manual-review:chip-agent-queue batch 2; publisher index confirmed by agent 2026-09-10"
+)
+RETRIED_AT = "2026-09-10T18:39Z"
+# Batch-1 blocked rows, retried once (one plain request, one chrome120 request, 25 s timeouts).
+RETRY_NOTES: dict[str, str] = {
+    "us-fl": f"retried {RETRIED_AT}, same failure (HTTP 403 Cloudflare 'Attention Required!' plain and chrome120).",
+    "us-ks": f"retried {RETRIED_AT}, same failure (HTTP 403 'Access Denied' plain and chrome120).",
+    "us-la": f"retried {RETRIED_AT}, same failure (HTTP 403 Cloudflare 'Attention Required!' plain and chrome120).",
+    "us-wi": f"retried {RETRIED_AT}, same failure (TCP connect timeout after 25 s on 443, plain and chrome120).",
+}
+
+NEW_ROW_NAMES: dict[str, str] = {
+    "us-az": "Arizona", "us-ca": "California", "us-co": "Colorado", "us-md": "Maryland",
+    "us-mn": "Minnesota", "us-nc": "North Carolina", "us-nj": "New Jersey", "us-oh": "Ohio",
+    "us-pa": "Pennsylvania", "us-sc": "South Carolina", "us-tn": "Tennessee", "us-va": "Virginia",
+    "us-wa": "Washington",
+}
+
+NEVER_CONTINUE = "(?!)"  # heading_continuation_pattern that never matches: headings are one line
+
+MD_COMAR_10_09_11_SECTIONS: dict[str, str] = {
+    "01": "Purpose and Scope",
+    "02": "Definitions",
+    "03": "Coverage Groups",
+    "04": "Application",
+    "05": "Application: Additional Requirements",
+    "06": "Nonfinancial Eligibility Requirements",
+    "07": "Consideration of Household Income",
+    "08": "Consideration of Family Income: Earned and Unearned Income (Repealed)",
+    "09": "Consideration of Family Income: Income Disregards (Repealed)",
+    "10": "Determining Financial Eligibility",
+    "11": "Certification Periods",
+    "12": "Covered Services",
+    "13": "Post-Eligibility Requirements",
+    "14": "Hearings",
+    "15": "Fraud and Abuse",
+    "16": "Adjustments and Recoveries",
+    "17": "Interpretive Regulation",
+}
+
+
+def _md_comar_doc(num: str, title: str) -> dict:
+    d = doc(
+        "us-md", f"md-mdh-comar-10-09-11-{num}",
+        f"COMAR 10.09.11.{num} {title}",
+        f"https://regs.maryland.gov/us/md/exec/comar/10.09.11.{num}",
+        f"us-md/regulation/title-10/subtitle-09/chapter-11/regulation-{num}", "html", "2026-04-13",
+        document_class="regulation",
+        subtype="administrative_regulation_section",
+        authority="Maryland Department of Health (COMAR Title 10), published by the Maryland Division of State Documents",
+        extraction={"html_content_selector": "article.content"},
+        metadata={"legal_identifier": f"COMAR 10.09.11.{num}", "state_program": "Maryland Children's Health Program",
+                  "chapter_page": "https://regs.maryland.gov/us/md/exec/comar/10.09.11",
+                  "repealed": title.endswith("(Repealed)")},
+    )
+    d["metadata"]["discovered_via"] = BATCH2_DISCOVERED_VIA
+    return d
+
+
+CONFIRMED_BATCH2: dict[str, dict] = {
+    "us-pa": {
+        "name": "Pennsylvania",
+        "document_class": "manual",
+        "source_kind": "official_pdf_policy_handbook",
+        "index_url": "https://www.pa.gov/agencies/dhs/resources/chip/chip-resources",
+        "index_document_count": 16,
+        "index_families": {"agency_policy_handbook_pdf": 2, "chip_state_plan_pdf": 1,
+                           "privacy_notice_pdf": 1, "program_web_page": 12},
+        "primary_source_url": "https://www.pa.gov/content/dam/copapwp-pagov/en/dhs/documents/chip/eligibility-and-benefits/documents/chip-enrollment-and-benefits-handbook.pdf",
+        "notes": (
+            "PA DHS CHIP Resources index: 16 documents (2 agency policy handbooks: CHIP Enrollment "
+            "and Benefits Handbook released 2026-01-01, CHIP Procedures Handbook January 2026; the "
+            "CHIP State Plan PDF (September 2026); the CHIP privacy notice; 12 CHIP program web pages). "
+            "Taken 1: the Enrollment and Benefits Handbook (Part 1 eligibility, enrollment and cost "
+            "sharing; Part 2 benefits), chapter-level sections. Not taken: the Procedures Handbook "
+            "(148 pages of MCO operating procedures: COMPASS, quality management, marketing, "
+            "administration), the state plan (state-plan family; CMS CHIP SPAs are already in the "
+            "corpus), the privacy notice. The Medicaid run's MA Eligibility Handbook section 309.6 "
+            "(us-pa/manual/dhs/medicaid/309-...) only refers applicants to CHIP. Reviewer judgments: "
+            "sections are chapters because the publisher's subsection labels repeat (2.1 appears three "
+            "times), and the glossary (page 5) precedes the first chapter and is not captured."
+        ),
+        "documents": [
+            doc(
+                "us-pa", "pa-dhs-chip-enrollment-and-benefits-handbook",
+                "Pennsylvania DHS Children's Health Insurance Program (CHIP) Enrollment and Benefits Handbook",
+                "https://www.pa.gov/content/dam/copapwp-pagov/en/dhs/documents/chip/eligibility-and-benefits/documents/chip-enrollment-and-benefits-handbook.pdf",
+                "us-pa/manual/dhs/chip/enrollment-and-benefits-handbook", "pdf", "2026-01-01",
+                subtype="policy_handbook_pdf",
+                authority="Pennsylvania Department of Human Services",
+                extraction={
+                    "segmentation": "labeled_sections",
+                    "start_page": 6,
+                    "section_heading_pattern": r"^CHAPTER (?P<num>\d+):\s+(?P<heading>[A-Z].*?)\s*$",
+                    "section_label_template": "chapter-{num}",
+                    "heading_continuation_pattern": NEVER_CONTINUE,
+                    "drop_line_patterns": [r"^\s*Released January 1, 2026\s*$", r"^\s*\d{1,2}\s*$"],
+                },
+                metadata={"state_program": "Pennsylvania CHIP", "released": "2026-01-01"},
+            ),
+        ],
+    },
+    "us-wa": {
+        "name": "Washington",
+        "document_class": "manual",
+        "source_kind": "official_html_manual_chapter",
+        "index_url": "https://www.hca.wa.gov/free-or-low-cost-health-care/i-help-others-apply-and-access-apple-health/modified-adjusted-gross-income-magi-based-programs-manual",
+        "index_document_count": 16,
+        "index_families": {"magi_program_chapter": 9, "magi_financial_eligibility_chapter": 3,
+                           "magi_client_notice_chapter": 4},
+        "primary_source_url": "https://www.hca.wa.gov/free-or-low-cost-health-care/i-help-others-apply-and-access-apple-health/apple-health-kids-and-without-premiums",
+        "notes": (
+            "Washington HCA Apple Health Eligibility Manual, MAGI-based programs manual index: 16 "
+            "chapters (9 program chapters, 3 financial-eligibility chapters, 4 client-notice chapters). "
+            "CHIP in Washington is premium-based Apple Health for Kids; taken 1: 'Apple Health for "
+            "Kids, with and without premiums' (revised 2026-04-01), which carries WAC 182-505-0210, "
+            "182-505-0215 and 182-505-0225 with HCA clarifying information, sectioned by WAC. The "
+            "accordion title copies of each WAC heading are dropped (dl.ckeditor-accordion > dt) so "
+            "each WAC appears once. Not taken: Household composition, Income (parts 1-2) and the "
+            "other program chapters (Medicaid)."
+        ),
+        "documents": [
+            doc(
+                "us-wa", "wa-hca-apple-health-for-kids",
+                "Washington Apple Health Eligibility Manual: Apple Health for Kids, with and without premiums",
+                "https://www.hca.wa.gov/free-or-low-cost-health-care/i-help-others-apply-and-access-apple-health/apple-health-kids-and-without-premiums",
+                "us-wa/manual/hca/chip/apple-health-for-kids", "html", "2026-04-01",
+                subtype="eligibility_manual_chapter",
+                authority="Washington State Health Care Authority",
+                extraction={
+                    "html_content_selector": "div.region-content",
+                    "html_drop_selectors": ["dl.ckeditor-accordion > dt"],
+                    "segmentation": "labeled_sections",
+                    "section_heading_pattern": r"^(?P<heading>WAC (?P<num>182-505-\d{4})\s+\S.*)$",
+                    "section_label_template": "wac-{num}",
+                },
+                metadata={"state_program": "Apple Health for Kids with premiums (CHIP)",
+                          "wac_sections": ["182-505-0210", "182-505-0215", "182-505-0225"]},
+            ),
+        ],
+    },
+    "us-tn": {
+        "name": "Tennessee",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_pdf",
+        "index_url": "https://publications.tnsosfiles.com/rules/1200/1200-13/1200-13.htm",
+        "index_document_count": 22,
+        "index_families": {"tenncare_rule_chapter_pdf": 22},
+        "primary_source_url": "https://publications.tnsosfiles.com/rules/1200/1200-13/1200-13-21.20250202.pdf",
+        "notes": (
+            "Tennessee Secretary of State, Division of Publications, effective rules index for "
+            "Chapter 1200-13 (Division of TennCare): 22 rule chapters 1200-13-01 through 1200-13-22. "
+            "Taken 1: 1200-13-21 CoverKids (Tennessee's separate CHIP), February 2025 revision, rules "
+            ".01-.10. Not taken: 1200-13-20 TennCare Eligibility (Medicaid) and the other chapters. "
+            "tn.gov (TennCare eligibility policy page) returns HTTP 403 to plain and chrome120 clients; "
+            "publications.tnsosfiles.com returns 403 to a plain client and 200 with browser "
+            "impersonation. Citation path follows the existing us-tn/regulation/1240-01/02/01 "
+            "convention (chapter 1200-13 / rule chapter 21 / rule NN)."
+        ),
+        "documents": [
+            doc(
+                "us-tn", "tn-tenncare-rules-1200-13-21-coverkids",
+                "Rules of the Tennessee Department of Finance and Administration, Division of TennCare, Chapter 1200-13-21 CoverKids",
+                "https://publications.tnsosfiles.com/rules/1200/1200-13/1200-13-21.20250202.pdf",
+                "us-tn/regulation/1200-13/21", "pdf", "2025-02-02",
+                document_class="regulation",
+                subtype="administrative_rules_chapter",
+                authority="Tennessee Department of Finance and Administration, Division of TennCare",
+                request=IMPERSONATE,
+                extraction={
+                    "segmentation": "labeled_sections",
+                    "section_heading_pattern": r"^1200-13-21-\.(?P<num>\d{2})\s+(?P<heading>[A-Z][A-Z0-9 ,'&/()-]*?)\.(?:\s+(?P<body>\S.*))?\s*$",
+                    "section_label_template": "{num}",
+                    "heading_continuation_pattern": NEVER_CONTINUE,
+                    "drop_lines": ["COVERKIDS", "CHAPTER 1200-13-21"],
+                    "drop_line_patterns": [
+                        r"^\(Rule 1200-13-21-\.\d{2}, continued\)\s*$",
+                        r"^[A-Z][a-z]+, \d{4}(?: \(Revised\))?\s*$",
+                        r"^\d{1,2}\s*$",
+                    ],
+                },
+                metadata={"state_program": "CoverKids", "rule_chapter": "1200-13-21",
+                          "sos_revision": "February, 2025 (Revised)"},
+            ),
+        ],
+    },
+    "us-md": {
+        "name": "Maryland",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_html",
+        "index_url": "https://regs.maryland.gov/us/md/exec/comar/10.09.11",
+        "index_document_count": 17,
+        "index_families": {"comar_regulation_section_html_in_force": 15,
+                           "comar_regulation_section_html_repealed": 2},
+        "primary_source_url": "https://regs.maryland.gov/us/md/exec/comar/10.09.11",
+        "notes": (
+            "COMAR 10.09.11 Maryland Children's Health Program (MCHP, Maryland's CHIP), chapter page "
+            "on the Division of State Documents' COMAR site regs.maryland.gov (dsd.maryland.gov "
+            "redirects there with HTTP 301; the site is operated for DSD by Open Law Library and "
+            "states State of Maryland copyright). 17 regulation sections .01-.17, two repealed (.08, "
+            ".09); all 17 taken as one HTML document each, citation paths following the existing "
+            "us-md/regulation/title-07/subtitle-03/chapter-03/regulation-NN convention. Chapter "
+            "revised 2014-01-06; latest amendment .11D effective 2026-04-13 (used as expression_date "
+            "for all sections). Reviewer judgments: the site asks visitors to use its bulk HTML/XML "
+            "downloads (GitHub maryland-dsd) instead of scraping; 17 page fetches were made directly. "
+            "The Maryland Medical Assistance eligibility manual was not located on mdh.maryland.gov."
+        ),
+        "documents": [_md_comar_doc(num, title) for num, title in MD_COMAR_10_09_11_SECTIONS.items()],
+    },
+    "us-co": {
+        "name": "Colorado",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_pdf",
+        "index_url": "https://www.sos.state.co.us/CCR/NumericalCCRDocList.do?deptID=7&agencyID=69",
+        "index_document_count": 22,
+        "index_families": {"ccr_rule_document_chp_plus": 1, "ccr_rule_document_medical_assistance": 21},
+        "primary_source_url": "https://www.sos.state.co.us/CCR/GenerateRulePdf.do?ruleVersionId=12479&fileName=10%20CCR%202505-3",
+        "notes": (
+            "Colorado Secretary of State, Code of Colorado Regulations, HCPF Medical Services Board "
+            "rule list: 22 CCR documents (10 CCR 2505-3 and 21 parts of 10 CCR 2505-10 Medical "
+            "Assistance). Taken 1: 10 CCR 2505-3, the Children's Basic Health Plan (Child Health Plan "
+            "Plus) rule, current version effective 2026-04-14 (ruleVersionId 12479; rule info page "
+            "DisplayRule.do?action=ruleinfo&ruleId=2816), sectioned by the rule's numbered sections "
+            "50-610 (the SOS listing titles it 'Financial Management of the Children's Basic Health "
+            "Plan'; the text covers eligibility, benefits, cost sharing, enrollment, financial "
+            "management and appeals). Sections 210 and 510 have no title line; their first sentence "
+            "serves as heading. hcpf.colorado.gov returns HTTP 403 (CloudFront) and was not used. "
+            "Citation path follows the existing us-co/regulation/10-ccr-2506-1 convention."
+        ),
+        "documents": [
+            doc(
+                "us-co", "co-hcpf-10-ccr-2505-3",
+                "10 CCR 2505-3 Financial Management of the Children's Basic Health Plan (Child Health Plan Plus rules)",
+                "https://www.sos.state.co.us/CCR/GenerateRulePdf.do?ruleVersionId=12479&fileName=10%20CCR%202505-3",
+                "us-co/regulation/10-ccr-2505-3", "pdf", "2026-04-14",
+                document_class="regulation",
+                subtype="code_of_colorado_regulations_rule",
+                authority="Colorado Department of Health Care Policy and Financing, Medical Services Board",
+                extraction={
+                    "segmentation": "labeled_sections",
+                    "section_label_pattern": r"^(?P<label>50|[1-6][0-9]0)\s*$",
+                    "label_only_heading_pattern": r"^\S.*$",
+                    "heading_continuation_pattern": NEVER_CONTINUE,
+                    "drop_lines": [
+                        "CODE OF COLORADO REGULATIONS",
+                        "10 CCR 2505-3",
+                        "Medical Services Board",
+                        "DEPARTMENT OF HEALTH CARE POLICY AND FINANCING",
+                    ],
+                    "drop_line_patterns": [r"^(?:[1-9]|[1-4][0-9])\s*$"],
+                },
+                metadata={"state_program": "Child Health Plan Plus (CHP+)", "ccr_series": "10 CCR 2505-3",
+                          "rule_version_id": "12479", "effective_date": "2026-04-14",
+                          "rule_info_url": "https://www.sos.state.co.us/CCR/DisplayRule.do?action=ruleinfo&ruleId=2816&deptID=7&agencyID=69"},
+            ),
+        ],
+    },
+    "us-mn": {
+        "name": "Minnesota",
+        "document_class": "manual",
+        "source_kind": "official_html_manual_section",
+        "index_url": "https://hcopub.dhs.state.mn.us/epm/2_2.htm",
+        "index_document_count": 23,
+        "index_families": {"epm_ma_fca_topic": 23},
+        "primary_source_url": "https://hcopub.dhs.state.mn.us/epm/2_2_3_3.htm",
+        "notes": (
+            "Minnesota DHS Health Care Programs Eligibility Policy Manual (EPM), chapter 2.2 Medical "
+            "Assistance for Families with Children and Adults (MA-FCA) index: 23 topic pages (general "
+            "requirements, non-financial eligibility, financial eligibility, post-eligibility). "
+            "Minnesota's CHIP is Medicaid-expansion CHIP (Title XXI-funded MA for infants 275-283% "
+            "FPG and pregnant people; MinnesotaCare is a Basic Health Program, not CHIP), so there is "
+            "no separate CHIP manual. Taken 2: 2.2.2.1 MA-FCA Bases of Eligibility (published "
+            "2026-06-03) and 2.2.3.3 MA-FCA Income Limit (published 2018-12-01; names the CHIP-funded "
+            "infant band). The RoboHelp topic body (#rh-topic) is taken as blocks. Reviewer judgment: "
+            "the remaining MA-FCA topics (household composition, income methodology) also apply."
+        ),
+        "documents": [
+            doc(
+                "us-mn", "mn-dhs-epm-2-2-2-1",
+                "Minnesota EPM 2.2.2.1 MA-FCA Bases of Eligibility",
+                "https://hcopub.dhs.state.mn.us/epm/2_2_2_1.htm",
+                "us-mn/manual/dhs/chip/epm-2-2-2-1", "html", "2026-06-03",
+                subtype="eligibility_policy_manual_topic",
+                authority="Minnesota Department of Human Services",
+                extraction={"html_content_selector": "#rh-topic"},
+                metadata={"state_program": "Medical Assistance for Families with Children and Adults (CHIP-funded infants and pregnant people)",
+                          "epm_section": "2.2.2.1"},
+            ),
+            doc(
+                "us-mn", "mn-dhs-epm-2-2-3-3",
+                "Minnesota EPM 2.2.3.3 MA-FCA Income Limit",
+                "https://hcopub.dhs.state.mn.us/epm/2_2_3_3.htm",
+                "us-mn/manual/dhs/chip/epm-2-2-3-3", "html", "2018-12-01",
+                subtype="eligibility_policy_manual_topic",
+                authority="Minnesota Department of Human Services",
+                extraction={"html_content_selector": "#rh-topic"},
+                metadata={"state_program": "Medical Assistance for Families with Children and Adults (CHIP-funded infants and pregnant people)",
+                          "epm_section": "2.2.3.3"},
+            ),
+        ],
+    },
+}
+for _spec in CONFIRMED_BATCH2.values():
+    for _d in _spec["documents"]:
+        _d["metadata"]["discovered_via"] = BATCH2_DISCOVERED_VIA
+
+BLOCKED_BATCH2: dict[str, dict] = {
+    "us-ca": {
+        "name": "California",
+        "index_url": "https://www.dhcs.ca.gov/services/medi-cal/eligibility/Pages/MEPM.aspx",
+        "index_document_count": None,
+        "primary_source_url": "https://www.dhcs.ca.gov/services/medi-cal/eligibility/Pages/MEPM.aspx",
+        "notes": (
+            "Blocked. California's CHIP is Title XXI-funded Medi-Cal for children (Optional Targeted "
+            "Low-Income Children) plus MCAP and county CCHIP; the eligibility manual is the DHCS "
+            "Medi-Cal Eligibility Procedures Manual. www.dhcs.ca.gov returns HTTP 403 with an empty "
+            "772-byte body for the MEPM index and for the site root, to a plain client, the WebFetch "
+            "client and the chrome120 browser-impersonation client. 22 CCR is vendor-hosted (Westlaw) "
+            "and was not used. No existing us-ca scope carries Medi-Cal or CHIP eligibility text. 0 taken."
+        ),
+    },
+    "us-oh": {
+        "name": "Ohio",
+        "index_url": "https://codes.ohio.gov/ohio-administrative-code/chapter-5160:1-4",
+        "index_document_count": None,
+        "primary_source_url": "https://codes.ohio.gov/ohio-administrative-code/chapter-5160:1-4",
+        "notes": (
+            "Blocked. Ohio's CHIP is Medicaid-expansion CHIP whose eligibility rules are the adopted "
+            "rules in OAC Chapter 5160:1-4 (MAGI-based Medicaid: children, families and adults) "
+            "published by the Legislative Service Commission at codes.ohio.gov. codes.ohio.gov did "
+            "not accept TCP connections on 443 during this run (requests ConnectTimeout after 25 s "
+            "plain; curl (28) connection timed out after 25 s with chrome120 impersonation; WebFetch "
+            "ECONNREFUSED 198.234.74.32:443), and emanuals.jfs.ohio.gov timed out the same way. "
+            "medicaid.ohio.gov answered (HTTP 200) but publishes no eligibility manual, only consumer "
+            "coverage pages and managed-care policy. codes.ohio.gov served us-oh-snap-rules.yaml "
+            "(OAC 5101:4) in July 2026, so this is probably transient; retry before treating the "
+            "block as durable. 0 taken."
+        ),
+    },
+    "us-az": {
+        "name": "Arizona",
+        "index_url": "https://epm.azahcccs.gov/",
+        "index_document_count": None,
+        "primary_source_url": "https://epm.azahcccs.gov/",
+        "notes": (
+            "Blocked. AHCCCS publishes the Medical Assistance Eligibility Policy Manual (KidsCare is "
+            "its chapter 408) at epm.azahcccs.gov; that host, www.azahcccs.gov (AMPM index, program "
+            "pages) and the site root all return HTTP 403 Forbidden to plain, WebFetch and chrome120 "
+            "clients. The adopted KidsCare rule A.A.C. Title 9 Chapter 31 at the Arizona Secretary of "
+            "State (apps.azsos.gov/public_services/Title_09/9-31.pdf) returns a Cloudflare JavaScript "
+            "challenge ('Just a moment...', HTTP 403). 0 taken."
+        ),
+    },
+    "us-sc": {
+        "name": "South Carolina",
+        "index_url": "https://img1.scdhhs.gov/mppm/",
+        "index_document_count": None,
+        "primary_source_url": "https://img1.scdhhs.gov/mppm/",
+        "notes": (
+            "Blocked. South Carolina's CHIP (Partners for Healthy Children) is Medicaid-expansion CHIP "
+            "governed by the SCDHHS Medicaid Policy and Procedures Manual (MPPM; Chapter 204 Healthy "
+            "Connections Plans for Children), published at img1.scdhhs.gov/mppm/ and "
+            "www1.scdhhs.gov/mppm/. Both hosts present their leaf certificate without the issuing "
+            "intermediate (Go Daddy Secure Certificate Authority - G2); the chain was repaired with the "
+            "publisher's public intermediate fetched from the leaf's AIA URL "
+            "(data/certs/godaddy-secure-certificate-authority-g2.pem) via REQUESTS_CA_BUNDLE, TLS "
+            "verification never disabled. With the chain verified, both hosts return HTTP 403 'Error "
+            "Page' to plain and chrome120 clients, and www.scdhhs.gov (CloudFront) returns HTTP 403 "
+            "'The request could not be satisfied' for its policy index pages. 0 taken."
+        ),
+    },
+}
+
+MEDICAID_RUN_VERSION = "2026-09-10-medicaid-state-eligibility-manual"
+MEDICAID_RUN_NOTE = (
+    "Manifest lives on the parallel Medicaid branch (discovery/ingest-medicaid); artifacts share "
+    "data/corpus in the main checkout."
+)
+
+DONE_BATCH2: dict[str, dict] = {
+    "us-nc": {
+        "name": "North Carolina",
+        "index_url": "https://policies.ncdhhs.gov/divisional/health-benefits-nc-medicaid/family-and-childrens-medicaid/",
+        "index_document_count": 64,
+        "target_manifest": f"discovery/ingest-medicaid: us-nc/manual {MEDICAID_RUN_VERSION}",
+        "target_scope": {"jurisdiction": "us-nc", "document_class": "manual", "version": MEDICAID_RUN_VERSION},
+        "pointer": "us-nc/manual/dhb/medicaid/ma-3xxx (Family and Children's Medicaid manual, 64 documents incl. fcm table of contents)",
+        "notes": (
+            "Done by pointer (reviewer judgment). NC Health Choice, the separate CHIP, was folded into "
+            "NC Medicaid on 2023-04-01; CHIP-funded children are determined under the Family and "
+            "Children's Medicaid manual (MA-3xxx), which the parallel Medicaid run ingested in full on "
+            "2026-09-10 (64 F&C documents at us-nc/manual/dhb/medicaid/ma-3100 ... ma-3570 plus the "
+            "fcm table of contents, version " + MEDICAID_RUN_VERSION + "). " + MEDICAID_RUN_NOTE +
+            " policies.ncdhhs.gov returns HTTP 403 to the WebFetch client; the index count is the "
+            "Medicaid run's inventory. Nothing separate to add."
+        ),
+    },
+    "us-nj": {
+        "name": "New Jersey",
+        "index_url": "https://www.nj.gov/humanservices/notices/documents/rules-and-regulations/",
+        "index_document_count": 6,
+        "target_manifest": f"discovery/ingest-medicaid: us-nj/manual {MEDICAID_RUN_VERSION}",
+        "target_scope": {"jurisdiction": "us-nj", "document_class": "manual", "version": MEDICAID_RUN_VERSION},
+        "pointer": "us-nj/manual/dhs/medicaid/njac-10-79 (N.J.A.C. 10:79 NJ FamilyCare-Children's Program, 115 page provisions)",
+        "notes": (
+            "Done by pointer (reviewer judgment). New Jersey's CHIP eligibility rule is N.J.A.C. 10:79 "
+            "NJ FamilyCare-Children's Program (DHS/DMAHS rules-and-regulations PDF set: 10:69, 10:70, "
+            "10:71, 10:72, 10:78, 10:79), already ingested by the parallel Medicaid run on 2026-09-10 "
+            "at us-nj/manual/dhs/medicaid/njac-10-79 (115 page provisions, version "
+            + MEDICAID_RUN_VERSION + "). " + MEDICAID_RUN_NOTE + " The HTML index page for that PDF "
+            "folder was not re-located in this run (three candidate DHS URLs returned 404); the "
+            "folder listing count is the Medicaid run's inventory. Nothing separate to add."
+        ),
+    },
+    "us-va": {
+        "name": "Virginia",
+        "index_url": "https://www.dmas.virginia.gov/for-providers/eligibility-manual/",
+        "index_document_count": 21,
+        "target_manifest": f"discovery/ingest-medicaid: us-va/manual {MEDICAID_RUN_VERSION}",
+        "target_scope": {"jurisdiction": "us-va", "document_class": "manual", "version": MEDICAID_RUN_VERSION},
+        "pointer": "us-va/manual/dmas/medicaid/m21 (Chapter M21 FAMIS, 22 provisions; also m22 FAMIS MOMS, m23 FAMIS Prenatal)",
+        "notes": (
+            "Done by pointer (reviewer judgment). Virginia's CHIP (FAMIS) eligibility is Chapter M21 "
+            "FAMIS of the DMAS Virginia Medical Assistance Eligibility Manual, with M22 FAMIS MOMS and "
+            "M23 FAMIS Prenatal Coverage; all three were ingested by the parallel Medicaid run on "
+            "2026-09-10 (21 manual chapters, us-va/manual/dmas/medicaid/m21 has 22 provisions, version "
+            + MEDICAID_RUN_VERSION + "). " + MEDICAID_RUN_NOTE + " Nothing separate to add."
+        ),
+    },
+}
+
 def main() -> int:
     queue = yaml.safe_load(QUEUE.read_text())
     rows = {s["jurisdiction"]: s for s in queue["states"]}
+    for jur, name in NEW_ROW_NAMES.items():
+        rows.setdefault(jur, {"jurisdiction": jur, "name": name, "lead_counts": {},
+                              "candidate_sources": []})
     written: list[str] = []
-    for jur, spec in CONFIRMED.items():
+    for jur, spec in {**CONFIRMED, **CONFIRMED_BATCH2}.items():
         stem = f"{jur}-chip-state-eligibility-manual"
         manifest = {"version": VERSION, "documents": spec["documents"]}
         (ROOT / "manifests" / f"{stem}.yaml").write_text(
@@ -670,7 +1113,9 @@ def main() -> int:
             "taken_count": len(spec["documents"]),
             "notes": spec["notes"],
         })
-    for jur, spec in BLOCKED.items():
+        if "index_families" in spec:
+            row["index_families"] = spec["index_families"]
+    for jur, spec in {**BLOCKED, **BLOCKED_BATCH2}.items():
         row = rows[jur]
         row.update({
             "queue_status": "blocked_primary_source",
@@ -681,9 +1126,9 @@ def main() -> int:
             "index_url": spec["index_url"],
             "index_document_count": spec["index_document_count"],
             "taken_count": 0,
-            "notes": spec["notes"],
+            "notes": spec["notes"] + (f" {RETRY_NOTES[jur]}" if jur in RETRY_NOTES else ""),
         })
-    for jur, spec in DONE.items():
+    for jur, spec in {**DONE, **DONE_BATCH2}.items():
         row = rows[jur]
         row.update({
             "queue_status": "done",
@@ -696,6 +1141,8 @@ def main() -> int:
             "taken_count": 0,
             "notes": spec["notes"],
         })
+        if "pointer" in spec:
+            row["pointer"] = spec["pointer"]
     queue["states"] = [rows[j] for j in sorted(rows, key=lambda j: (j != "us", j))]
     queue["status_counts"] = {}
     for s in queue["states"]:
