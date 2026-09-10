@@ -26,10 +26,20 @@ intermediates were fetched from the leaf certificates' AIA URLs into data/certs/
 are appended to certifi in data/certs/wic-state-ca-bundle.pem. Run extraction with
 REQUESTS_CA_BUNDLE pointing at that bundle. No verification is disabled.
 
-    uv run python scripts/build_wic_manifests.py
+Second batch (the next ten states by population: NJ, VA, WA, AZ, TN, MA, IN, MD, MO, WI):
+VA, WA and MD publish chapter/policy PDF indexes and are built here; NJ publishes only the
+vendor-management functional area of its WIC Services Policy and Procedure Manual, which is
+taken as a flagged partial; AZ (Cloudflare 403 to every client), TN (tn.gov 403/timeout to
+every client), MO (manual behind the local-agency portal login), MA, IN and WI (manual not
+published) are blocked_primary_source with the exact failure. Batch-1 blocked rows (NY, FL,
+IL, OH) carry a re-check stamp.
+
+    uv run python scripts/build_wic_manifests.py                      # everything
+    uv run python scripts/build_wic_manifests.py --only us-va,us-wa   # selected rows only
 """
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import re
 import time
@@ -457,6 +467,231 @@ def build_nc() -> tuple[str, int, dict]:
     return write_manifest("us-nc-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
 
 
+def pdf_header_policy_code(content: bytes) -> str | None:
+    """Virginia policies print their number on page one, e.g. ``Policy: CRT 05.2``."""
+    import fitz
+
+    with fitz.open(stream=content, filetype="pdf") as document:
+        text = " ".join(document[0].get_text().split()) if len(document) else ""
+    m = re.search(r"Policy:\s*([A-Z][A-Za-z]{1,3})\s+(\d{2}\.\d+(?:\.\d+)?)", text)
+    return f"{m.group(1)}-{m.group(2)}" if m else None
+
+
+def build_va() -> tuple[str, int, dict]:
+    """Virginia: one PDF per policy under roman-numbered functional areas I-VIII and XII; IX forms, X appendices,
+    XI glossary are inventoried, not taken. Labels come from the policy number printed on page one (several
+    newer files are named by title only), falling back to the code in the filename."""
+    index = "https://www.vdh.virginia.gov/wic/wic-policy-and-procedures-manual/"
+    page = soup_of(get(index))
+    main = page.select_one("main") or page
+    docs, labels = [], {}
+    families = {"policy_pdf": 0, "overview_pdf": 0, "toc_pdf": 0, "form_pdf": 0, "appendix_pdf": 0, "glossary_pdf": 0,
+                "duplicate_link_same_file": 0}
+    section = None
+    seen_urls: set[str] = set()
+    for el in main.find_all(["h3", "h4", "a"]):
+        if el.name != "a":
+            m = re.match(r"^([IVX]+)\.", el.get_text(" ", strip=True))
+            section = m.group(1) if m else None
+            continue
+        href = el.get("href", "")
+        if not href.lower().endswith(".pdf"):
+            continue
+        url = urljoin(index, href)
+        fname = href.rsplit("/", 1)[-1]
+        text = " ".join(el.get_text(" ", strip=True).split())
+        if "Table-of-Content" in fname:
+            families["toc_pdf"] += 1
+            continue
+        if section == "IX" or (section == "XII" and "form" in fname.lower()):
+            families["form_pdf"] += 1
+            continue
+        if section == "X":
+            families["appendix_pdf"] += 1
+            continue
+        if section == "XI":
+            families["glossary_pdf"] += 1
+            continue
+        if url in seen_urls:  # FDS-02.2.4 is linked twice under two titles
+            families["duplicate_link_same_file"] += 1
+            continue
+        seen_urls.add(url)
+        probe = requests.get(url, headers=UA, timeout=90)
+        if probe.status_code != 200 or probe.content[:4] != b"%PDF":
+            key = f"policy_link_{probe.status_code}_on_publisher"
+            families[key] = families.get(key, []) + [text]
+            continue
+        fm = re.match(r"^([A-Z][A-Za-z]{1,3})-?(\d{1,2}\.\d+(?:\.\d+)?)", fname)
+        filename_code = f"{fm.group(1)}-{fm.group(2)}" if fm else None
+        if fname.startswith("Overview"):
+            code, display = "overview", "Overview"
+            families["overview_pdf"] += 1
+        else:
+            code = pdf_header_policy_code(probe.content) or filename_code
+            if code is None and section == "XII":  # the Remote WIC Services policy prints no policy number
+                code = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+                families["policy_pdf_labeled_by_title"] = families.get("policy_pdf_labeled_by_title", []) + [f"{text} -> {code}"]
+            elif code is None:
+                families["policy_pdf_without_policy_number"] = families.get("policy_pdf_without_policy_number", []) + [text]
+                continue
+            if filename_code and filename_code.lower() != code.lower():
+                families["header_number_differs_from_filename"] = families.get("header_number_differs_from_filename", []) + [f"{fname} -> {code}"]
+            display = code.replace("-", " ") if re.match(r"^[A-Z]", code) else text
+            families["policy_pdf"] += 1
+        label = code
+        if label.lower() in labels:  # two files printing one policy number
+            labels[label.lower()] += 1
+            label = f"{label}-{labels[label.lower()]}"
+            families["duplicate_policy_number"] = families.get("duplicate_policy_number", []) + [label]
+        else:
+            labels[label.lower()] = 1
+        docs.append(state_doc(
+            "us-va", "vdh", label,
+            f"Virginia WIC Policy and Procedures Manual {display}: {text}" if display != text else f"Virginia WIC Policy and Procedures Manual: {text}",
+            url,
+            authority="Virginia Department of Health, Division of Community Nutrition",
+            index_url=index, manual="Virginia WIC Policy and Procedures Manual",
+            extra={"index_functional_area": section, "label_source": "page-one policy number, else filename"},
+        ))
+    if len(docs) < 100:
+        raise RuntimeError(f"VA index yielded only {len(docs)} policies")
+    return write_manifest("us-va-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
+
+
+def build_wa() -> tuple[str, int, dict]:
+    """Washington: Volume 1 and Volume 2 chapter PDFs (plus the chapter-section 'Required Guidance' PDFs the index
+    lists under a chapter); revision tables, staff tools, forms and the post-PHE guidance family are inventoried only."""
+    index = ("https://doh.wa.gov/public-health-provider-resources/public-health-system-resources-and-services/"
+             "local-health-resources-and-tools/wic/policy-procedures")
+    page = soup_of(get(index))
+    main = page.select_one("main") or page
+    docs = []
+    families = {"chapter_pdf": 0, "chapter_section_required_guidance_pdf": 0, "revision_table_pdf": 0,
+                "policy_revision_pdf": 0, "post_phe_guidance_pdf": 0, "required_local_agency_policies_pdf": 0,
+                "staff_tool_form_or_other_file": 0, "vacant_chapter": []}
+    volume = chapter = group = None
+    for el in main.find_all(["h2", "h3", "a"]):
+        if el.name == "h2":
+            t = el.get_text(" ", strip=True)
+            volume = {"Volume 1": 1, "Volume 2": 2}.get(t)
+            group = "phe" if "PHE" in t else ("required_la" if t.startswith("Required Local Agency") else None)
+            chapter = None
+            continue
+        if el.name == "h3":
+            t = " ".join(el.get_text(" ", strip=True).replace("\xa0", " ").split())
+            m = re.match(r"^(Draft\s+)?Chapter (\d+):\s*(.*)$", t)
+            if m and volume:
+                chapter = (int(m.group(2)), m.group(3), bool(m.group(1)))
+                if "Vacant" in m.group(3):
+                    families["vacant_chapter"].append(f"volume-{volume}-chapter-{m.group(2)}")
+            elif "PHE" in t:
+                group = "phe"
+            continue
+        href = el.get("href", "")
+        if not re.search(r"\.(pdf|docx?|xlsx?)(\?|$)", href, re.I):
+            continue
+        fname = href.rsplit("/", 1)[-1]
+        text = " ".join(el.get_text(" ", strip=True).replace("\xa0", " ").split())
+        if re.search(r"RevisionLog|LogOfRevisionDates|Revision-?Table|revisiontable|Notice-?of-?Revisions?-", fname, re.I):
+            families["revision_table_pdf"] += 1
+            continue
+        if volume and chapter:
+            number, title, draft = chapter
+            if re.search(rf"Volume{volume}Chapter(?:%20|\s)?{number}\.pdf$", fname, re.I):
+                families["chapter_pdf"] += 1
+                label = f"volume-{volume}-chapter-{number}"
+                docs.append(state_doc(
+                    "us-wa", "doh", label, f"Washington State WIC Manual Volume {volume}, Chapter {number}: {title}",
+                    urljoin(index, href), authority="Washington State Department of Health, WIC Nutrition Program",
+                    index_url=index, manual="Washington State WIC Manual (Policy and Procedure Manual, Volumes 1 and 2)",
+                    extra={"volume": volume, "chapter": number, "working_draft": draft},
+                ))
+                continue
+            sm = re.search(rf"Volume{volume}Chapter{number}Section(\d+)\.pdf$", fname, re.I)
+            if sm:
+                families["chapter_section_required_guidance_pdf"] += 1
+                label = f"volume-{volume}-chapter-{number}-section-{sm.group(1)}"
+                docs.append(state_doc(
+                    "us-wa", "doh", label,
+                    f"Washington State WIC Manual Volume {volume}, Chapter {number}, Section {sm.group(1)}: {text.replace(' (PDF)', '')}",
+                    urljoin(index, href), authority="Washington State Department of Health, WIC Nutrition Program",
+                    index_url=index, manual="Washington State WIC Manual (Policy and Procedure Manual, Volumes 1 and 2)",
+                    extra={"volume": volume, "chapter": number, "section": int(sm.group(1)), "working_draft": False},
+                ))
+                continue
+            if "CertifyingAfterDelivery" in fname:
+                families["policy_revision_pdf"] += 1
+                continue
+            families["staff_tool_form_or_other_file"] += 1
+            continue
+        if group == "phe":
+            families["post_phe_guidance_pdf"] += 1
+        elif group == "required_la":
+            families["required_local_agency_policies_pdf"] += 1
+        else:
+            families["staff_tool_form_or_other_file"] += 1
+    if len(docs) < 25:
+        raise RuntimeError(f"WA index yielded only {len(docs)} chapters")
+    return write_manifest("us-wa-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
+
+
+def build_md() -> tuple[str, int, dict]:
+    """Maryland: eight chapter files (each a compiled chapter of numbered policies) on the Policies and Procedures page."""
+    index = "https://health.maryland.gov/phpa/wic/Pages/wic-policy.aspx"
+    page = soup_of(get(index))
+    docs, families = [], {"chapter_pdf": 0, "other_pdf": 0}
+    for a in page.find_all("a", href=True):
+        if not a["href"].lower().endswith(".pdf"):
+            continue
+        text = " ".join(a.get_text(" ", strip=True).replace("​", "").split())
+        m = re.match(r"^(\d)\s+(.*)$", text)
+        if not (m and "/phpa/wic/Documents/" in a["href"]):
+            families["other_pdf"] += 1
+            continue
+        families["chapter_pdf"] += 1
+        docs.append(state_doc(
+            "us-md", "mdh", f"chapter-{m.group(1)}", f"Maryland WIC Program Policy and Procedure Manual Chapter {m.group(1)}: {m.group(2)}",
+            urljoin(index, quote(a["href"], safe="/:%")), authority="Maryland Department of Health, Maryland WIC Program",
+            index_url=index, manual="Maryland WIC Program Policy and Procedure Manual",
+            extra={"chapter": int(m.group(1))},
+        ))
+    if len(docs) < 8:
+        raise RuntimeError(f"MD index yielded only {len(docs)} chapters")
+    return write_manifest("us-md-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
+
+
+def build_nj() -> tuple[str, int, dict]:
+    """New Jersey publishes only the vendor-management functional area (P&P 1.31-1.50) of its WIC Services Policy and
+    Procedure Manual, on the Vendor Policies and Procedures page; the rest of the manual is not on nj.gov."""
+    index = "https://www.nj.gov/health/fhs/wic/vendors/policies.shtml"
+    page = soup_of(get(index))
+    docs, families = [], {"vendor_management_policy_pdf": 0, "other_pdf": 0}
+    for a in page.find_all("a", href=True):
+        if not a["href"].lower().endswith(".pdf"):
+            continue
+        text = " ".join(a.get_text(" ", strip=True).split())
+        m = re.match(r"^P&P (\d\.\d\d)\s+(.*)$", text)
+        if not (m and "/documents/PP/" in a["href"]):
+            families["other_pdf"] += 1
+            continue
+        families["vendor_management_policy_pdf"] += 1
+        title = re.sub(r"\.pdf$", "", m.group(2))
+        title = re.sub(r"\s*-\s*(Approved\s+)?[A-Z][a-z]+ \d{1,2},? \d{4}$", "", title)
+        title = re.sub(r"\s+\d{1,2}-\d{1,2}-\d{4}$", "", title)
+        docs.append(state_doc(
+            "us-nj", "doh", m.group(1), f"New Jersey WIC Services Policy and Procedure Manual P&P {m.group(1)}: {title}",
+            urljoin(index, quote(a["href"], safe="/:%")),  # hrefs contain literal (double) spaces
+            authority="New Jersey Department of Health, WIC Services",
+            index_url=index, manual="New Jersey WIC Services Policy and Procedure Manual",
+            extra={"index_link_text": text, "functional_area": "vendor management",
+                   "manual_coverage_note": ("only the vendor-management P&Ps are published on nj.gov; the publisher says "
+                                            "some are redacted; the remaining functional areas of the manual are not published")},
+        ))
+    if len(docs) < 5:
+        raise RuntimeError(f"NJ index yielded only {len(docs)} policies")
+    return write_manifest("us-nj-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
+
+
 BLOCKED = {
     "us-ny": (
         "New York State Department of Health",
@@ -485,48 +720,125 @@ BLOCKED = {
         "The Ohio WIC Policy and Procedure Manual is not published on odh.ohio.gov: the Local Staff and program pages link no "
         "manual; the only public copy is a July 2015 repost by a county health department, which is neither current nor the publisher.",
     ),
+    # second batch
+    "us-az": (
+        "Arizona Department of Health Services",
+        "https://www.azdhs.gov/prevention/azwic/local-agencies/index.php",
+        "The Arizona WIC Policy and Procedure Manual chapters exist as PDFs under azdhs.gov/documents/prevention/azwic/manuals/policy/, "
+        "but azdhs.gov answers every request for the local-agencies index page and for the chapter PDFs with a Cloudflare "
+        "'Attention Required!' HTTP 403: plain requests, browser user agent, curl with browser headers, curl_cffi impersonation "
+        "(chrome120/124/131, safari17, firefox133, edge101, android chrome) and the Claude fetch proxy. No mirror was used.",
+    ),
+    "us-tn": (
+        "Tennessee Department of Health",
+        "https://www.tn.gov/health/health-program-areas/fhw/wic.html",
+        "Individual WIC Policy & Procedures Manual policies are hosted on tn.gov (content/dam/tn/health/program-areas/wic/"
+        "FY2022-ADM-01-03-02-Access-to-WIC-Services.pdf), but www.tn.gov answers HTTP 403 (awselb/2.0) or times out for every "
+        "client tried (plain requests, browser user agent, curl with browser headers, curl_cffi impersonation chrome120/124/131, "
+        "safari17, firefox133, edge101, android chrome, and the Claude fetch proxy), so neither the WIC pages nor a manual "
+        "index could be read from the publisher.",
+    ),
+    "us-mo": (
+        "Missouri Department of Health and Senior Services",
+        "https://health.mo.gov/providers/manuals/wic-operations-manual-wom/",
+        "The WIC Operations Manual (WOM) is published only behind the WIC Local Agency Portal login: the manual index and every "
+        "section URL (e.g. .../wic-operations-manual-wom/usda-definitions-and-justifications/100s-10) redirect to "
+        "health.mo.gov/topic/781/login, and the public WIC pages link no manual.",
+    ),
+    "us-ma": (
+        "Massachusetts Department of Public Health",
+        "https://www.mass.gov/orgs/women-infants-children-nutrition-program",
+        "The Massachusetts WIC Program Manual (PM) is named in the FFY 2027 WIC state plan as the document the state office "
+        "updates, but it is not published on mass.gov: the WIC organization page, the providers page and the state-plan page link "
+        "no manual (the state plans are a different document family). mass.gov also answers 403 to non-browser clients.",
+    ),
+    "us-in": (
+        "Indiana Department of Health",
+        "https://www.in.gov/health/wic/wic-staff",
+        "The Indiana WIC Policy and Procedure Manual is not published on in.gov: the WIC Staff page links only the Indiana WIC "
+        "Disaster Plan, and the WIC home, eligibility and vendor pages link only the vendor manual and participant material.",
+    ),
+    "us-wi": (
+        "Wisconsin Department of Health Services",
+        "https://www.dhs.wisconsin.gov/wic/professionals.htm",
+        "The Wisconsin WIC Policy and Procedure Manual is not published on dhs.wisconsin.gov: the WIC home, Providers and "
+        "Professionals and local-project pages link no manual and candidate /wic/ppm*, /wic/local-agency* paths answer 404; the "
+        "only policy-like PDFs on the host (wic/certification-eligibility-coordination.pdf, wic/caseload-management.pdf) are "
+        "FY 2025 state-plan sections, not a manual index.",
+    ),
 }
 
 STATE_NAMES = {"us-ca": "California", "us-tx": "Texas", "us-fl": "Florida", "us-ny": "New York", "us-pa": "Pennsylvania",
-               "us-il": "Illinois", "us-oh": "Ohio", "us-ga": "Georgia", "us-nc": "North Carolina", "us-mi": "Michigan"}
+               "us-il": "Illinois", "us-oh": "Ohio", "us-ga": "Georgia", "us-nc": "North Carolina", "us-mi": "Michigan",
+               "us-nj": "New Jersey", "us-va": "Virginia", "us-wa": "Washington", "us-az": "Arizona", "us-tn": "Tennessee",
+               "us-ma": "Massachusetts", "us-in": "Indiana", "us-md": "Maryland", "us-mo": "Missouri", "us-wi": "Wisconsin"}
+
+BATCH_NOTE = {
+    1: "Selected in the first batch as one of the ten largest states by population.",
+    2: "Selected in the second batch as one of the next ten states by population (NJ, VA, WA, AZ, TN, MA, IN, MD, MO, WI).",
+}
+BATCH = dict.fromkeys(("us-ca", "us-tx", "us-fl", "us-ny", "us-pa", "us-il", "us-oh", "us-ga", "us-nc", "us-mi"), 1)
+BATCH.update(dict.fromkeys(("us-nj", "us-va", "us-wa", "us-az", "us-tn", "us-ma", "us-in", "us-md", "us-mo", "us-wi"), 2))
+
+# Batch-1 blocked rows re-checked once during batch 2 (agency site only; nothing else was tried).
+RECHECKED = {"us-ny": "2026-09-10T18:47Z", "us-fl": "2026-09-10T18:47Z", "us-il": "2026-09-10T18:47Z", "us-oh": "2026-09-10T18:47Z"}
+
+# inventory keys that annotate documents already counted in another family (or that are not documents at all)
+INDEX_ANNOTATION_KEYS = {"vacant_chapter", "duplicate_link_same_file", "policy_pdf_labeled_by_title",
+                         "header_number_differs_from_filename", "duplicate_policy_number"}
+
+STATE_BUILDERS = {
+    "us-ca": lambda bundle: build_ca(bundle), "us-tx": lambda bundle: build_tx(), "us-ga": lambda bundle: build_ga(),
+    "us-mi": lambda bundle: build_mi(), "us-pa": lambda bundle: build_pa(), "us-nc": lambda bundle: build_nc(),
+    "us-va": lambda bundle: build_va(), "us-wa": lambda bundle: build_wa(), "us-md": lambda bundle: build_md(),
+    "us-nj": lambda bundle: build_nj(),
+}
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--only", help="comma-separated jurisdictions to rebuild (us, us-xx); default rebuilds every row")
+    args = parser.parse_args(argv)
+    only = set(args.only.split(",")) if args.only else None
+
+    def selected(jur: str) -> bool:
+        return only is None or jur in only
+
     bundle = ca_bundle()
     queue_path = ROOT / "manifests" / "wic-agent-queue.yaml"
     queue = yaml.safe_load(queue_path.read_text())
     rows = {s["jurisdiction"]: s for s in queue["states"]}
 
-    manifest, count, inventory = build_federal()
-    fed = rows["us"]
-    fed.update({
-        "queue_status": "agent_ready",
-        "source_kind": "official_agency_guidance_pdf_and_federal_register_html",
-        "primary_source_url": FNA_CANONICAL + "/wic/agency",
-        "target_manifest": manifest,
-        "target_scope": {"jurisdiction": "us", "document_class": "guidance", "version": FEDERAL_VERSION},
-        "index_url": FNA_CANONICAL + "/resources?f[0]=program:32&f[1]=resource_type:160",
-        "index_document_count": inventory["year_facets"].get("total"),
-        "taken_count": count,
-        "index_inventory": inventory,
-        "notes": (
-            "FNS became the Food and Nutrition Administration on 2026-06-01; www.fns.usda.gov and www.fna.usda.gov answer 403 "
-            "to every client, so the index and memo pages were read from the publisher's origin host fns-prod.azureedge.us and "
-            "the memo PDFs from the USDA guidance portal with browser impersonation. Taken: FY2025 memos #2025-1..#2025-5, "
-            "FY2026 memos #2026-1, #2026-2, #2026-4, #2026-5 (no #2026-3 is listed), and the 2025-2026 and 2026-2027 Income "
-            "Eligibility Guidelines Federal Register notices from govinfo. 7 CFR 246 is already in the corpus "
-            "(data/corpus/provisions/us/regulation/2026-07-13-recovery-r2026-07-17-dedup.jsonl, 268 provisions under "
-            "us/regulation/7/246) and was not re-ingested."
-        ),
-    })
+    if selected("us"):
+        manifest, count, inventory = build_federal()
+        fed = rows["us"]
+        fed.update({
+            "queue_status": "agent_ready",
+            "source_kind": "official_agency_guidance_pdf_and_federal_register_html",
+            "primary_source_url": FNA_CANONICAL + "/wic/agency",
+            "target_manifest": manifest,
+            "target_scope": {"jurisdiction": "us", "document_class": "guidance", "version": FEDERAL_VERSION},
+            "index_url": FNA_CANONICAL + "/resources?f[0]=program:32&f[1]=resource_type:160",
+            "index_document_count": inventory["year_facets"].get("total"),
+            "taken_count": count,
+            "index_inventory": inventory,
+            "notes": (
+                "FNS became the Food and Nutrition Administration on 2026-06-01; www.fns.usda.gov and www.fna.usda.gov answer 403 "
+                "to every client, so the index and memo pages were read from the publisher's origin host fns-prod.azureedge.us and "
+                "the memo PDFs from the USDA guidance portal with browser impersonation. Taken: FY2025 memos #2025-1..#2025-5, "
+                "FY2026 memos #2026-1, #2026-2, #2026-4, #2026-5 (no #2026-3 is listed), and the 2025-2026 and 2026-2027 Income "
+                "Eligibility Guidelines Federal Register notices from govinfo. 7 CFR 246 is already in the corpus "
+                "(data/corpus/provisions/us/regulation/2026-07-13-recovery-r2026-07-17-dedup.jsonl, 268 provisions under "
+                "us/regulation/7/246) and was not re-ingested."
+            ),
+        })
 
-    results = {}
-    for jur, builder in (("us-ca", lambda: build_ca(bundle)), ("us-tx", build_tx), ("us-ga", build_ga),
-                         ("us-mi", build_mi), ("us-pa", build_pa), ("us-nc", build_nc)):
-        manifest, count, inventory = builder()
-        results[jur] = (manifest, count, inventory)
-        agency = manifest.split("-")[1]
+    for jur, builder in STATE_BUILDERS.items():
+        if not selected(jur):
+            continue
+        manifest, count, inventory = builder(bundle)
         row = rows.get(jur) or {"jurisdiction": jur, "name": STATE_NAMES[jur], "lead_counts": {}, "candidate_sources": []}
+        partial = " Partial: only the vendor-management functional area of the manual is published." if jur == "us-nj" else ""
         row.update({
             "name": STATE_NAMES[jur],
             "queue_status": "agent_ready",
@@ -536,20 +848,24 @@ def main() -> int:
             "target_scope": {"jurisdiction": jur, "document_class": "manual", "version": STATE_VERSION},
             "index_url": inventory["index_url"],
             "index_document_count": sum(
-                len(v) if isinstance(v, list) else v for k, v in inventory.items() if k != "index_url"
+                len(v) if isinstance(v, list) else v
+                for k, v in inventory.items() if k != "index_url" and k not in INDEX_ANNOTATION_KEYS
             ),
             "taken_count": count,
             "index_inventory": {k: v for k, v in inventory.items() if k != "index_url"},
             "notes": (
                 "Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter "
-                "PDF listed there, single_block extraction. Selected in the first batch as one of the ten largest states by population."
+                f"PDF listed there, single_block extraction.{partial} {BATCH_NOTE[BATCH[jur]]}"
             ),
         })
         rows[jur] = row
         print(f"{jur}: {count} documents -> {manifest}; index {inventory}")
 
     for jur, (agency_name, index_url, failure) in BLOCKED.items():
+        if not selected(jur):
+            continue
         row = rows.get(jur) or {"jurisdiction": jur, "name": STATE_NAMES[jur], "lead_counts": {}, "candidate_sources": []}
+        recheck = f" re-checked {RECHECKED[jur]}, still not published." if jur in RECHECKED else ""
         row.update({
             "name": STATE_NAMES[jur],
             "queue_status": "blocked_primary_source",
@@ -560,7 +876,7 @@ def main() -> int:
             "index_url": index_url,
             "index_document_count": 0,
             "taken_count": 0,
-            "notes": f"{agency_name}: {failure} Selected in the first batch as one of the ten largest states by population.",
+            "notes": f"{agency_name}: {failure} {BATCH_NOTE[BATCH[jur]]}{recheck}",
         })
         rows[jur] = row
 
