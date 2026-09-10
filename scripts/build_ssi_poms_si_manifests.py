@@ -194,7 +194,7 @@ def read_index(session: requests.Session, cache_dir: Path) -> dict[str, dict]:
         chapters[f"SI {code}"] = {"title": html.unescape(title).strip(), "code": f"05{code}", "subchapters": {}}
     if len(chapters) < 10:
         raise SystemExit(f"only {len(chapters)} SI chapters parsed from {INDEX_URL}; layout changed?")
-    for chapter, info in chapters.items():
+    for _chapter, info in chapters.items():
         url = SUBCHAPTER_URL.format(chapter=info["code"])
         info["url"] = url
         body = fetch(session, url, cache_dir / "index" / f"subchapterlist-{info['code']}.html")
