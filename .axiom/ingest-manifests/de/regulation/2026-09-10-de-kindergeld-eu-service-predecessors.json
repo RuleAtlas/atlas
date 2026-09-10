@@ -6,11 +6,11 @@
     },
     {
       "path": "data/corpus/inventory/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors.json",
-      "sha256": "d3362fd15495f6fb668aeef49ad448fe22570a03890895523019a4785e9b6660"
+      "sha256": "1b03196c4dc1f71a5e4b3f02e2cbd204a2acc8996002e8d506e2ec9f854d5c07"
     },
     {
       "path": "data/corpus/provisions/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors.jsonl",
-      "sha256": "2b38ec56ca738752cc9432b0fa9a6642f31f67469fbc44345fa808ded1861504"
+      "sha256": "2388831e8b537295149c08a02ea21cae22326962acc6ec5fb067a1f212247785"
     },
     {
       "path": "data/corpus/sources/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors/official-documents/de-kindergeld-eu-2013-1288.pdf",
@@ -22,7 +22,7 @@
     }
   ],
   "axiom_corpus_git": {
-    "commit": "53ae61cc62a8dc00b5b4fdec4113fdb4cfe6ed33",
+    "commit": "60e1ed4ed3381d69fd9df606d1a08b923a123314",
     "dirty_tracked": false,
     "root": "."
   },
@@ -39,12 +39,12 @@
     "source_count": 4
   },
   "document_class": "regulation",
-  "generated_at": "2026-09-10T18:51:54.636590+00:00",
+  "generated_at": "2026-09-10T19:01:58.322739+00:00",
   "jurisdiction": "de",
   "reasoning_logs": [
     {
       "path": "docs/ingest-runs/2026-09-10-de-kindergeld-eu-service-predecessors-audit.json",
-      "sha256": "dca0f2345cd06c390bb9aa008a042370a0f2173d99c77282e4986ba2c2a67b2e"
+      "sha256": "3b829e1583d5bac6eea3b8521829eb4dab1224d5aaad92176af99c73baadb06a"
     },
     {
       "path": "docs/ingest-runs/2026-09-10-de-kindergeld-eu-service-predecessors.md",
@@ -55,7 +55,7 @@
   "signature": {
     "algorithm": "ed25519",
     "key_id": "axiom-corpus-ingest-v1",
-    "value": "Jbif2UpuQ+zGc9/0DHvgKT6He3Q2qGY/S8AkUQzEDOLvMQc8Mm/EAYQXFhlAFjPL1MpDO6XkBxtVzTw0WPtTDg=="
+    "value": "zRduMZn1m2Fs9xNJ+JWWIqTtiWat/xbXWsbACGvCO+4UoOaHfQ5//3E2GkrIrirxTOuiFLTk82aT+3leojo8Dw=="
   },
   "tool": "axiom-corpus-ingest signed ingest manifest",
   "version": "2026-09-10-de-kindergeld-eu-service-predecessors"
