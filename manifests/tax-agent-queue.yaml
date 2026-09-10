@@ -1,7 +1,7 @@
 version: '2026-09-10'
 document_family: tax_policy_sources
 program: TAX
-queue_status: draft
+queue_status: in_progress
 policy:
   canonical_pipeline: source-first
   source_policy: primary_official_only
@@ -29,18 +29,21 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 52
+  agent_ready: 9
+  done: 34
+  blocked_primary_source: 2
+  needs_review: 7
 states:
 - jurisdiction: us
   name: Federal
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-tax-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_and_html_forms_instructions
+  primary_source_url: https://www.irs.gov/forms-pubs/about-form-1040
+  target_manifest: manifests/us-irs-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-09-10-tax-irs-forms-ty2025
   lead_counts:
     ready_for_manifest: 22
     needs_review: 102
@@ -2020,18 +2023,26 @@ states:
     - policyengine-us#parameters/gov/territories/pr/tax/income/credits/earned_income/eligibility/min.yaml
     - policyengine-us#parameters/gov/territories/pr/tax/income/credits/earned_income/eligibility/separate_filer.yaml
     - policyengine-us#parameters/gov/territories/pr/tax/income/credits/earned_income/max_amount.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'IRS individual income tax core, tax year 2025 (family irs-individual-income-tax-forms-ty2025): forms/schedules as
+    single-block PDFs, instructions and Publication 17 from the irs.gov HTML editions (one provision per heading). Forms &
+    Instructions index lists 35 products (popular forms/instructions/tax table; 1040 family, W-4, 1040-ES, W-9, 4506/4506-T,
+    2848, 941, W-2/W-3, 9465, SS-4, W-7, 4547) and links the Schedules for Form 1040 page (14 schedules: 1, 1-A, 2, 3, A-F,
+    H, J, R, SE, EIC, 8812). Taken: 19. Separate manifest manifests/us-irs-guidance-2026-inflation-adjustments.yaml (document_class
+    guidance, version 2026-09-10-tax-irs-guidance) adds the 2026 IRB inflation-adjustment items not already in manifests/us-irs-guidance.yaml:
+    Notice 2026-10, Rev. Proc. 2026-24, Rev. Proc. 2026-26. Extraction proven 2026-09-10.'
+  index_url: https://www.irs.gov/forms-instructions
+  index_document_count: 35
+  taken_count: 19
 - jurisdiction: us-ak
   name: Alaska
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-ak-tax-sources.yaml
+  target_manifest: manifests/us-ak-title-43-individual-income-tax-2026.yaml
   target_scope:
     jurisdiction: us-ak
-    document_class: null
-    version: null
+    document_class: statute
+    version: 2026-07-24-ak-individual-income-tax
   lead_counts:
     ready_for_manifest: 2
     needs_review: 2
@@ -2074,18 +2085,19 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/ak/tax/payroll/unemployment/default_rate.yaml
     - policyengine-us#parameters/gov/states/ak/tax/payroll/unemployment/taxable_wage_base.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-al
   name: Alabama
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-al-tax-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://www.revenue.alabama.gov/wp-content/uploads/2026/01/25f40blk.pdf
+  target_manifest: manifests/us-al-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-al
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 10
     needs_review: 12
@@ -2438,18 +2450,26 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/al/tax/income/agi/gross_income_sources.yaml
     - policyengine-us#parameters/gov/states/al/tax/income/exemptions/personal.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
+    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. TY2025 resident individual income tax return material confirmed
+    from the Alabama Department of Revenue forms index. JetEngine data table filtered to Individual Income Tax; server renders
+    25 rows per view, all years, no server-side pagination. Search ''40'' view: 26 rows = 15 TY2025 + 10 TY2024 (Form 40 print
+    form + instructions booklet, Form 40 tax table, 40A/40NR tax tables, 40V, Schedule OC + instructions, Schedules A/B/DC,
+    D/E, ATP, standard deduction charts 40/40A/40NR, qualified vehicle loan interest worksheets). Nonresident (40NR) and 40A
+    families not taken. Extraction proven 2026-09-10.'
+  index_url: https://www.revenue.alabama.gov/forms/?jsf=jet-data-table:form-table&tax=individual-income-tax
+  index_document_count: 26
+  taken_count: 4
 - jurisdiction: us-ar
   name: Arkansas
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-ar-tax-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://www.dfa.arkansas.gov/wp-content/uploads/2025_AR1000F_FullYearResidentIndividualIncomeTaxReturn_1.pdf
+  target_manifest: manifests/us-ar-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-ar
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 6
     needs_review: 38
@@ -3076,18 +3096,26 @@ states:
     - policyengine-us#parameters/gov/states/ar/tax/income/gross_income/capital_gains/exempt/cap.yaml
     - policyengine-us#parameters/gov/states/ar/tax/income/gross_income/capital_gains/exempt/rate.yaml
     - policyengine-us#parameters/gov/states/ar/tax/income/gross_income/capital_gains/loss_cap.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
+    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. TY2025 resident individual income tax return material confirmed
+    from the Arkansas Department of Finance and Administration forms index. 2025 Tax Forms page: 49 PDF links (AR1000F resident
+    return, AR1000NR nonresident return, joint AR1000F/NR instructions, AR1000ES vouchers, schedules AR3/AR4/AR1000ADJ/AR1000D/AR1000TC/AR1000NOL/AR1000-CO/AR1000TD/AR-OI
+    with instructions, credit forms AR1000CE/DC/DD/AR1075/AR1113/AR2441, AR2106/AR2210/AR2210A/AR3903/AR4684, AR1000V, AR1055-IT,
+    AR-MS, AR-NRMILITARY, additional tax credit worksheet, penalty waiver form, Tax Brackets 2025, Tax Tables). Taken: resident
+    return, instructions, tax brackets. Extraction proven 2026-09-10.'
+  index_url: https://www.dfa.arkansas.gov/office/taxes/income-tax-administration/individual-income-tax/forms/2025-tax-forms/
+  index_document_count: 49
+  taken_count: 3
 - jurisdiction: us-az
   name: Arizona
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-az-tax-sources.yaml
+  target_manifest: manifests/us-az-2026-140es-booklet.yaml
   target_scope:
     jurisdiction: us-az
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-07-21-az-140es-2026
   lead_counts:
     ready_for_manifest: 30
     needs_review: 22
@@ -3660,18 +3688,19 @@ states:
     - policyengine-us#variables/gov/states/az/tax/income/credits/charitable_contribution/az_charitable_contributions_credit.py
     - policyengine-us#variables/gov/states/az/tax/income/credits/charitable_contribution/az_charitable_contributions_credit_potential.py
     - policyengine-us#variables/gov/states/az/tax/income/credits/charitable_contribution/az_charitable_contributions_to_qualifying_charitable_organizations.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-ca
   name: California
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-ca-tax-sources.yaml
+  target_manifest: manifests/us-ca-2026-form-540-es-instructions.yaml
   target_scope:
     jurisdiction: us-ca
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-07-23-ca-2026-form-540-es
   lead_counts:
     ready_for_manifest: 49
     needs_review: 24
@@ -4493,17 +4522,18 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/ca/tax/income/deductions/ca_investment_interest_deduction.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-co
   name: Colorado
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-co-tax-sources.yaml
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://tax.colorado.gov/individual-income-tax-forms
+  target_manifest: null
   target_scope:
     jurisdiction: us-co
-    document_class: null
+    document_class: form
     version: null
   lead_counts:
     ready_for_manifest: 1
@@ -5231,18 +5261,25 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/co/tax/income/rate.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
+    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. Blocked by the publisher: tax.colorado.gov returns HTTP 403 ''ERROR:
+    The request could not be satisfied ... The Amazon CloudFront distribution is configured to block access from your country''
+    for the site root, the individual income tax forms index, and the DR 0104 Book PDF path, with the corpus user agent, a
+    browser user agent, and curl_cffi chrome120 impersonation (2026-09-10). No workaround attempted; retry from a US network
+    or request the publisher''s bulk export.'
+  index_url: https://tax.colorado.gov/individual-income-tax-forms
+  index_document_count: null
+  taken_count: 0
 - jurisdiction: us-ct
   name: Connecticut
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-ct-tax-sources.yaml
+  target_manifest: manifests/us-ct-2026-supplement-section-12-704e.yaml
   target_scope:
     jurisdiction: us-ct
-    document_class: null
-    version: null
+    document_class: statute
+    version: 2026-07-24-ct-income-tax-supplement
   lead_counts:
     ready_for_manifest: 14
     needs_review: 15
@@ -5551,18 +5588,19 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/ct/tax/income/subtractions/subtractions.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-dc
   name: District of Columbia
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-dc-tax-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://otr.cfo.dc.gov/node/1817386
+  target_manifest: manifests/us-dc-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-dc
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 12
     needs_review: 17
@@ -5871,18 +5909,27 @@ states:
     discovered_via:
     - policyengine-us#variables/gov/states/dc/tax/income/credits/eitc/dc_eitc_with_qualifying_child.py
     - policyengine-us#variables/gov/states/dc/tax/income/credits/eitc/dc_eitc_without_qualifying_child.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
+    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. TY2025 resident individual income tax return material confirmed
+    from the District of Columbia Office of Tax and Revenue forms index. Individual Income Tax Forms page: 230 node links
+    across tax years 2018-2025; per year the families are D-40 Booklet, D-40 form (fill-in), D-40P payment voucher, D-40B
+    nonresident request for refund, D-40ES estimated tax booklet, and LIHTC allocation instructions. TY2025 row: 6 documents.
+    Taken: 2025 D-40 Booklet and 2025 D-40 form. The 2026 D-40ES booklet (estimated tax) is a TY2026 product and was left
+    for the TY2026 cut. Note: the page and PDFs serve to the corpus user agent; a Chrome user agent / chrome120 impersonation
+    is answered with a Cloudflare ''Access denied'' page, so no browser_impersonation is configured. Extraction proven 2026-09-10.'
+  index_url: https://otr.cfo.dc.gov/page/individual-income-tax-forms-0
+  index_document_count: 230
+  taken_count: 2
 - jurisdiction: us-de
   name: Delaware
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-de-tax-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://revenuefiles.delaware.gov/2025/PITForms_Instructions/PIT-RES_2025-01_PaperInteractiveIPM.pdf
+  target_manifest: manifests/us-de-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-de
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 10
     needs_review: 10
@@ -6098,18 +6145,26 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/de/tax/income/credits/cdcc/match.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
+    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. TY2025 resident individual income tax return material confirmed
+    from the Delaware Division of Revenue forms index. Personal Income Tax Forms Current Year (2025-2026) page: 63 PDF links.
+    Families: resident PIT-RES form/schedule/Schedule A/worksheet/instructions, non-resident PIT-NON family, 2025 income tax
+    table, PIT-VCH/PIT-EXT/PIT-EST 2026/PIT-REQ/PIT-UND/PIT-STC/PIT-SCW/PIT-CRS/PIT-BIN/PIT-CFR, fiduciary FID-*, composite
+    CMP-*, partnership PRT-*, real estate REW-*, PUT-EXM and RTT-* business forms. Taken: PIT-RES form, PIT-RES instructions,
+    2025 tax table. Extraction proven 2026-09-10.'
+  index_url: https://revenue.delaware.gov/personal-income-tax-forms/
+  index_document_count: 63
+  taken_count: 3
 - jurisdiction: us-fl
   name: Florida
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-fl-tax-sources.yaml
+  target_manifest: manifests/us-fl-individual-income-tax-zero-liability.yaml
   target_scope:
     jurisdiction: us-fl
-    document_class: null
-    version: null
+    document_class: statute
+    version: 2026-07-24-fl-individual-income-tax-zero-liability
   lead_counts:
     ready_for_manifest: 2
     needs_review: 1
@@ -6142,18 +6197,19 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/fl/tax/payroll/unemployment/default_rate.yaml
     - policyengine-us#parameters/gov/states/fl/tax/payroll/unemployment/taxable_wage_base.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-ga
   name: Georgia
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-ga-tax-sources.yaml
+  target_manifest: manifests/us-ga-it-511-2025-official-document.yaml
   target_scope:
     jurisdiction: us-ga
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-07-21-ga-it-511-2025
   lead_counts:
     ready_for_manifest: 2
     needs_review: 19
@@ -6604,18 +6660,19 @@ states:
     - policyengine-us#parameters/gov/states/ga/tax/income/additions/additions.yaml
     - policyengine-us#parameters/gov/states/ga/tax/income/credits/low_income/amount.yaml
     - policyengine-us#parameters/gov/states/ga/tax/income/subtractions/subtractions.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-hi
   name: Hawaii
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-hi-tax-sources.yaml
+  target_manifest: manifests/us-hi-2025-n11-capital-gain-worksheet.yaml
   target_scope:
     jurisdiction: us-hi
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-07-22-hi-2025-n11-capital-gain-worksheet
   lead_counts:
     ready_for_manifest: 27
     needs_review: 18
@@ -7158,18 +7215,19 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/hi/tax/income/credits/cdcc/hi_cdcc_eligible.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-ia
   name: Iowa
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-ia-tax-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://revenue.iowa.gov/media/4402/download?inline
+  target_manifest: manifests/us-ia-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-ia
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 12
     needs_review: 21
@@ -7550,18 +7608,27 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/ia/tax/income/credits/child_care/fraction.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
+    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. TY2025 resident individual income tax return material confirmed
+    from the Iowa Department of Revenue forms index. Forms - Individual Income Tax page: 15 media links (2025 IA 1040 return,
+    IA 1040ES 2026 voucher instructions, IA 148, IA 100/100A-G capital gain deduction forms, IA 4136, IA 176, alternate tax
+    worksheet, composite agreement) plus a link to the online 2025 IA 1040 Expanded Instructions (47 line/intro HTML pages
+    at .../1040-expanded-instructions and a printable PDF on its past-instructions page). Iowa publishes no separate rate
+    schedule for TY2025 (flat rate stated in the instructions). Taken: 2025 IA 1040 return and the 2025 Expanded Instructions
+    PDF (the department''s own printable compilation of the HTML instructions). Extraction proven 2026-09-10.'
+  index_url: https://revenue.iowa.gov/forms/common-forms/individual-income-tax
+  index_document_count: 15
+  taken_count: 2
 - jurisdiction: us-id
   name: Idaho
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-id-tax-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://tax.idaho.gov/wp-content/uploads/forms/EFO00089/EFO00089_03-02-2026.pdf
+  target_manifest: manifests/us-id-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-id
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 37
     needs_review: 12
@@ -8140,18 +8207,27 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/id/tax/income/subtractions/subtractions.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
+    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. TY2025 resident individual income tax return material confirmed
+    from the Idaho State Tax Commission forms index. Forms page: 589 links, 200 PDF form links across sales/use, property,
+    tobacco, fuels, business income, individual income (Form 40 return 2025, Form 43 part-year/nonresident, Form 39R resident
+    supplemental schedule, Form 39NR, individual income tax instructions EIN00046 rev. 2026-03-02, Form 51 estimated payment,
+    food tax credit Form 24, capital gains deduction, itemized deduction worksheet), fiduciary, withholding and beer/wine
+    families. Taken: Form 40, EIN00046 instructions, Form 39R. manifests/us-id-tax-forms.yaml (source-discovery seed, older
+    EIN00046 revisions, never extracted) is left untouched. Extraction proven 2026-09-10.'
+  index_url: https://tax.idaho.gov/forms/
+  index_document_count: 200
+  taken_count: 3
 - jurisdiction: us-il
   name: Illinois
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-il-tax-sources.yaml
+  target_manifest: manifests/us-il-2026-resident-income-tax-core.yaml
   target_scope:
     jurisdiction: us-il
-    document_class: null
-    version: null
+    document_class: statute
+    version: 2026-07-24-il-individual-income-tax-resident-core
   lead_counts:
     ready_for_manifest: 21
     needs_review: 14
@@ -8534,17 +8610,18 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/il/tax/income/credits/il_eitc.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-in
   name: Indiana
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-in-tax-sources.yaml
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://www.in.gov/dor/tax-forms/individual/current/
+  target_manifest: null
   target_scope:
     jurisdiction: us-in
-    document_class: null
+    document_class: form
     version: null
   lead_counts:
     ready_for_manifest: 9
@@ -8826,18 +8903,27 @@ states:
     - policyengine-us#parameters/gov/states/in/tax/income/credits/plan_529/cap.yaml
     - policyengine-us#parameters/gov/states/in/tax/income/credits/plan_529/rate.yaml
     - policyengine-us#variables/gov/states/in/tax/income/credits/plan_529/in_529_plan_credit.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
+    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. Blocked by the publisher: The DOR Current Year Individual Tax
+    Forms index (62 form links: IT-40 booklet, IT-40 form, Schedules 1-7, IN-DEP, IN-W, CT-40, IT-40PNR family, credit schedules,
+    ES-40, IT-2210) renders, but every download is served by forms.in.gov/Download.aspx?id=..., which answers HTTP 403 with
+    a Cloudflare ''Sorry, you have been blocked ... You are unable to access in.gov'' page for the corpus user agent, a Chrome
+    user agent, and curl_cffi chrome120 impersonation (HEAD and GET, 2026-09-10); forms.in.gov root also 403s. No in.gov-hosted
+    copy of the IT-40 booklet was found. The existing us-in guidance scope (2026-07-24-in-2026-individual-income-tax-source-hold)
+    already records the portal listing; retry the file host from a US network.'
+  index_url: https://www.in.gov/dor/tax-forms/individual/current/
+  index_document_count: 62
+  taken_count: 0
 - jurisdiction: us-ks
   name: Kansas
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-ks-tax-sources.yaml
+  target_manifest: manifests/us-ks-2026-k40es.yaml
   target_scope:
     jurisdiction: us-ks
-    document_class: null
-    version: null
+    document_class: guidance
+    version: 2026-07-21-ks-k40es-2026
   lead_counts:
     ready_for_manifest: 10
     needs_review: 14
@@ -9117,18 +9203,19 @@ states:
     - policyengine-us#parameters/gov/states/ks/tax/income/exemptions/base.yaml
     - policyengine-us#parameters/gov/states/ks/tax/income/exemptions/disabled_veteran/base.yaml
     - policyengine-us#parameters/gov/states/ks/tax/income/exemptions/disabled_veteran/in_effect.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-ky
   name: Kentucky
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-ky-tax-sources.yaml
+  target_manifest: manifests/us-ky-2026-740-es.yaml
   target_scope:
     jurisdiction: us-ky
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-740-es
   lead_counts:
     ready_for_manifest: 38
     needs_review: 9
@@ -9637,18 +9724,19 @@ states:
     - policyengine-us#parameters/gov/states/ky/tax/income/subtractions.yaml
     - policyengine-us#variables/gov/states/ky/tax/income/ky_additions.py
     - policyengine-us#variables/gov/states/ky/tax/income/ky_subtractions.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-la
   name: Louisiana
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-la-tax-sources.yaml
+  target_manifest: manifests/us-la-2026-it-540es-instructions.yaml
   target_scope:
     jurisdiction: us-la
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-07-23-la-2026-it-540es-instructions
   lead_counts:
     ready_for_manifest: 15
     needs_review: 18
@@ -10013,18 +10101,19 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/la/tax/income/deductions/plan_529/cap.yaml
     - policyengine-us#variables/gov/states/la/tax/income/deductions/la_529_plan_deduction.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-ma
   name: Massachusetts
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-ma-tax-sources.yaml
+  target_manifest: manifests/us-ma-2026-form-1-es.yaml
   target_scope:
     jurisdiction: us-ma
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-07-22-ma-2026-form-1-es
   lead_counts:
     ready_for_manifest: 20
     needs_review: 31
@@ -10553,14 +10642,15 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/ma/tax/income/credits/senior_circuit_breaker/amount/max.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-md
   name: Maryland
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-md-tax-sources.yaml
+  target_manifest: manifests/us-md-tax-forms.yaml
   target_scope:
     jurisdiction: us-md
     document_class: null
@@ -11080,18 +11170,20 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/md/tax/income/agi/subtractions/pension/max_amount.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. The prior manifest exists but no local coverage artifact or release selector
+    names its version in this checkout; reviewer to confirm the scope.
+  taken_count: 0
 - jurisdiction: us-me
   name: Maine
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-me-tax-sources.yaml
+  target_manifest: manifests/us-me-individual-income-tax-rates-2026.yaml
   target_scope:
     jurisdiction: us-me
-    document_class: null
-    version: null
+    document_class: guidance
+    version: 2026-07-23-me-individual-income-tax-rates-2026
   lead_counts:
     ready_for_manifest: 25
     needs_review: 56
@@ -11931,18 +12023,19 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/me/tax/payroll/unemployment/default_rate.yaml
     - policyengine-us#parameters/gov/states/me/tax/payroll/unemployment/taxable_wage_base.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-mi
   name: Michigan
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-mi-tax-sources.yaml
+  target_manifest: manifests/us-mi-2026-income-tax-rate-notice.yaml
   target_scope:
     jurisdiction: us-mi
-    document_class: null
-    version: null
+    document_class: guidance
+    version: 2026-07-21-mi-2026-income-tax-rate-notice
   lead_counts:
     ready_for_manifest: 27
     needs_review: 29
@@ -12553,18 +12646,19 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/mi/tax/income/household_resources.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-mn
   name: Minnesota
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-mn-tax-sources.yaml
+  target_manifest: manifests/us-mn-income-tax-inflation-adjusted-amounts-2026.yaml
   target_scope:
     jurisdiction: us-mn
-    document_class: null
-    version: null
+    document_class: guidance
+    version: 2026-07-22-mn-income-tax-inflation-adjusted-amounts-2026
   lead_counts:
     ready_for_manifest: 23
     needs_review: 72
@@ -13617,14 +13711,15 @@ states:
     - policyengine-us#parameters/gov/states/mn/tax/income/deductions/itemized/reduction/agi_threshold/low.yaml
     - policyengine-us#parameters/gov/states/mn/tax/income/deductions/itemized/reduction/alternate/rate.yaml
     - policyengine-us#parameters/gov/states/mn/tax/income/deductions/itemized/reduction/excess_agi_fraction/low.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-mo
   name: Missouri
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-mo-tax-sources.yaml
+  target_manifest: manifests/us-mo-individual-income-tax-forms.yaml
   target_scope:
     jurisdiction: us-mo
     document_class: null
@@ -14259,18 +14354,20 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/mo/tax/income/subtractions/net_capital_gain/rate.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. The prior manifest exists but no local coverage artifact or release selector
+    names its version in this checkout; reviewer to confirm the scope.
+  taken_count: 0
 - jurisdiction: us-ms
   name: Mississippi
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-ms-tax-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://www.dor.ms.gov/sites/default/files/tax-forms/individual/80105258%201.pdf
+  target_manifest: manifests/us-ms-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-ms
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 10
     needs_review: 3
@@ -14581,18 +14678,27 @@ states:
     - policyengine-us#parameters/gov/states/ms/tax/income/credits/cdcc/income_limit.yaml
     - policyengine-us#parameters/gov/states/ms/tax/income/credits/cdcc/match.yaml
     - policyengine-us#variables/gov/states/ms/tax/income/credits/cdcc/ms_cdcc.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
+    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. TY2025 resident individual income tax return material confirmed
+    from the Mississippi Department of Revenue forms index. Form Search, Individual division: 26 PDF links (Form 80-100 individual
+    income tax instructions, 80-105 resident return, 80-205 non-resident/part-year return, 80-106 voucher, 80-107 withholding
+    schedule, 80-108 itemized deductions, 80-115 e-file declaration, 80-155 NOL, 80-160 credit for tax paid to another state,
+    80-161 PTE credit, 80-315 reforestation credit + instructions, 80-320 interest/penalty worksheet, 80-340 reservation exclusion,
+    80-401 credit summary, 80-491 additional dependents, fiduciary 81-* forms, 70-698, 71-661, transcript request). Taken:
+    80-105 and 80-100. Mississippi publishes no separate TY2025 rate schedule. Extraction proven 2026-09-10.'
+  index_url: https://www.dor.ms.gov/forms-resources/form-search?division=individual_forms
+  index_document_count: 26
+  taken_count: 2
 - jurisdiction: us-mt
   name: Montana
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-mt-tax-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://revenue.mt.gov/publications/montana-individual-income-tax-return-form-2
+  target_manifest: manifests/us-mt-individual-income-tax-forms-ty2025.yaml
   target_scope:
     jurisdiction: us-mt
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-09-10-tax-state-forms-ty2025
   lead_counts:
     ready_for_manifest: 15
     needs_review: 35
@@ -15281,18 +15387,26 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/mt/tax/income/subtractions/disability_income/cap.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: us-al, us-ar,
+    us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt. TY2025 resident individual income tax return material confirmed
+    from the Montana Department of Revenue forms index. Forms repository index links the Individual Income Tax publication
+    pages. Form 2 publication page: 20 PDF links (Form 2 returns 2021-2025, 2024 instructions, 2024/2025 Schedules I-V, 2EC
+    and transition schedule, 2025 instructions); Form 2 instruction booklet page: 7 links (instructions 2020-2025, SALT-cap
+    instructions). Taken: 2025 Form 2 and 2025 Form 2 instructions. Montana''s rate schedule is inside the instructions. Extraction
+    proven 2026-09-10.'
+  index_url: https://revenue.mt.gov/forms/
+  index_document_count: 20
+  taken_count: 2
 - jurisdiction: us-nc
   name: North Carolina
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-nc-tax-sources.yaml
+  target_manifest: manifests/us-nc-ty2026-income-tax-core.yaml
   target_scope:
     jurisdiction: us-nc
-    document_class: null
-    version: null
+    document_class: statute
+    version: 2026-07-26-nc-ty2026-income-tax-core
   lead_counts:
     ready_for_manifest: 18
     needs_review: 11
@@ -15618,14 +15732,15 @@ states:
     - policyengine-us#parameters/gov/states/nc/tax/income/deductions/military_retirement/fraction.yaml
     - policyengine-us#parameters/gov/states/nc/tax/income/deductions/military_retirement/minimum_years.yaml
     - policyengine-us#variables/gov/states/nc/tax/income/deductions/military_retirement/nc_military_retirement_deduction.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-nd
   name: North Dakota
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-nd-tax-sources.yaml
+  target_manifest: manifests/us-nd-individual-income-tax-forms.yaml
   target_scope:
     jurisdiction: us-nd
     document_class: null
@@ -15915,18 +16030,20 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/nd/tax/income/credits/resident_tax_relief/joint_amount.yaml
     - policyengine-us#parameters/gov/states/nd/tax/income/credits/resident_tax_relief/other_amount.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. The prior manifest exists but no local coverage artifact or release selector
+    names its version in this checkout; reviewer to confirm the scope.
+  taken_count: 0
 - jurisdiction: us-ne
   name: Nebraska
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-ne-tax-sources.yaml
+  target_manifest: manifests/us-ne-2026-1040n-es.yaml
   target_scope:
     jurisdiction: us-ne
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-07-22-ne-1040n-es-2026
   lead_counts:
     ready_for_manifest: 22
     needs_review: 9
@@ -16258,8 +16375,9 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/ne/tax/income/agi/subtractions/military_retirement/age_threshold.yaml
     - policyengine-us#parameters/gov/states/ne/tax/income/agi/subtractions/military_retirement/fraction.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-nh
   name: New Hampshire
   queue_status: needs_review
@@ -16486,8 +16604,8 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/nh/tax/credits/education/rate.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1; waits for a later batch. Batch 1 (2026-09-10) = the first ten queue-order states without a current-year
+    resident return ingest: us-al, us-ar, us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt.'
 - jurisdiction: us-nj
   name: New Jersey
   queue_status: needs_review
@@ -16943,8 +17061,8 @@ states:
     - policyengine-us#parameters/gov/states/nj/tax/income/additions.yaml
     - policyengine-us#parameters/gov/states/nj/tax/income/gross_income/loss_eligible_categories/category_b.yaml
     - policyengine-us#parameters/gov/states/nj/tax/income/gross_income/loss_eligible_categories/category_c.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1; waits for a later batch. Batch 1 (2026-09-10) = the first ten queue-order states without a current-year
+    resident return ingest: us-al, us-ar, us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt.'
 - jurisdiction: us-nm
   name: New Mexico
   queue_status: needs_review
@@ -17289,18 +17407,18 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/nm/tax/income/exemptions/armed_forces_retirement_pay/cap.yaml
     - policyengine-us#parameters/gov/states/nm/tax/income/exemptions/exemptions.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1; waits for a later batch. Batch 1 (2026-09-10) = the first ten queue-order states without a current-year
+    resident return ingest: us-al, us-ar, us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt.'
 - jurisdiction: us-nv
   name: Nevada
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-nv-tax-sources.yaml
+  target_manifest: manifests/us-nv-individual-income-tax-zero-liability.yaml
   target_scope:
     jurisdiction: us-nv
-    document_class: null
-    version: null
+    document_class: statute
+    version: 2026-07-24-nv-individual-income-tax-zero-liability
   lead_counts:
     needs_review: 2
   candidate_sources:
@@ -17324,18 +17442,19 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/nv/tax/payroll/unemployment/default_rate.yaml
     - policyengine-us#parameters/gov/states/nv/tax/payroll/unemployment/taxable_wage_base.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-ny
   name: New York
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-ny-tax-sources.yaml
+  target_manifest: manifests/us-ny-tax-current-forms.yaml
   target_scope:
     jurisdiction: us-ny
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-06-05-ny-tax-current-forms
   lead_counts:
     ready_for_manifest: 10
     needs_review: 33
@@ -17822,14 +17941,15 @@ states:
     - policyengine-us#parameters/gov/states/ny/tax/income/deductions/itemized/phase_out/agi_excess_rate.yaml
     - policyengine-us#parameters/gov/states/ny/tax/income/deductions/itemized/phase_out/deduction_limited_rate.yaml
     - policyengine-us#parameters/gov/states/ny/tax/income/deductions/itemized/phase_out/start.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-oh
   name: Ohio
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-oh-tax-sources.yaml
+  target_manifest: manifests/us-oh-individual-income-tax-forms.yaml
   target_scope:
     jurisdiction: us-oh
     document_class: null
@@ -18211,8 +18331,10 @@ states:
     - policyengine-us#parameters/gov/states/oh/tax/income/credits/adoption/age_limit.yaml
     - policyengine-us#parameters/gov/states/oh/tax/income/credits/adoption/amount/max.yaml
     - policyengine-us#parameters/gov/states/oh/tax/income/credits/adoption/amount/min.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. The prior manifest exists but no local coverage artifact or release selector
+    names its version in this checkout; reviewer to confirm the scope.
+  taken_count: 0
 - jurisdiction: us-ok
   name: Oklahoma
   queue_status: needs_review
@@ -18508,18 +18630,18 @@ states:
     - policyengine-us#variables/gov/states/ok/tax/income/credits/eitc/federal_credit/eligible/ok_federal_eitc_demographic_eligible.py
     - policyengine-us#variables/gov/states/ok/tax/income/credits/eitc/federal_credit/eligible/ok_federal_eitc_eligible.py
     - policyengine-us#variables/gov/states/ok/tax/income/credits/eitc/federal_credit/eligible/ok_federal_eitc_investment_income_eligible.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1; waits for a later batch. Batch 1 (2026-09-10) = the first ten queue-order states without a current-year
+    resident return ingest: us-al, us-ar, us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt.'
 - jurisdiction: us-or
   name: Oregon
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-or-tax-sources.yaml
+  target_manifest: manifests/us-or-2026-or-estimate.yaml
   target_scope:
     jurisdiction: us-or
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-07-22-or-estimate-2026
   lead_counts:
     ready_for_manifest: 20
     needs_review: 17
@@ -18999,18 +19121,19 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/or/tax/income/credits/wfhdc/child_age_limit.yaml
     - policyengine-us#parameters/gov/states/or/tax/income/credits/wfhdc/min_tax_unit_size.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-pa
   name: Pennsylvania
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-pa-tax-sources.yaml
+  target_manifest: manifests/us-pa-personal-income-tax-rates.yaml
   target_scope:
     jurisdiction: us-pa
-    document_class: null
-    version: null
+    document_class: guidance
+    version: 2026-07-21-pa-personal-income-tax-rates
   lead_counts:
     ready_for_manifest: 12
     needs_review: 17
@@ -19301,18 +19424,19 @@ states:
     - policyengine-us#parameters/gov/states/pa/tax/income/forgiveness/base.yaml
     - policyengine-us#parameters/gov/states/pa/tax/income/forgiveness/dependent_rate.yaml
     - policyengine-us#parameters/gov/states/pa/tax/income/forgiveness/eligibility_income_sources.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-ri
   name: Rhode Island
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-ri-tax-sources.yaml
+  target_manifest: manifests/us-ri-pit-adv-2025-22-official-documents.yaml
   target_scope:
     jurisdiction: us-ri
-    document_class: null
-    version: null
+    document_class: guidance
+    version: 2026-07-23-ri-pit-adv-2025-22
   lead_counts:
     ready_for_manifest: 20
     needs_review: 35
@@ -19917,14 +20041,15 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/ri/tax/income/credits/property_tax/max_amount.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-sc
   name: South Carolina
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-sc-tax-sources.yaml
+  target_manifest: manifests/us-sc-individual-income-tax-forms.yaml
   target_scope:
     jurisdiction: us-sc
     document_class: null
@@ -20262,18 +20387,20 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/sc/tax/income/rates.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. The prior manifest exists but no local coverage artifact or release selector
+    names its version in this checkout; reviewer to confirm the scope.
+  taken_count: 0
 - jurisdiction: us-sd
   name: South Dakota
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-sd-tax-sources.yaml
+  target_manifest: manifests/us-sd-2026-personal-income-tax-zero-liability.yaml
   target_scope:
     jurisdiction: us-sd
-    document_class: null
-    version: null
+    document_class: guidance
+    version: 2026-07-24-sd-personal-income-tax-zero-liability
   lead_counts:
     ready_for_manifest: 1
     needs_review: 2
@@ -20306,18 +20433,19 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/sd/tax/payroll/unemployment/default_rate.yaml
     - policyengine-us#parameters/gov/states/sd/tax/payroll/unemployment/taxable_wage_base.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-tn
   name: Tennessee
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-tn-tax-sources.yaml
+  target_manifest: manifests/us-tn-2026-individual-income-tax-zero-liability-guidance.yaml
   target_scope:
     jurisdiction: us-tn
-    document_class: null
-    version: null
+    document_class: guidance
+    version: 2026-07-24-tn-individual-income-tax-zero-liability-guidance
   lead_counts:
     needs_review: 5
     excluded_secondary: 2
@@ -20392,18 +20520,19 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/tn/tax/payroll/unemployment/default_rate.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-tx
   name: Texas
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-tx-tax-sources.yaml
+  target_manifest: manifests/us-tx-2026-individual-income-tax-prohibition.yaml
   target_scope:
     jurisdiction: us-tx
-    document_class: null
-    version: null
+    document_class: statute
+    version: 2026-07-24-tx-individual-income-tax-prohibition
   lead_counts:
     ready_for_manifest: 3
     needs_review: 3
@@ -20468,8 +20597,9 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/tx/tax/property/school_district_homestead_exemption/general_amount.yaml
     - policyengine-us#parameters/gov/states/tx/tax/property/school_district_homestead_exemption/over_65_or_disabled_amount.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-ut
   name: Utah
   queue_status: needs_review
@@ -21067,14 +21197,14 @@ states:
     - policyengine-us#parameters/gov/states/ut/tax/income/credits/at_home_parent/amount.yaml
     - policyengine-us#parameters/gov/states/ut/tax/income/credits/at_home_parent/max_agi.yaml
     - policyengine-us#parameters/gov/states/ut/tax/income/credits/at_home_parent/max_child_age.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1; waits for a later batch. Batch 1 (2026-09-10) = the first ten queue-order states without a current-year
+    resident return ingest: us-al, us-ar, us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt.'
 - jurisdiction: us-va
   name: Virginia
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-va-tax-sources.yaml
+  target_manifest: manifests/us-va-tax-forms.yaml
   target_scope:
     jurisdiction: us-va
     document_class: null
@@ -21498,8 +21628,10 @@ states:
     - policyengine-us#parameters/gov/states/va/tax/income/credits/eitc/match/refundable.yaml
     - policyengine-us#parameters/gov/states/va/tax/income/credits/non_refundable.yaml
     - policyengine-us#parameters/gov/states/va/tax/income/deductions/standard.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. The prior manifest exists but no local coverage artifact or release selector
+    names its version in this checkout; reviewer to confirm the scope.
+  taken_count: 0
 - jurisdiction: us-vt
   name: Vermont
   queue_status: needs_review
@@ -22254,8 +22386,8 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/vt/tax/income/credits/eitc/match.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1; waits for a later batch. Batch 1 (2026-09-10) = the first ten queue-order states without a current-year
+    resident return ingest: us-al, us-ar, us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt.'
 - jurisdiction: us-wa
   name: Washington
   queue_status: needs_review
@@ -22577,18 +22709,18 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/wa/tax/income/credits/wa_working_families_tax_credit.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1; waits for a later batch. Batch 1 (2026-09-10) = the first ten queue-order states without a current-year
+    resident return ingest: us-al, us-ar, us-co, us-dc, us-de, us-ia, us-id, us-in, us-ms, us-mt.'
 - jurisdiction: us-wi
   name: Wisconsin
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-wi-tax-sources.yaml
+  target_manifest: manifests/us-wi-2026-form1-es-instructions.yaml
   target_scope:
     jurisdiction: us-wi
-    document_class: null
-    version: null
+    document_class: form
+    version: 2026-07-22-wi-form1-es-2026
   lead_counts:
     ready_for_manifest: 58
     needs_review: 4
@@ -23245,14 +23377,15 @@ states:
     - policyengine-us#parameters/gov/states/wi/tax/income/deductions/standard/max.yaml
     - policyengine-us#parameters/gov/states/wi/tax/income/deductions/standard/phase_out/head_of_household.yaml
     - policyengine-us#parameters/gov/states/wi/tax/income/deductions/standard/phase_out/joint.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
 - jurisdiction: us-wv
   name: West Virginia
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-wv-tax-sources.yaml
+  target_manifest: manifests/us-wv-individual-income-tax-forms.yaml
   target_scope:
     jurisdiction: us-wv
     document_class: null
@@ -23532,18 +23665,20 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/wv/tax/income/subtractions/public_pension/wv_public_pension_subtraction_person.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. The prior manifest exists but no local coverage artifact or release selector
+    names its version in this checkout; reviewer to confirm the scope.
+  taken_count: 0
 - jurisdiction: us-wy
   name: Wyoming
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: official_documents_prior_ingest
   primary_source_url: null
-  target_manifest: manifests/us-wy-tax-sources.yaml
+  target_manifest: manifests/us-wy-2026-individual-income-tax-absence.yaml
   target_scope:
     jurisdiction: us-wy
-    document_class: null
-    version: null
+    document_class: guidance
+    version: 2026-07-24-wy-individual-income-tax-absence
   lead_counts:
     ready_for_manifest: 1
     needs_review: 1
@@ -23568,5 +23703,6 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/wy/tax/payroll/unemployment/default_rate.yaml
     - policyengine-us#parameters/gov/states/wy/tax/payroll/unemployment/taxable_wage_base.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
+    not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
+  taken_count: 0
