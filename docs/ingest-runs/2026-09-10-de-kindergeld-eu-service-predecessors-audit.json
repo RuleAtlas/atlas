@@ -20,13 +20,13 @@
       "source_path": "data/corpus/sources/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors/official-documents/de-kindergeld-eu-2018-1475.pdf"
     },
     {
-      "citation_path": "de/regulation/eu-2013-1288",
+      "citation_path": "de/regulation/eu-1288-2013",
       "source_url": "https://eur-lex.europa.eu/legal-content/DE/TXT/PDF/?uri=CELEX:32013R1288",
       "source_sha256": "13b72c32f1929f094876a86a6ee36737b104afa93eb1f82d630fe981a9bd4528",
       "source_bytes": 1288021,
       "pages": 24,
       "every_page_has_extractable_text": true,
-      "body_citation_path": "de/regulation/eu-2013-1288/document-1",
+      "body_citation_path": "de/regulation/eu-1288-2013/document-1",
       "body_sha256": "04fae9469ebf8abff1ea7f9dbfe301a21ce53af6e2e151f03c780905eb575a29",
       "body_characters": 115047,
       "first_page_prefix": "L 347/50              DE                               Amtsblatt der Europäischen Union                                         20.12.2013\n\n\n                 VERORDNUNG (EU) Nr. 1288/2013 DES EUROPÄISCHEN PARLAMENTS UND DES RATES\n                                                           vom 11. Dezember 2013\n              zur Einrichtung von \"Erasmus+\", dem Programm der Union für allgemeine und b",
