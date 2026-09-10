@@ -29,9 +29,9 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 5
-  agent_ready: 28
-  blocked_primary_source: 25
+  needs_review: 6
+  agent_ready: 44
+  blocked_primary_source: 8
 states:
 - jurisdiction: us
   name: Federal
@@ -179,7 +179,7 @@ states:
     a separate document family, not taken.
 - jurisdiction: us-ak
   name: Alaska
-  queue_status: blocked_primary_source
+  queue_status: needs_review
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://aws.state.ak.us/OnlinePublicNotices/Notices/View.aspx?id=215530
@@ -193,8 +193,11 @@ states:
   primary_source_url: null
   target_manifest: manifests/us-ak-ccdf-state-plan-fy2025-2027.yaml
   taken_count: 0
-  notes: 'Publisher blocked: TCP connect to aws.state.ak.us:443 timed out (curl 75 s; curl_cffi chrome impersonation 45 s);
-    retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+  notes: 'Not extracted: retry 2 2026-09-10T21:35Z from a US network: aws.state.ak.us now answers (first two passes: TCP connect
+    timeout); the Online Public Notice the ACF index links carries one attachment, ''2025-2027 CCDF State Plan 052424.pdf''
+    (Attachment.aspx?id=148401, 213 pages, Microsoft Word export dated 2024-05-24, no CARS Plan Status line, text refers to
+    ''this draft CCDF Plan'' posted for public comment); the Department of Health Child Care Program Office page lists no
+    CCDF plan; no approved or certified FFY 2025-2027 plan is posted, so not extracted. Nothing was worked around.'
 - jurisdiction: us-as
   name: American Samoa
   queue_status: blocked_primary_source
@@ -212,7 +215,8 @@ states:
   target_manifest: manifests/us-as-ccdf-state-plan-fy2025-2027.yaml
   taken_count: 0
   notes: 'Publisher blocked: TLS: www.dhss.as presents a self-signed, expired certificate (CN=cmaster70); verification impossible,
-    not disabled; retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+    not disabled; retried 2026-09-10T18:36Z, same failure; retried 2026-09-10T21:35Z from US network, same failure (SSLCertVerificationError
+    / curl 60 self-signed, expired certificate). Nothing was worked around.'
 - jurisdiction: us-az
   name: Arizona
   queue_status: blocked_primary_source
@@ -230,7 +234,8 @@ states:
   target_manifest: manifests/us-az-ccdf-state-plan-fy2025-2027.yaml
   taken_count: 0
   notes: 'Publisher blocked: HTTP 403 (cloudflare) for requests with browser UA and curl_cffi chrome120/safari17_0/edge101;
-    retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+    retried 2026-09-10T18:36Z, same failure; retried 2026-09-10T21:35Z from US network, same failure (HTTP 403 cloudflare
+    for plain requests and chrome impersonation). Nothing was worked around.'
 - jurisdiction: us-ar
   name: Arkansas
   queue_status: agent_ready
@@ -271,7 +276,7 @@ states:
     Appendix on the index is a separate document family, not taken.'
 - jurisdiction: us-co
   name: Colorado
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://cdec.colorado.gov/resources/state-plans
@@ -281,15 +286,18 @@ states:
     jurisdiction: us-co
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://drive.google.com/file/d/1zaT-E7tSLFKir9ANtSBRxy0f3T5sm-li/view?usp=sharing
   target_manifest: manifests/us-co-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: HTTP 403 (CloudFront) for requests with browser UA and curl_cffi chrome120/safari17_0/edge101;
-    retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 (located on retry 2 2026-09-10T21:35Z from
+    a US network after HTTP 403 CloudFront on the first two passes; the CDEC State Plans page labels it '2024-27 Child Care
+    and Development Fund State Plan' and links it on Google Drive, fetched through the extractor's existing Google Drive download
+    path)) located on the Lead Agency page linked from the ACF index; extraction proven. The ACF-hosted Appendix on the index
+    is a separate document family, not taken.
 - jurisdiction: us-ct
   name: Connecticut
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://www.ctoec.org/ccdf/%C2%A0
@@ -299,12 +307,16 @@ states:
     jurisdiction: us-ct
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://www.ctoec.org/forms-documents/25-27-ccdf-plan.pdf
   target_manifest: manifests/us-ct-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: HTTP 403 (cloudflare) for requests with browser UA and curl_cffi chrome120/safari17_0/edge101;
-    retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: 'FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 (''Final CCDF Plan 2025-2027'', a PDFium
+    re-save of the CARS print, 219 pages; located on retry 2 2026-09-10T21:35Z from a US network: plain requests now answer
+    200 while curl_cffi chrome impersonation still gets HTTP 403 cloudflare, so no impersonation is configured; the draft,
+    implementation summaries and public comment report are posted separately, not taken)) located on the Lead Agency page
+    linked from the ACF index; extraction proven. The ACF-hosted Appendix on the index is a separate document family, not
+    taken.'
 - jurisdiction: us-de
   name: Delaware
   queue_status: agent_ready
@@ -377,7 +389,8 @@ states:
   target_manifest: manifests/us-ga-ccdf-state-plan-fy2025-2027.yaml
   taken_count: 0
   notes: 'Publisher blocked: connection reset by peer (curl 56) from www.decal.ga.gov for plain curl and curl_cffi; retried
-    2026-09-10T18:36Z, same failure. Nothing was worked around.'
+    2026-09-10T18:36Z, same failure; retried 2026-09-10T21:35Z from US network, same failure (remote end closed connection
+    without response / curl 52 empty reply). Nothing was worked around.'
 - jurisdiction: us-gu
   name: Guam
   queue_status: agent_ready
@@ -418,7 +431,7 @@ states:
     a separate document family, not taken.
 - jurisdiction: us-id
   name: Idaho
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://healthandwelfare.idaho.gov/providers/child-care-providers/child-care-resources
@@ -428,12 +441,15 @@ states:
     jurisdiction: us-id
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://publicdocuments.dhw.idaho.gov/WebLink/ElectronicFile.aspx?docid=32013&dbid=0&repo=PUBLIC-DOCUMENTS
   target_manifest: manifests/us-id-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: index page reachable; the plan is served from publicdocuments.dhw.idaho.gov (Laserfiche WebLink
-    DocView id=32013), TCP connect timed out; retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: 'FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 (located on retry 2 2026-09-10T21:35Z from
+    a US network: publicdocuments.dhw.idaho.gov now answers after TCP connect timeouts on the first two passes; the index
+    links the Laserfiche WebLink DocView page id=32013, whose viewer serves the file from the same repository''s ElectronicFile.aspx
+    endpoint, taken as source_url)) located on the Lead Agency page linked from the ACF index; extraction proven. The ACF-hosted
+    Appendix on the index is a separate document family, not taken.'
 - jurisdiction: us-il
   name: Illinois
   queue_status: agent_ready
@@ -472,8 +488,9 @@ states:
   notes: 'Not extracted: publisher posts https://www.in.gov/dA/ce627c931e/ACF-118-CCDF-FY2025-2027-IN.pdf?language_id=1: the
     certified 2024-06-30 submission (399 pages, 7.7 MB, non-CARS layout with attached state rules); the CARS section pattern
     finds 5 unique labels, so it was not extracted; approved version not posted; retried 2026-09-10: same file (7,742,708
-    bytes, Last-Modified 2026-06-19), 1 of 41 labels after the Overview start, the carefinder index lists the same 11 documents.
-    Nothing was worked around.'
+    bytes, Last-Modified 2026-06-19), 1 of 41 labels after the Overview start, the carefinder index lists the same 11 documents;
+    retried 2026-09-10T21:35Z from US network: same page (the plan plus 9 CAP and letter documents), same file (HTTP 200,
+    7,742,708 bytes, Last-Modified 2026-06-19); approved print still not posted. Nothing was worked around.'
 - jurisdiction: us-ia
   name: Iowa
   queue_status: agent_ready
@@ -495,25 +512,29 @@ states:
     document family, not taken.
 - jurisdiction: us-ks
   name: Kansas
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://www.dcf.ks.gov/services/ees/Pages/Child_Care/Child-care-and-early-education.aspx
   index_appendix_url: https://acf.gov/sites/default/files/documents/occ/KS-Accepted-ACF118-CCDF-FFY-2025-2027-Appendix.pdf
-  publisher_index_url: https://www.dcf.ks.gov/services/ees/Pages/Child_Care/Child-care-and-early-education.aspx
+  publisher_index_url: https://www.dcf.ks.gov/search/Pages/SearchResults.aspx?k=CCDF%20state%20plan
   target_scope:
     jurisdiction: us-ks
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://www.dcf.ks.gov/services/ees/Documents/Child_Care/FFY%202025-2027%20CCDF%20Initial%20CCDF%20Plan.pdf
   target_manifest: manifests/us-ks-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: TCP connect to www.dcf.ks.gov:443 timed out (curl 75 s; curl_cffi 45 s); retried 2026-09-10T18:36Z,
-    same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: 'FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 (located on retry 2 2026-09-10T21:35Z from
+    a US network: www.dcf.ks.gov now answers after TCP connect timeouts on the first two passes; the Child care and early
+    education page the ACF index links carries no CCDF plan link, nor do the Child Care Subsidy and Child Care Providers pages;
+    ''FFY 2025-2027 CCDF Initial CCDF Plan'' was located with the publisher''s own site search, which also lists the Initial
+    Plan Approval Letter and the Waiver Approval Letter, not taken)) located on the Lead Agency page linked from the ACF index;
+    extraction proven. The ACF-hosted Appendix on the index is a separate document family, not taken.'
 - jurisdiction: us-ky
   name: Kentucky
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://www.chfs.ky.gov/agencies/dcbs/dcc/Pages/default.aspx
@@ -523,30 +544,36 @@ states:
     jurisdiction: us-ky
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://www.chfs.ky.gov/agencies/dcbs/dcc/Documents/stateplan20252027.pdf
   target_manifest: manifests/us-ky-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: HTTP 403 for requests with browser UA and curl_cffi chrome120/safari17_0/edge101; retried 2026-09-10T18:36Z,
-    same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 ('Kentucky CCDF FFY 2025-2027 Approved State
+    Plan'; located on retry 2 2026-09-10T21:35Z from a US network after HTTP 403 on the first two passes; the state-hosted
+    Appendix and the Preliminary Draft are posted separately, not taken)) located on the Lead Agency page linked from the
+    ACF index; extraction proven. The ACF-hosted Appendix on the index is a separate document family, not taken.
 - jurisdiction: us-la
   name: Louisiana
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://www.louisianabelieves.com/resources/library/early-childhood-policy-guidance
   index_appendix_url: https://acf.gov/sites/default/files/documents/occ/LA-Accepted-ACF118-CCDF-FFY-2025-2027-Appendix.pdf
-  publisher_index_url: https://www.louisianabelieves.com/resources/library/early-childhood-policy-guidance
+  publisher_index_url: https://doe.louisiana.gov/early-childhood/early-childhood-center-directors/early-childhood-poicy-guidance
   target_scope:
     jurisdiction: us-la
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://doe.louisiana.gov/docs/default-source/early-childhood/approved-2025-2027-ccdf-state-plan.pdf?sfvrsn=3316f8f1_12
   target_manifest: manifests/us-la-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: HTTP 403 (cloudflare) for requests with browser UA and curl_cffi chrome120/safari17_0/edge101;
-    retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Amendment 1; Approved as of 2025-03-26 (the only approved FFY 2025-2027 version
+    posted, labelled 'Approved 2025-2027 CCDF State Plan'; the CARS print carries 'Amendment 1'; the public-comment draft
+    and hearing agenda are posted separately, not taken; located on retry 2 2026-09-10T21:35Z from a US network after HTTP
+    403 cloudflare on the first two passes; the ACF index link on louisianabelieves.com redirects to this doe.louisiana.gov
+    page)) located on the Lead Agency page linked from the ACF index; extraction proven. The ACF-hosted Appendix on the index
+    is a separate document family, not taken.
 - jurisdiction: us-me
   name: Maine
   queue_status: agent_ready
@@ -586,7 +613,9 @@ states:
   target_manifest: manifests/us-md-ccdf-state-plan-fy2025-2027.yaml
   taken_count: 0
   notes: 'Publisher blocked: landing page 200; the linked plan page https://earlychildhood.marylandpublicschools.org/2025-2027-ccdf-plan
-    returns HTTP 403 ''Access denied''; retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+    returns HTTP 403 ''Access denied''; retried 2026-09-10T18:36Z, same failure; retried 2026-09-10T21:35Z from US network,
+    same failure (HTTP 403 cloudflare on the 2025-2027-ccdf-plan page for plain and impersonated requests; the about/ccdf-state-plan
+    landing page answers 200 and links only that page). Nothing was worked around.'
 - jurisdiction: us-ma
   name: Massachusetts
   queue_status: agent_ready
@@ -627,7 +656,7 @@ states:
     extraction proven. The ACF-hosted Appendix on the index is a separate document family, not taken.
 - jurisdiction: us-mn
   name: Minnesota
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://mn.gov/dhs/partners-and-providers/program-overviews/child-care-and-early-education/child-care-development-fund/
@@ -637,17 +666,16 @@ states:
     jurisdiction: us-mn
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://dcyf.mn.gov/sites/default/files/2026-09/CCDF%2025_27_plan_round_3_amendments.pdf
   target_manifest: manifests/us-mn-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: mn.gov redirects plain requests to a validate.perfdrive.com (ShieldSquare) bot challenge instead
-    of the page; retried 2026-09-10T18:36Z: plain request same failure; curl_cffi chrome impersonation now receives the mn.gov
-    page, which is only a meta-refresh to the new Lead Agency page https://dcyf.mn.gov/child-care-and-development-fund (Department
-    of Children, Youth, and Families); that host redirects plain requests to the Radware validate.perfdrive.com challenge
-    and answers curl_cffi chrome/safari17_0 impersonation with a certificate chain that fails verification (curl 60 ''self
-    signed certificate in certificate chain''; openssl s_client sees a valid Sectigo EV chain), so the plan page was never
-    served; verification not disabled. Nothing was worked around.'
+  taken_count: 1
+  notes: 'FFY 2025-2027 ACF-118 CCDF Plan (Amendment 3; Approved as of 2026-08-11 (''Amended 25-27 CCDF Plan'', the only FFY
+    2025-2027 version posted by the Department of Children, Youth, and Families, which replaced DHS as Lead Agency; the mn.gov
+    page the ACF index links is a meta-refresh to this page; retry 2 2026-09-10T21:35Z from a US network: plain requests are
+    still redirected to the validate.perfdrive.com challenge, curl_cffi chrome impersonation now completes TLS verification
+    and receives the page and the PDF)) located on the Lead Agency page linked from the ACF index; extraction proven. The
+    ACF-hosted Appendix on the index is a separate document family, not taken.'
 - jurisdiction: us-ms
   name: Mississippi
   queue_status: agent_ready
@@ -686,8 +714,10 @@ states:
   target_manifest: manifests/us-mo-ccdf-state-plan-fy2025-2027.yaml
   taken_count: 0
   notes: 'Publisher blocked: plan link https://dese.mo.gov/media/pdf/acf-118-ccdf-ffy-2025-2027-missouri returns an HTML Drupal
-    antibot form (HTTP 200) instead of the PDF for requests and curl_cffi chrome120; retried 2026-09-10T18:36Z, same failure.
-    Nothing was worked around.'
+    antibot form (HTTP 200) instead of the PDF for requests and curl_cffi chrome120; retried 2026-09-10T18:36Z, same failure;
+    retried 2026-09-10T21:35Z from US network, same failure (HTTP 200 text/html Drupal antibot form with an Incapsula script
+    instead of the PDF, plain and impersonated; the landing page also lists Amendment #1 and ''Current'' Amendment #2 behind
+    the same media path). Nothing was worked around.'
 - jurisdiction: us-mt
   name: Montana
   queue_status: agent_ready
@@ -708,7 +738,7 @@ states:
     from the ACF index; extraction proven. The ACF-hosted Appendix on the index is a separate document family, not taken.
 - jurisdiction: us-ne
   name: Nebraska
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://dhhs.ne.gov/Pages/Child-Care-and-Development-Fund-Plan.aspx
@@ -718,12 +748,14 @@ states:
     jurisdiction: us-ne
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://dhhs.ne.gov/Child%20Care%20Documents/ACF-118%20CCDF%20FFY%202025-2027%20For%20Nebraska%20-%20APPROVED.pdf
   target_manifest: manifests/us-ne-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: TCP connect to dhhs.ne.gov:443 timed out (curl 75 s; curl_cffi 45 s); retried 2026-09-10T18:36Z,
-    same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 ('approved 2025-2027 State Plan'; located
+    on retry 2 2026-09-10T21:35Z from a US network after TCP connect timeouts on the first two passes)) located on the Lead
+    Agency page linked from the ACF index; extraction proven. The ACF-hosted Appendix on the index is a separate document
+    family, not taken.
 - jurisdiction: us-nv
   name: Nevada
   queue_status: agent_ready
@@ -764,7 +796,7 @@ states:
     The ACF-hosted Appendix on the index is a separate document family, not taken.
 - jurisdiction: us-nj
   name: New Jersey
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://www.childcarenj.gov/ChildCareNJ/media/media_library/CCDF_State_Plan_for_New_Jersey_FFY25-27.pdf
@@ -774,13 +806,14 @@ states:
     jurisdiction: us-nj
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://www.childcarenj.gov/ChildCareNJ/media/media_library/CCDF_State_Plan_for_New_Jersey_FFY25-27.pdf
   target_manifest: manifests/us-nj-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: plan PDF https://www.childcarenj.gov/ChildCareNJ/media/media_library/CCDF_State_Plan_for_New_Jersey_FFY25-27.pdf
-    returns HTTP 403 (cloudflare) for requests and curl_cffi chrome120/safari17_0/edge101; retried 2026-09-10T18:36Z, same
-    failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Certified as of 2024-09-27 (submitted version linked directly from
+    the ACF index; approved print not posted; the PDF answered HTTP 200 on retry 2 2026-09-10T21:35Z from a US network after
+    HTTP 403 cloudflare on the first two passes)) located on the Lead Agency page linked from the ACF index; extraction proven.
+    The ACF-hosted Appendix on the index is a separate document family, not taken.
 - jurisdiction: us-nm
   name: New Mexico
   queue_status: agent_ready
@@ -816,7 +849,8 @@ states:
   target_manifest: manifests/us-ny-ccdf-state-plan-fy2025-2027.yaml
   taken_count: 0
   notes: 'Publisher blocked: ocfs.ny.gov returns an F5/Shape JavaScript bot-challenge page (TSPD) instead of the index; retried
-    2026-09-10T18:36Z, same failure. Nothing was worked around.'
+    2026-09-10T18:36Z, same failure; retried 2026-09-10T21:35Z from US network, same failure (F5/Shape TSPD JavaScript challenge
+    page, 7.5 KB, plain and impersonated). Nothing was worked around.'
 - jurisdiction: us-nc
   name: North Carolina
   queue_status: agent_ready
@@ -872,7 +906,8 @@ states:
   target_manifest: manifests/us-mp-ccdf-state-plan-fy2025-2027.yaml
   taken_count: 0
   notes: 'Publisher blocked: HTTP 403 (nginx) for requests with browser UA and curl_cffi chrome120/safari17_0/edge101; retried
-    2026-09-10T18:36Z, same failure. Nothing was worked around.'
+    2026-09-10T18:36Z, same failure; retried 2026-09-10T21:35Z from US network, same failure (HTTP 403 nginx). Nothing was
+    worked around.'
 - jurisdiction: us-oh
   name: Ohio
   queue_status: agent_ready
@@ -913,7 +948,7 @@ states:
     document family, not taken.
 - jurisdiction: us-or
   name: Oregon
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://www.oregon.gov/delc/about-us/pages/state-plans.aspx
@@ -923,12 +958,15 @@ states:
     jurisdiction: us-or
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://www.oregon.gov/delc/about-us/Documents/ACF-118_CCDF_2025-2027_Oregon.pdf
   target_manifest: manifests/us-or-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: DNS resolution of www.oregon.gov failed from this network (curl 6) for plain curl and curl_cffi;
-    retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 ('2025-27 Plan (303 pages)'; Amendment 1
+    with its approval letter, the initial approval letter, the state-hosted Appendix 1, public comment documents and the transitional
+    waiver request are posted separately, not taken; www.oregon.gov resolved and answered on retry 2 2026-09-10T21:35Z from
+    a US network)) located on the Lead Agency page linked from the ACF index; extraction proven. The ACF-hosted Appendix on
+    the index is a separate document family, not taken.
 - jurisdiction: us-pa
   name: Pennsylvania
   queue_status: agent_ready
@@ -971,7 +1009,7 @@ states:
     Scale State Plan 2025-2027'' supporting document, emergency plan); no approved or certified plan. Nothing was worked around.'
 - jurisdiction: us-ri
   name: Rhode Island
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://dhs.ri.gov/regulations/state-plans
@@ -981,15 +1019,17 @@ states:
     jurisdiction: us-ri
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://dhs.ri.gov/media/8381/download?language=en
   target_manifest: manifests/us-ri-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: HTTP 403 (cloudflare) for requests with browser UA and curl_cffi chrome120/safari17_0/edge101;
-    retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 ('Child Care Development Fund State Plan
+    FFY25-27'; located on retry 2 2026-09-10T21:35Z from a US network after HTTP 403 cloudflare on the first two passes))
+    located on the Lead Agency page linked from the ACF index; extraction proven. The ACF-hosted Appendix on the index is
+    a separate document family, not taken.
 - jurisdiction: us-sc
   name: South Carolina
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://www.scchildcare.org/resources/
@@ -999,12 +1039,15 @@ states:
     jurisdiction: us-sc
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://scchildcare.org/media/bxkiasbl/acf-118-ccdf-ffy-2025-2027-for-south-carolina-approved-state-plan.pdf
   target_manifest: manifests/us-sc-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: TCP connect to www.scchildcare.org:443 timed out (curl 75 s; curl_cffi 45 s); retried 2026-09-10T18:36Z,
-    same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 ('Child Care Development Fund State Plan
+    FFY 2025-2027 Approved State Plan' on the SC Child Care resources page, which redirects to scchildcare.org; located on
+    retry 2 2026-09-10T21:35Z from a US network after TCP connect timeouts on the first two passes)) located on the Lead Agency
+    page linked from the ACF index; extraction proven. The ACF-hosted Appendix on the index is a separate document family,
+    not taken.
 - jurisdiction: us-sd
   name: South Dakota
   queue_status: agent_ready
@@ -1026,7 +1069,7 @@ states:
     ACF-hosted Appendix on the index is a separate document family, not taken.
 - jurisdiction: us-tn
   name: Tennessee
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://www.tn.gov/humanservices/information-and-resources/tdhs-reports-and-information.html
@@ -1036,12 +1079,15 @@ states:
     jurisdiction: us-tn
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://www.tn.gov/content/dam/tn/human-services/documents/CCDF%20State%20Plan%20FFY%202025-2027%20Tennessee.pdf
   target_manifest: manifests/us-tn-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: requests read timeout; HTTP 403 for curl_cffi chrome120/safari17_0/edge101; retried 2026-09-10T18:36Z,
-    same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 ('CCDF State Plan FFY 2025-2027' on the
+    TDHS Reports and Information page; Appendix 1 and two transitional waiver approvals are posted separately, not taken;
+    located on retry 2 2026-09-10T21:35Z from a US network after HTTP 403 awselb on the first two passes; one of three page
+    requests on the retry ended with an SSL unexpected EOF, the others answered 200)) located on the Lead Agency page linked
+    from the ACF index; extraction proven. The ACF-hosted Appendix on the index is a separate document family, not taken.
 - jurisdiction: us-tx
   name: Texas
   queue_status: blocked_primary_source
@@ -1059,10 +1105,12 @@ states:
   target_manifest: manifests/us-tx-ccdf-state-plan-fy2025-2027.yaml
   taken_count: 0
   notes: 'Publisher blocked: HTTP 403 (CloudFront) for requests with browser UA and curl_cffi chrome120/safari17_0/edge101;
-    retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+    retried 2026-09-10T18:36Z, same failure; retried 2026-09-10T21:35Z from US network, same failure class (HTTP 202 with
+    an AWS WAF JavaScript challenge body instead of the page, plain and impersonated; the first two passes saw 403 CloudFront).
+    Nothing was worked around.'
 - jurisdiction: us-ut
   name: Utah
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://jobs.utah.gov/occ/plans.html
@@ -1072,15 +1120,17 @@ states:
     jurisdiction: us-ut
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://jobs.utah.gov/occ/ccdfplan.pdf
   target_manifest: manifests/us-ut-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: HTTP 403 (awselb) for requests with browser UA and curl_cffi chrome120/safari17_0/edge101; retried
-    2026-09-10T18:36Z, same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 ('2025-2027 State Plan' on the OCC Plans
+    and Reports page; the state-hosted Appendix is posted separately, not taken; located on retry 2 2026-09-10T21:35Z from
+    a US network after HTTP 403 awselb on the first two passes)) located on the Lead Agency page linked from the ACF index;
+    extraction proven. The ACF-hosted Appendix on the index is a separate document family, not taken.
 - jurisdiction: us-vt
   name: Vermont
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://dcf.vermont.gov/CDD/CCDF
@@ -1090,13 +1140,16 @@ states:
     jurisdiction: us-vt
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://outside.vermont.gov/dept/DCF/Shared%20Documents/CDD/Reports/CCDF-Plans/CCDF-Plan-2025-2027-Approved.pdf
   target_manifest: manifests/us-vt-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: index page 200; plan PDF https://outside.vermont.gov/dept/DCF/Shared%20Documents/CDD/Reports/CCDF-Plans/CCDF-Plan-2025-2027-Approved.pdf
-    returns HTTP 403 ''The requested URL was rejected'' (F5) for requests and curl_cffi chrome120; retried 2026-09-10T18:36Z,
-    same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Approved as of 2024-11-09 ('CCDF-Plan-2025-2027-Approved'; the PDF
+    answered HTTP 200 on retry 2 2026-09-10T21:35Z from a US network after HTTP 403 on the first two passes; the plan embeds
+    Vermont's child care licensing rules inside section 5.3, whose numbered rule headings (5.3, 5.6, 9.1-9.4, 13.1) collide
+    with the preprint labels, so the section pattern is restricted to the 41 preprint headings)) located on the Lead Agency
+    page linked from the ACF index; extraction proven. The ACF-hosted Appendix on the index is a separate document family,
+    not taken.
 - jurisdiction: us-vi
   name: Virgin Islands
   queue_status: needs_review
@@ -1119,7 +1172,7 @@ states:
     for ''CCDF 2025'' returns nothing; no FFY 2025-2027 plan. Nothing was worked around.'
 - jurisdiction: us-va
   name: Virginia
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   index_url: https://acf.gov/occ/form/approved-ccdf-plans-fy-2025-2027
   index_document_count: 2
   index_plan_link: https://www.childcare.virginia.gov/reports-resources/administrative-program-manuals-reports-and-data/virginia-child-care-plan
@@ -1129,12 +1182,15 @@ states:
     jurisdiction: us-va
     document_class: policy
     version: 2026-09-10-ccdf-plan-fy2025-2027
-  source_kind: official_state_plan_page
-  primary_source_url: null
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://www.childcare.virginia.gov/home/showpublisheddocument/55566/638647472799800000
   target_manifest: manifests/us-va-ccdf-state-plan-fy2025-2027.yaml
-  taken_count: 0
-  notes: 'Publisher blocked: HTTP 403 (AkamaiGHost) for requests with browser UA and curl_cffi chrome120/safari17_0/edge101;
-    retried 2026-09-10T18:36Z, same failure. Nothing was worked around.'
+  taken_count: 1
+  notes: 'FFY 2025-2027 ACF-118 CCDF Plan (Initial Plan; Certified as of 2024-10-01 (the publisher labels it "Virginia''s
+    Approved 2025-2027 CCDF State Plan"; the CARS print carries Plan Status Certified and no approval print is posted; retry
+    2 2026-09-10T21:35Z from a US network: plain requests still get HTTP 403 AkamaiGHost, curl_cffi chrome impersonation receives
+    the page and the PDF)) located on the Lead Agency page linked from the ACF index; extraction proven. The ACF-hosted Appendix
+    on the index is a separate document family, not taken.'
 - jurisdiction: us-wa
   name: Washington
   queue_status: agent_ready
@@ -1317,8 +1373,8 @@ states:
     PDF, public-comment summary, waiver request, CAP plan and letters); the CCDF Policy Manual is not listed there. The lead-list
     URL https://www.in.gov/fssa/carefinder/files/CCDF-Policy-Manual.pdf answers HTTP 200 (application/pdf, 4,417,558 bytes,
     Last-Modified 2026-06-24) and the Provider Manual likewise (1,067,593 bytes), but their own carefinder index page was
-    not located without crawling in.gov. Not extracted in this run: the plan family is not fully complete (25 jurisdictions
-    blocked, 3 needs_review after the 2026-09-10 retry), so the work order''s precondition for the separate 2026-09-10-ccdf-in-policy-manual
+    not located without crawling in.gov. Not extracted in this run: the plan family is not fully complete (8 jurisdictions
+    blocked, 4 needs_review after the 2026-09-10 second retry), so the work order''s precondition for the separate 2026-09-10-ccdf-in-policy-manual
     version is not met.'
   index_url: https://www.in.gov/fssa/carefinder/information-and-resources2/
   index_document_count: 11
@@ -1334,7 +1390,7 @@ index_inventory:
       direct_pdf: 4
       lead_agency_pages: 52
       hosted_by: state/territory Lead Agency
-      taken: 28
+      taken: 44
     acf118_appendix_pdfs:
       count: 51
       hosted_by: acf.gov
