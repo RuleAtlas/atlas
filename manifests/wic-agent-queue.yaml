@@ -1,7 +1,7 @@
 version: '2026-09-10'
 document_family: wic_policy_sources
 program: WIC
-queue_status: draft
+queue_status: in_progress
 policy:
   canonical_pipeline: source-first
   source_policy: primary_official_only
@@ -29,18 +29,19 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 1
+  agent_ready: 7
+  blocked_primary_source: 4
 states:
 - jurisdiction: us
   name: Federal
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-wic-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_agency_guidance_pdf_and_federal_register_html
+  primary_source_url: https://www.fna.usda.gov/wic/agency
+  target_manifest: manifests/us-wic-fns-guidance.yaml
   target_scope:
     jurisdiction: us
-    document_class: null
-    version: null
+    document_class: guidance
+    version: 2026-09-10-wic-fns-guidance
   lead_counts:
     needs_review: 6
     excluded_secondary: 3
@@ -137,5 +138,295 @@ states:
     - policyengine-us#variables/gov/usda/wic/is_wic_at_nutritional_risk.py
     - policyengine-us#variables/gov/usda/wic/meets_wic_categorical_eligibility.py
     - policyengine-us#variables/gov/usda/wic/meets_wic_categorical_eligibility.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'FNS became the Food and Nutrition Administration on 2026-06-01; www.fns.usda.gov and www.fna.usda.gov answer 403
+    to every client, so the index and memo pages were read from the publisher''s origin host fns-prod.azureedge.us and the
+    memo PDFs from the USDA guidance portal with browser impersonation. Taken: FY2025 memos #2025-1..#2025-5, FY2026 memos
+    #2026-1, #2026-2, #2026-4, #2026-5 (no #2026-3 is listed), and the 2025-2026 and 2026-2027 Income Eligibility Guidelines
+    Federal Register notices from govinfo. 7 CFR 246 is already in the corpus (data/corpus/provisions/us/regulation/2026-07-13-recovery-r2026-07-17-dedup.jsonl,
+    268 provisions under us/regulation/7/246) and was not re-ingested.'
+  index_url: https://www.fna.usda.gov/resources?f[0]=program:32&f[1]=resource_type:160
+  index_document_count: 154
+  taken_count: 11
+  index_inventory:
+    first_page_rows:
+    - date: 04/29/2026
+      title: Publication of 2026-2027 WIC Income Eligibility Guidelines
+      href: /wic/agency/ieg-2026-27
+    - date: 03/30/2026
+      title: 'WIC Policy Memorandum #2026-4: Dietary Guidelines for Americans, 2025-2030 – Eat Real Food'
+      href: /wic/agency/dgas-eat-real-food
+    - date: 02/06/2026
+      title: Information for WIC State Agencies on Executive Order 14218
+      href: /wic/agency/executive-order14218
+    - date: 12/10/2025
+      title: 'WIC Policy Memorandum #2026-2: FY 2026 Cash-Value Voucher/Benefit Amounts'
+      href: /wic/agency/cvvb-fy26
+    - date: 12/05/2025
+      title: 'WIC Policy Memo #2026-1: Temporary Increase to the Maximum Monthly Allowance of Fluid Milk'
+      href: /wic/agency/increase-mma-fluidmilk
+    - date: 09/25/2025
+      title: Promoting Stronger Vendor Integrity and Oversight in WIC
+      href: /wic/vendor-integrity
+    - date: 08/19/2025
+      title: State Agency Options and Select Federal Requirements
+      href: /wic/revised-food-packages-flexibilities/options-requirements
+    - date: 08/19/2025
+      title: 'Implementing Revisions to the WIC Food Packages: Flexibilities to Support Healthy Choices, Healthy Outcomes,
+        and Healthy Families'
+      href: /wic/revised-food-packages-flexibilities
+    - date: 03/27/2025
+      title: WIC Income Eligibility Guidelines (2025-2026)
+      href: /wic/income-eligibility-guidelines-2025-26
+    - date: 01/10/2025
+      title: Use of Banked Human Breastmilk in WIC
+      href: /wic/banked-human-breastmilk
+    year_facets:
+      '2026': 3
+      '2025': 7
+      '2024': 11
+      '2023': 6
+      '2022': 9
+      '2021': 8
+      '2020': 3
+      '2019': 6
+      '2018': 1
+      '2017': 1
+      '2016': 5
+      '2015': 5
+      '2014': 7
+      '2013': 4
+      '2012': 2
+      '2011': 5
+      '2010': 2
+      '2009': 3
+      '2008': 4
+      '2007': 4
+      '2006': 4
+      '2005': 3
+      '2004': 4
+      '2003': 4
+      '2002': 1
+      '2001': 4
+      '2000': 1
+      '1999': 4
+      '1998': 5
+      '1997': 2
+      '1996': 1
+      '1995': 7
+      '1994': 7
+      '1993': 4
+      '1992': 6
+      '1991': 1
+      total: 154
+- jurisdiction: us-ca
+  name: California
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual_pdf_per_section
+  primary_source_url: https://www.cdph.ca.gov/Programs/CFH/DWICSN/Pages/LocalAgencies/PoliciesandPolicyResources/WPPM.aspx
+  target_manifest: manifests/us-ca-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-ca
+    document_class: manual
+    version: 2026-09-10-wic-state-policy-manual
+  index_url: https://www.cdph.ca.gov/Programs/CFH/DWICSN/Pages/LocalAgencies/PoliciesandPolicyResources/WPPM.aspx
+  index_document_count: 147
+  taken_count: 138
+  index_inventory:
+    wppm_policy_pdf: 138
+    other_link: 9
+  notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
+    listed there, single_block extraction. Selected in the first batch as one of the ten largest states by population.
+- jurisdiction: us-fl
+  name: Florida
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-fl-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-fl
+    document_class: manual
+    version: null
+  index_url: https://www.floridahealth.gov/individual-family-health/womens-health/wic/
+  index_document_count: 0
+  taken_count: 0
+  notes: 'Florida Department of Health: The Florida WIC Procedure Manual (DHM 150-24) is not published on floridahealth.gov:
+    the WIC and health-care-provider pages link only forms, the vendor handbook and outreach material; the manual is referenced
+    by number in county documents but no state index or PDF is available. Selected in the first batch as one of the ten largest
+    states by population.'
+- jurisdiction: us-ga
+  name: Georgia
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual_pdf_per_section
+  primary_source_url: https://dph.georgia.gov/WIC/wic-policy-and-procedures-manual
+  target_manifest: manifests/us-ga-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-ga
+    document_class: manual
+    version: 2026-09-10-wic-state-policy-manual
+  index_url: https://dph.georgia.gov/WIC/wic-policy-and-procedures-manual
+  index_document_count: 150
+  taken_count: 127
+  index_inventory:
+    policy_pdf: 127
+    section_outline_pdf: 11
+    combined_section_pdf: 1
+    policy_link_404_on_publisher:
+    - NS-200.03
+    - NS-200.10
+    - NS-210.14
+    - NS-220.02
+    - CT-800.01
+    - CT-820.03
+    - CT-820.05
+    - CT-860.01
+    - CT-860.04
+    - FD-940.01
+    policy_link_403_on_publisher:
+    - CT-800.13
+  notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
+    listed there, single_block extraction. Selected in the first batch as one of the ten largest states by population.
+- jurisdiction: us-il
+  name: Illinois
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-il-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-il
+    document_class: manual
+    version: null
+  index_url: https://www.dhs.state.il.us/page.aspx?item=36418
+  index_document_count: 0
+  taken_count: 0
+  notes: 'Illinois Department of Human Services: The IDHS ''WIC Policy and Procedure Manual'' page (item=36418) now redirects
+    to ''Page Not Found'' (item=27893); the WIC program page (item=31907) links no manual. One chapter PDF (onenetlibrary/27896/.../wic/ppm/3_certificationstandards.pdf,
+    issue date May 2006) is still served, but there is no publisher index from which the current manual can be confirmed.
+    Selected in the first batch as one of the ten largest states by population.'
+- jurisdiction: us-mi
+  name: Michigan
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual_pdf_per_section
+  primary_source_url: https://www.michigan.gov/mdhhs/assistance-programs/wic/wic-staff/wicpolicymanual/mi-wic-policy-manual-table-of-contents
+  target_manifest: manifests/us-mi-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-mi
+    document_class: manual
+    version: 2026-09-10-wic-state-policy-manual
+  index_url: https://www.michigan.gov/mdhhs/assistance-programs/wic/wic-staff/wicpolicymanual/mi-wic-policy-manual-table-of-contents
+  index_document_count: 127
+  taken_count: 115
+  index_inventory:
+    numbered_policy_or_exhibit_pdf: 115
+    unnumbered_attachment_pdf: 12
+    policy_index_pdf: 0
+  notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
+    listed there, single_block extraction. Selected in the first batch as one of the ten largest states by population.
+- jurisdiction: us-nc
+  name: North Carolina
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual_pdf_per_section
+  primary_source_url: https://www.ncdhhs.gov/divisions/child-and-family-well-being/community-nutrition-services-section/wic/staff/wic-local-agency-resources
+  target_manifest: manifests/us-nc-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-nc
+    document_class: manual
+    version: 2026-09-10-wic-state-policy-manual
+  index_url: https://www.ncdhhs.gov/divisions/child-and-family-well-being/community-nutrition-services-section/wic/staff/wic-local-agency-resources
+  index_document_count: 24
+  taken_count: 23
+  index_inventory:
+    chapter_pdf: 23
+    complete_manual_pdf: 1
+  notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
+    listed there, single_block extraction. Selected in the first batch as one of the ten largest states by population.
+- jurisdiction: us-ny
+  name: New York
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-ny-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-ny
+    document_class: manual
+    version: null
+  index_url: https://www.health.ny.gov/prevention/nutrition/wic/
+  index_document_count: 0
+  taken_count: 0
+  notes: 'New York State Department of Health: The NYS WIC Program Manual is not published on health.ny.gov: the WIC pages
+    link no manual, the only copies on the host are inactive procurement attachments (funding/ifb/inactive/16429/wic_program_manual_*.pdf),
+    and current copies exist only as reposts on non-government sites (nwica.org, thewichub.org), which the queue forbids.
+    Selected in the first batch as one of the ten largest states by population.'
+- jurisdiction: us-oh
+  name: Ohio
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-oh-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-oh
+    document_class: manual
+    version: null
+  index_url: https://odh.ohio.gov/know-our-programs/Women-Infants-Children/Local-Staff
+  index_document_count: 0
+  taken_count: 0
+  notes: 'Ohio Department of Health: The Ohio WIC Policy and Procedure Manual is not published on odh.ohio.gov: the Local
+    Staff and program pages link no manual; the only public copy is a July 2015 repost by a county health department, which
+    is neither current nor the publisher. Selected in the first batch as one of the ten largest states by population.'
+- jurisdiction: us-pa
+  name: Pennsylvania
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual_pdf_per_section
+  primary_source_url: https://wic.health.pa.gov/pawic/PoliciesAndProcedures.aspx
+  target_manifest: manifests/us-pa-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-pa
+    document_class: manual
+    version: 2026-09-10-wic-state-policy-manual
+  index_url: https://wic.health.pa.gov/pawic/PoliciesAndProcedures.aspx
+  index_document_count: 56
+  taken_count: 44
+  index_inventory:
+    policy_pdf: 44
+    policy_index_pdf: 1
+    other_pdf: 11
+  notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
+    listed there, single_block extraction. Selected in the first batch as one of the ten largest states by population.
+- jurisdiction: us-tx
+  name: Texas
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual_pdf_per_section
+  primary_source_url: https://www.hhs.texas.gov/providers/wic-providers/wic-policy-procedures-manual
+  target_manifest: manifests/us-tx-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-tx
+    document_class: manual
+    version: 2026-09-10-wic-state-policy-manual
+  index_url: https://www.hhs.texas.gov/providers/wic-providers/wic-policy-procedures-manual
+  index_document_count: 147
+  taken_count: 146
+  index_inventory:
+    policy_pdf: 137
+    policy_pdf_working_draft: 9
+    complete_manual_pdf: 1
+  notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
+    listed there, single_block extraction. Selected in the first batch as one of the ten largest states by population.
