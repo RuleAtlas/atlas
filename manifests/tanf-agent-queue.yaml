@@ -29,10 +29,10 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 5
-  done: 14
-  agent_ready: 8
-  blocked_primary_source: 2
+  needs_review: 2
+  done: 26
+  agent_ready: 14
+  blocked_primary_source: 5
 states:
 - jurisdiction: us
   name: Federal
@@ -277,6 +277,20 @@ states:
   index_url: https://acf.gov/ofa/programs/temporary-assistance-needy-families-tanf
   index_document_count: null
   taken_count: 0
+- jurisdiction: us-ak
+  name: Alaska
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-ak-atap-regulations.yaml
+  target_scope:
+    jurisdiction: us-ak
+    document_class: regulation
+    version: 2026-07-01-ak-atap-regulations
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: Alaska ATAP regulations (7 AAC 45, adopted rule) and ATAP standards (guidance, 2026-07-01-ak-atap-standards)
+    already ingested. Done.'
 - jurisdiction: us-al
   name: Alabama
   queue_status: done
@@ -347,6 +361,19 @@ states:
     and Public Assistance Payment Manual Appendix N Sec 2 (policy). Reviewer judgment: the DHR-published payment manual appendix
     plus the adopted rule is the state''s primary policy document set; no separate DHR TANF policy manual index exists. Done
     per the prior-ingest list.'
+- jurisdiction: us-ar
+  name: Arkansas
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-ar-tea-official-documents.yaml
+  target_scope:
+    jurisdiction: us-ar
+    document_class: policy
+    version: 2026-07-02-ar-tea-official-documents
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: Arkansas TEA official documents already ingested. Done.'
 - jurisdiction: us-az
   name: Arizona
   queue_status: done
@@ -858,6 +885,19 @@ states:
   index_url: https://www.coloradosos.gov/CCR/DisplayRule.do?action=ruleinfo&ruleId=3145&deptID=9&agencyID=53&deptName=Department+of+Human+Services&agencyName=Income+Maintenance+(Volume+3)&seriesNum=9+CCR+2503-6
   index_document_count: 31
   taken_count: 1
+- jurisdiction: us-ct
+  name: Connecticut
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-ct-ssp-official-documents.yaml
+  target_scope:
+    jurisdiction: us-ct
+    document_class: policy
+    version: 2026-07-02-ct-ssp-upm-and-standards
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: Connecticut DSS Uniform Policy Manual (TFA) and standards already ingested. Done.'
 - jurisdiction: us-dc
   name: District of Columbia
   queue_status: agent_ready
@@ -1502,6 +1542,38 @@ states:
     - policyengine-us#parameters/gov/states/hi/dhs/tanf/deductions/eidr_rate.yaml
     - policyengine-us#parameters/gov/states/hi/dhs/tanf/deductions/flat_amount.yaml
   notes: Hawaii HAR TANF rules already ingested. Done per the prior-ingest list.
+- jurisdiction: us-ia
+  name: Iowa
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-ia-fip-admin-rules.yaml
+  target_scope:
+    jurisdiction: us-ia
+    document_class: regulation
+    version: 2026-07-03-ia-fip-admin-rules
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: Iowa FIP administrative rules (441 IAC, adopted rule) already ingested. Done.'
+- jurisdiction: us-id
+  name: Idaho
+  queue_status: agent_ready
+  source_kind: official_pdf_regulation
+  primary_source_url: https://adminrules.idaho.gov/rules/current/16/160308.pdf
+  target_manifest: manifests/us-id-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-id
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2. Primary source confirmed from the publisher''s own index. Inventory: OARC current-rules listing (REST fetch-documents,
+    documentType currentRules) has 371 rule chapters, 21 under IDAPA 16 (Health and Welfare); taken IDAPA 16.03.08 Federal
+    Welfare Programs (TAFI rule). Not taken: 16.03.04 Food Stamp Program and 16.03.05 AABD (already in the corpus) and the
+    other title 16 chapters. Extraction proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://adminrules.idaho.gov/current-rules/
+  index_document_count: 371
+  taken_count: 1
 - jurisdiction: us-il
   name: Illinois
   queue_status: done
@@ -2074,6 +2146,78 @@ states:
     discovered_via:
     - policyengine-us#variables/gov/states/ks/dcf/tanf/eligibility/ks_tanf_eligible.py
   notes: Kansas KEESM (combined) already ingested. Done per the prior-ingest list.
+- jurisdiction: us-ky
+  name: Kentucky
+  queue_status: blocked_primary_source
+  source_kind: official_html_manual
+  primary_source_url: https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/opmanual.aspx
+  target_manifest: manifests/us-ky-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-ky
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'BLOCKED 2026-09-10: Kentucky CHFS DCBS Operation Manual index (Volume IIIA K-TAP). Plain requests and curl-cffi
+    chrome impersonation both receive HTTP 403 text/html 1484 bytes ''Service unavailable - The request is blocked.'' with
+    an x-azure-ref header (Azure Front Door WAF). No index could be inventoried; no workaround attempted.'
+  index_url: https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/opmanual.aspx
+  index_document_count: null
+  taken_count: 0
+- jurisdiction: us-la
+  name: Louisiana
+  queue_status: agent_ready
+  source_kind: official_pdf_manual_sections
+  primary_source_url: https://public.powerdms.com/LADCFS/tree
+  target_manifest: manifests/us-la-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-la
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2. Primary source confirmed from the publisher''s own index. Inventory: PowerDMS listing has 3809 public documents;
+    Economic Independence (EI) folder 1248 in 7 families ({''7. Administrative Procedures Manual'': 184, ''4. Economic Independence'':
+    781, ''Louisiana TANF Work Verification Plan (WVP)'': 1, ''2. SIEVS Manual'': 9, ''16. Fraud and Recovery Manual'': 135,
+    ''14. Safety Policy Manual'': 102, ''3. EBT Handbook'': 36}); the ''4. Economic Independence'' manual has 781 documents
+    by part ({''Y. FORMS AND FORMS  INSTRUCTIONS'': 435, ''J. CHARTS'': 7, ''S. SIMPLIFIED REPORTING'': 15, ''O. DISASTER
+    SUPPLEMENTAL NUTRITION ASSISTANCE PROGRAM (DSNAP)'': 35, ''K.  LOUISIANA COMBINED APPLICATION PROJECT (LaCAP)'': 19, ''P.
+    STRATEGIES TO EMPOWER PEOPLE PROGRAM (STEP)'': 29, ''B. ELIGIBILITY FACTORS'': 87, ''N. CHILD ABUSE NEGLECT REPORTING'':
+    1, ''M. KINSHIP CARE SUBSIDY PROGRAM'': 4, ''E. SPECIAL HOUSEHOLDS'': 18, ''F. CASE MAINTENANCE'': 31, ''C. CASE PROCESSING'':
+    98, ''G. NONDISCRIMINATION'': 2}); taken the 292 policy documents in parts B., C., E., F., G., J., M., N., P., S. (eligibility,
+    case processing, special households, case maintenance, nondiscrimination, charts, KCSP, reporting, STEP); not taken: Y
+    forms and instructions, O DSNAP and K LaCAP (SNAP-only), and the other EI families. Extraction proven 2026-09-10 (coverage
+    complete, 0 missing/extra/duplicate).'
+  index_url: https://public.powerdms.com/LADCFS/tree
+  index_document_count: 3809
+  taken_count: 292
+- jurisdiction: us-ma
+  name: Massachusetts
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-ma-tafdc-regulations.yaml
+  target_scope:
+    jurisdiction: us-ma
+    document_class: regulation
+    version: 2026-06-27-ma-tafdc-regulations
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: Massachusetts DTA TAFDC regulations 106 CMR 701-707 (adopted rule published by DTA) already ingested.
+    Done.'
+- jurisdiction: us-md
+  name: Maryland
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-md-tca-guidance-official-documents.yaml
+  target_scope:
+    jurisdiction: us-md
+    document_class: regulation
+    version: 2026-07-03-md-tca-comar-publication-2026-06-29-title-07-subtitle-03-chapter-03
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: Maryland TCA COMAR 07.03.03 (adopted rule), TCA guidance and statutes already ingested. Done.'
 - jurisdiction: us-me
   name: Maine
   queue_status: done
@@ -2182,6 +2326,34 @@ states:
     - policyengine-us#variables/gov/states/me/dhhs/tanf/income/deductions/me_tanf_child_care_deduction.py
   notes: Maine TANF rule (10-144 CMR ch. 331) and rule 125A already ingested; Maine publishes its TANF policy as adopted rules.
     Done per the prior-ingest list.
+- jurisdiction: us-mi
+  name: Michigan
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-mi-bridges-manual.yaml
+  target_scope:
+    jurisdiction: us-mi
+    document_class: manual
+    version: 2026-07-17-mi-bridges-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: Michigan MDHHS Bridges Eligibility Manual (combined, incl. FIP) and RFT 248 already ingested. Reviewer
+    judgment: combined manual counts. Done.'
+- jurisdiction: us-mn
+  name: Minnesota
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-mn-combined-manual.yaml
+  target_scope:
+    jurisdiction: us-mn
+    document_class: manual
+    version: 2026-05-27-mn-combined-manual-r2026-07-15-self-contained
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: Minnesota DHS Combined Manual (MFIP) already ingested. Reviewer judgment: combined manual counts.
+    Done.'
 - jurisdiction: us-mo
   name: Missouri
   queue_status: agent_ready
@@ -2902,6 +3074,84 @@ states:
   index_url: https://www.nd.gov/dhs/policymanuals/40019/40019.htm
   index_document_count: 310
   taken_count: 310
+- jurisdiction: us-ne
+  name: Nebraska
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_regulation
+  primary_source_url: https://rules.nebraska.gov/
+  target_manifest: manifests/us-ne-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-ne
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'BLOCKED 2026-09-10: Nebraska ADC policy is 468 NAC, published by the Secretary of State at rules.nebraska.gov (www.nebraska.gov/rules-and-regs
+    redirects there); DHHS program pages (dhhs.ne.gov) time out on TCP connect. rules.nebraska.gov serves only its leaf certificate
+    (issuer DigiCert Global G2 TLS RSA SHA256 2020 CA1), so the public intermediate was added as data/certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem
+    (fetched from the leaf''s AIA URL; verification never disabled). With the repaired chain the host answers plain requests
+    and chrome impersonation with HTTP 403 (Microsoft-Azure-Application-Gateway/v2) ''403 - Access Denied / Forbidden ...
+    You are accessing this site from an IP Address out[side the allowed range]''. No index could be inventoried; no workaround
+    attempted. Retry from a US network.'
+  index_url: https://rules.nebraska.gov/
+  index_document_count: null
+  taken_count: 0
+- jurisdiction: us-nh
+  name: New Hampshire
+  queue_status: agent_ready
+  source_kind: official_html_manual
+  primary_source_url: https://www.dhhs.nh.gov/fam_htm/newfam.htm
+  target_manifest: manifests/us-nh-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-nh
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2. Primary source confirmed from the publisher''s own index. Inventory: WebHelp TOC (100 list files, 4019
+    entries) resolves to 715 topic pages (Introduction, 100 Case Processing through 900 NH Child Care Scholarship, Glossary);
+    taken all 715. The linked SR (supervisory release) letters and ''Previous Policy'' archive pages are separate families,
+    not taken. Extraction proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://www.dhhs.nh.gov/fam_htm/newfam.htm
+  index_document_count: 715
+  taken_count: 715
+- jurisdiction: us-nj
+  name: New Jersey
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-nj-wfnj-rules.yaml
+  target_scope:
+    jurisdiction: us-nj
+    document_class: regulation
+    version: 2026-07-13-recovery
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: New Jersey WFNJ rules N.J.A.C. 10:90 (adopted rule) are in the corpus in the page-level 2026-07-13-recovery
+    scope. Done with that caveat.'
+- jurisdiction: us-nm
+  name: New Mexico
+  queue_status: needs_review
+  source_kind: official_html_regulation_parts
+  primary_source_url: https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/chapter-102-cash-assistance-programs/
+  target_manifest: manifests/us-nm-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-nm
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2, attempted 2026-09-10, not extracted: New Mexico''s TANF policy is NMAC 8.102 (Cash Assistance Programs,
+    adopted rule) published by the Commission of Public Records / State Records Center and Archives. The part files are served
+    by the publisher (https://www.srca.nm.gov/parts/title08/08.102.0100.html and .pdf answer 200), but the publisher''s chapter
+    index is a RealFile folder widget (rts-realfile-folder-search plugin, rf_sdk.js, a.rf-folder data-folder-id b5ca2d14-a03f-466c-998d-8b8ff7c4c7b9)
+    whose listing comes from the vendor API (rf-sb-prod.rtssaas.com / AWS Lambda, embedded authTokenGUID); the static page
+    only lists the reserved part ranges. No mirror or probe-by-number was used. Reviewer decision needed: accept the vendor
+    folder listing as the publisher''s index (then an inventory of the non-reserved parts 100-640 follows) or find an HCA/ISD-published
+    parts index.'
+  index_url: https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/
+  index_document_count: null
+  taken_count: 0
 - jurisdiction: us-nv
   name: Nevada
   queue_status: done
@@ -3169,7 +3419,9 @@ states:
     to otda.ny.gov: TCP connection reset by peer. curl-cffi browser impersonation (chrome, chrome110, chrome124, edge101,
     firefox): HTTP 200 text/html 6.7 KB JavaScript bot-challenge page (''Please enable JavaScript to view the page content.
     Your support ID is ...'') instead of the PDF; safari profiles: connection reset. No workaround attempted. The 2024-2026
-    TANF State Plan (policy) is already in the corpus (us-ny-tanf-state-plan); the Employment Policy Manual is in 2026-07-17-ny-snap-manuals.'
+    TANF State Plan (policy) is already in the corpus (us-ny-tanf-state-plan); the Employment Policy Manual is in 2026-07-17-ny-snap-manuals.
+    Retried 2026-09-10T20:37+02:00 (batch 2: one plain curl HEAD, connection reset by peer; one curl-cffi chrome/firefox GET,
+    HTTP 200 text/html 5.5 KB challenge page; 15 s timeouts), same failure.'
   index_url: https://otda.ny.gov/programs/temporary-assistance/
   index_document_count: 1
   taken_count: 0
@@ -3447,20 +3699,22 @@ states:
     name-resolution errors, so no index could be inventoried. Not a publisher block of the client; re-try from another network.
     Note for the retry: chapter 461 is a combined rulebook for all ODHS self-sufficiency programs (SNAP, TANF, ERDC ...),
     so the TANF family would be a filtered division set, and an OAR adapter already exists (extract-oregon-administrative-rules).
-    The existing us-or manual scope (OPEN eligibility notebook) is not the TANF policy manual.'
+    The existing us-or manual scope (OPEN eligibility notebook) is not the TANF policy manual. Retried 2026-09-10T20:37+02:00
+    (batch 2: one plain curl, ''Resolving timed out''; one curl-cffi chrome GET of ch461rules.odhs.oregon.gov and secure.sos.state.or.us,
+    ''Could not resolve host''; 15 s timeouts), same failure.'
   index_url: https://ch461rules.odhs.oregon.gov/
   index_document_count: null
   taken_count: 0
 - jurisdiction: us-pa
   name: Pennsylvania
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-pa-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_html_manual
+  primary_source_url: http://services.dpw.state.pa.us/oimpolicymanuals/cash/index.htm
+  target_manifest: manifests/us-pa-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-pa
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 5
     needs_review: 7
@@ -3601,18 +3855,23 @@ states:
     - policyengine-us#variables/gov/states/pa/dhs/tanf/eligibility/pa_tanf_disregard_eligible.py
     - policyengine-us#variables/gov/states/pa/dhs/tanf/income/pa_tanf_countable_earned_income.py
     - policyengine-us#variables/gov/states/pa/dhs/tanf/income/pa_tanf_earned_income_after_deductions_person.py
-  notes: 'Not in batch 1 (batch 1 = first ten queue rows needing a new extraction: CA, CO, DC, MO, MS, MT, ND, NY, OK, OR).
-    Falls in batch 2 together with the remaining rows in queue order (PA, SC, SD, VA).'
+  notes: 'Batch 2. Primary source confirmed from the publisher''s own index. Inventory: RoboHelp TOC lists 543 entries resolving
+    to 365 topic pages (chapters 100-192, including appendices; the remaining entries are in-page anchors); taken all 365
+    topic pages. Glossary pop-ups (_Popups/) are not on the TOC and were not taken. Extraction proven 2026-09-10 (coverage
+    complete, 0 missing/extra/duplicate).'
+  index_url: http://services.dpw.state.pa.us/oimpolicymanuals/cash/index.htm
+  index_document_count: 365
+  taken_count: 365
 - jurisdiction: us-sc
   name: South Carolina
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-sc-tanf-sources.yaml
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_manual
+  primary_source_url: https://dss.sc.gov/media/ojqddxsk/tanf-policy-manual-volume-65.pdf
+  target_manifest: manifests/us-sc-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-sc
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 1
     excluded_secondary: 2
@@ -3649,18 +3908,24 @@ states:
     discovered_via:
     - policyengine-us#variables/gov/states/sc/tanf/eligibility/sc_tanf_eligible.py
     - policyengine-us#variables/gov/states/sc/tanf/eligibility/sc_tanf_resources_eligible.py
-  notes: 'Not in batch 1 (batch 1 = first ten queue rows needing a new extraction: CA, CO, DC, MO, MS, MT, ND, NY, OK, OR).
-    Falls in batch 2 together with the remaining rows in queue order (PA, SC, SD, VA).'
+  notes: 'BLOCKED 2026-09-10: SC DSS TANF Policy Manual Volume 65 (dss.sc.gov, the host of the ingested SNAP manual volume
+    69). dss.sc.gov resolves to 167.7.60.200 but every TCP connection to :443 and :80 timed out (curl ''Connection timed out
+    after 12002 milliseconds''; Python requests ConnectTimeout; curl-cffi chrome impersonation ''Connection timed out after
+    30001 milliseconds''), at 20:35, 20:39 and 20:52 +02:00. No index could be inventoried; no workaround attempted. Retry
+    from another network.'
+  index_url: https://dss.sc.gov/about/data-and-resources/manuals/
+  index_document_count: null
+  taken_count: 0
 - jurisdiction: us-sd
   name: South Dakota
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-sd-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_json_regulation_sections
+  primary_source_url: https://sdlegislature.gov/Rules/Administrative/67:10
+  target_manifest: manifests/us-sd-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-sd
-    document_class: null
-    version: null
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 10
     needs_review: 1
@@ -3795,8 +4060,15 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/sd/dss/tanf/resources/limit.yaml
-  notes: 'Not in batch 1 (batch 1 = first ten queue rows needing a new extraction: CA, CO, DC, MO, MS, MT, ND, NY, OK, OR).
-    Falls in batch 2 together with the remaining rows in queue order (PA, SC, SD, VA).'
+  notes: 'Batch 2. Primary source confirmed from the publisher''s own index. Inventory: rules API chain from 67:10 returns
+    181 records ({''B'': 1, ''C'': 10, ''D'': 170}: B article, C chapters, D sections); taken the 153 sections whose catchline
+    is not Repealed/Transferred; not taken: the article and chapter table-of-contents records and 17 repealed/transferred
+    sections (67:10:01:13, 67:10:03:22, 67:10:04:18, 67:10:04:19, 67:10:05:04, 67:10:05:06, 67:10:05:10, 67:10:05:15, 67:10:05:16,
+    67:10:06:04, 67:10:06:09, 67:10:06:10, 67:10:06:14, 67:10:06:15, 67:10:06:17, 67:10:06:20, 67:10:10:05). Extraction proven
+    2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://sdlegislature.gov/Rules/Administrative/67:10
+  index_document_count: 181
+  taken_count: 153
 - jurisdiction: us-tx
   name: Texas
   queue_status: done
@@ -4149,16 +4421,29 @@ states:
     discovered_via:
     - policyengine-us#variables/gov/states/tx/tanf/eligibility/tx_tanf_eligible.py
   notes: Texas Works Handbook (combined) already ingested. Done per the prior-ingest list.
+- jurisdiction: us-ut
+  name: Utah
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-ut-fep-official-documents.yaml
+  target_scope:
+    jurisdiction: us-ut
+    document_class: regulation
+    version: 2026-07-02-ut-fep-official-documents
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: Utah FEP rules R986 (adopted rule) and the DWS eligibility manual already ingested. Done.'
 - jurisdiction: us-va
   name: Virginia
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-va-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_manual_chapters
+  primary_source_url: https://www.dss.virginia.gov/relief/tanf/tanf-manual/
+  target_manifest: manifests/us-va-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-va
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 5
     needs_review: 7
@@ -4273,8 +4558,13 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/va/dss/tanf/standard_multiplier.yaml
-  notes: 'Not in batch 1 (batch 1 = first ten queue rows needing a new extraction: CA, CO, DC, MO, MS, MT, ND, NY, OK, OR).
-    Falls in batch 2 together with the remaining rows in queue order (PA, SC, SD, VA).'
+  notes: 'Batch 2. Primary source confirmed from the publisher''s own index. Inventory: 12 PDFs on the TANF Manual page: Contents
+    (table of contents), Full Manual (combined file) and 10 chapter files (Chapter 100 through Chapter 1000, incl. VIEW chapters
+    900-1000); taken the 10 chapter files (the Full Manual duplicates them; the Contents file is a TOC). Extraction proven
+    2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://www.dss.virginia.gov/relief/tanf/tanf-manual/
+  index_document_count: 12
+  taken_count: 10
 - jurisdiction: us-wa
   name: Washington
   queue_status: done
@@ -4495,3 +4785,31 @@ states:
     discovered_via:
     - policyengine-us#variables/gov/states/wa/dshs/tanf/eligibility/wa_tanf_immigration_status_eligible.py
   notes: Washington EA-Z Manual (combined) already ingested. Done per the prior-ingest list.
+- jurisdiction: us-wv
+  name: West Virginia
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-wv-manuals.yaml
+  target_scope:
+    jurisdiction: us-wv
+    document_class: manual
+    version: 2026-07-21-wv-income-maintenance-manual
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: West Virginia Income Maintenance Manual (combined, incl. WV WORKS) already ingested. Reviewer judgment:
+    combined manual counts. Done.'
+- jurisdiction: us-wy
+  name: Wyoming
+  queue_status: done
+  source_kind: already_ingested
+  primary_source_url: null
+  target_manifest: manifests/us-wy-manuals.yaml
+  target_scope:
+    jurisdiction: us-wy
+    document_class: manual
+    version: 2026-05-27-wy-manuals-r2026-07-15-self-contained
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Batch 2 check: Wyoming SNAP and POWER Policy Manual (combined) already ingested. Reviewer judgment: combined manual
+    counts. Done.'
