@@ -1,0 +1,280 @@
+version: '2026-09-10'
+document_family: liheap_policy_sources
+program: LIHEAP
+queue_status: draft
+policy:
+  canonical_pipeline: source-first
+  source_policy: primary_official_only
+  durable_artifacts:
+  - sources
+  - inventory
+  - provisions
+  - coverage
+  forbidden_sources:
+  - secondary summaries
+  - State Options Reports
+  - benefitswiki
+  - policy manuals reposted by non-government sites
+  notes:
+  - Drafted 2026-09-10 for the ten board Year 1 programs (ballmer-proposal-2026 encoding-program-list.md).
+  - 'Lead list only: PolicyEngine-US citations extracted offline with the citing path preserved, classified by axiom_corpus.corpus.source_discovery.
+    Not corpus sources; every selected document must be re-fetched from the official publisher.'
+  - The lead list under-names agency manuals and state plans. Reviewers must add them from the official publisher before the
+    queue is agent_ready.
+  - 'policyengine-us 84253b6afafb (2026-08-17); lead file: policyengine-us-committed-program-references.jsonl'
+lead_list:
+  source: policyengine-us
+  commit: 84253b6afafbb1875c65f12e654c6535744728b7
+  committed_at: '2026-08-17T17:54:20-04:00'
+  reference_file: policyengine-us-committed-program-references.jsonl
+  classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
+status_counts:
+  needs_review: 4
+states:
+- jurisdiction: us
+  name: Federal
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-liheap-sources.yaml
+  target_scope:
+    jurisdiction: us
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 1
+  candidate_sources:
+  - url: https://acf.gov/ocs/law-regulation/liheap-statute-and-regulations
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: regulation
+    host: acf.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/liheap/smi_limit.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-dc
+  name: District of Columbia
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-dc-liheap-sources.yaml
+  target_scope:
+    jurisdiction: us-dc
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 3
+  candidate_sources:
+  - url: https://doee.dc.gov/liheap
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: doee.dc.gov
+    jurisdiction_inferred: us-dc
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/states/dc/doee/liheap/dc_liheap_eligible.py
+  - url: https://doee.dc.gov/sites/default/files/dc/sites/doee/service_content/attachments/DC%20DOEE%20-%20FY26%20LIHEAP%20Benefit%20Matrix.docx
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: doee.dc.gov
+    jurisdiction_inferred: us-dc
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/dc/doee/liheap/income_level_increment.yaml
+    - policyengine-us#parameters/gov/states/dc/doee/liheap/payment/electricity.yaml
+    - policyengine-us#parameters/gov/states/dc/doee/liheap/payment/gas.yaml
+  - url: https://doee.dc.gov/sites/default/files/dc/sites/doee/service_content/attachments/DOEE%20FY24%20LIHEAP_REGULAR_Benefits_Table-Matrix.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: doee.dc.gov
+    jurisdiction_inferred: us-dc
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/dc/doee/liheap/income_level_increment.yaml
+    - policyengine-us#parameters/gov/states/dc/doee/liheap/payment/electricity.yaml
+    - policyengine-us#parameters/gov/states/dc/doee/liheap/payment/gas.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-il
+  name: Illinois
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-il-liheap-sources.yaml
+  target_scope:
+    jurisdiction: us-il
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 7
+  candidate_sources:
+  - url: https://dceo.illinois.gov/communityservices/utilitybillassistance.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dceo.illinois.gov
+    jurisdiction_inferred: us-il
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/eligibility/fpg_limit.yaml
+    - policyengine-us#variables/gov/states/il/dceo/liheap/eligibility/il_liheap_eligible.py
+    - policyengine-us#variables/gov/states/il/dceo/liheap/eligibility/il_liheap_eligible_for_crisis_assistance.py
+  - url: https://dceo.illinois.gov/communityservices/utilitybillassistance/faqs.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dceo.illinois.gov
+    jurisdiction_inferred: us-il
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/eligibility/rent_rate.yaml
+  - url: https://dceo.illinois.gov/content/dam/soi/en/web/dceo/communityservices/utilitybillassistance/documents/py25-liheap-state-plan--submitted-detailed-model-plan-liheap-10.01.24.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dceo.illinois.gov
+    jurisdiction_inferred: us-il
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/crisis_amount/max.yaml
+  - url: https://liheapch.acf.gov/docs/2024/benefits-matricies/IL_BenefitMatrix_2024.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: liheapch.acf.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/income_bracket.yaml
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/matrix/all_electric.yaml
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/matrix/cash.yaml
+  - url: https://liheapch.acf.gov/docs/2024/state-plans/IL_Plan_2024_rev1.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: liheapch.acf.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/crisis_amount/max.yaml
+  - url: https://liheapch.acf.gov/docs/2025/benefits-matricies/IL_BenefitMatrix_2025.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: liheapch.acf.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/matrix/all_electric.yaml
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/matrix/cash.yaml
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/matrix/nat_gas.yaml
+  - url: https://liheapch.acf.gov/docs/2026/benefits-matricies/IL_BenefitMatrix_Heat-Cool_2026.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: liheapch.acf.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/matrix/all_electric.yaml
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/matrix/cash.yaml
+    - policyengine-us#parameters/gov/states/il/dceo/liheap/payment/matrix/nat_gas.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-ma
+  name: Massachusetts
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-ma-liheap-sources.yaml
+  target_scope:
+    jurisdiction: us-ma
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 6
+    excluded_secondary: 1
+  candidate_sources:
+  - url: https://commteam.org/wp-content/uploads/2024/03/FY-2024-LIHEAP-Income-Eligibility-and-Benefit-Chart_Incomes-March-2024-Increase.pdf
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: commteam.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/benefit_level.yaml
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/hecs/amount/non_subsidized.yaml
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/hecs/amount/subsidized.yaml
+  - url: https://liheapch.acf.gov/tables/subsidize.htm
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: liheapch.acf.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/eligibility/rent_threshold_subsidized_housing.yaml
+    - policyengine-us#variables/gov/states/ma/doer/liheap/eligibility/ma_liheap_eligible.py
+    - policyengine-us#variables/gov/states/ma/doer/liheap/eligibility/ma_liheap_eligible_subsidized_housing.py
+  - url: https://mass.gov/doc/fy-2023-liheap-income-eligibility-and-benefit-level-chart-october-2022/download
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: mass.gov
+    jurisdiction_inferred: us-ma
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/benefit_level.yaml
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/hecs/amount/non_subsidized.yaml
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/hecs/amount/subsidized.yaml
+  - url: https://mass.gov/doc/fy-2025-heap-income-eligibility-benefit-chart-may-8-2025/download
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: mass.gov
+    jurisdiction_inferred: us-ma
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/benefit_level.yaml
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/hecs/amount/non_subsidized.yaml
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/hecs/amount/subsidized.yaml
+  - url: https://mass.gov/doc/fy2025-heap-state-plan-draft/download
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: mass.gov
+    jurisdiction_inferred: us-ma
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/eligibility/rent_threshold_subsidized_housing.yaml
+  - url: https://mass.gov/info-details/learn-about-home-energy-assistance-heap
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: mass.gov
+    jurisdiction_inferred: us-ma
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/hecs/eligibility/prior_year_cost_threshold.yaml
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/standard/amount/non_subsidized.yaml
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/standard/amount/subsidized.yaml
+  - url: https://masslegalservices.org/system/files/blog/FY_2022_LIHEAP_Income_Eligibility_and_Benefit_Chart_APRIL_2022_UTILITY_Increase.pdf
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: masslegalservices.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/benefit_level.yaml
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/hecs/amount/non_subsidized.yaml
+    - policyengine-us#parameters/gov/states/ma/doer/liheap/hecs/amount/subsidized.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.

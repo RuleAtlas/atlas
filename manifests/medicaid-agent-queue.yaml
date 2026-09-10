@@ -1,0 +1,1311 @@
+version: '2026-09-10'
+document_family: medicaid_policy_sources
+program: MEDICAID
+queue_status: draft
+policy:
+  canonical_pipeline: source-first
+  source_policy: primary_official_only
+  durable_artifacts:
+  - sources
+  - inventory
+  - provisions
+  - coverage
+  forbidden_sources:
+  - secondary summaries
+  - State Options Reports
+  - benefitswiki
+  - policy manuals reposted by non-government sites
+  notes:
+  - Drafted 2026-09-10 for the ten board Year 1 programs (ballmer-proposal-2026 encoding-program-list.md).
+  - 'Lead list only: PolicyEngine-US citations extracted offline with the citing path preserved, classified by axiom_corpus.corpus.source_discovery.
+    Not corpus sources; every selected document must be re-fetched from the official publisher.'
+  - The lead list under-names agency manuals and state plans. Reviewers must add them from the official publisher before the
+    queue is agent_ready.
+  - 'policyengine-us 84253b6afafb (2026-08-17); lead file: policyengine-us-committed-program-references.jsonl'
+lead_list:
+  source: policyengine-us
+  commit: 84253b6afafbb1875c65f12e654c6535744728b7
+  committed_at: '2026-08-17T17:54:20-04:00'
+  reference_file: policyengine-us-committed-program-references.jsonl
+  classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
+status_counts:
+  needs_review: 3
+states:
+- jurisdiction: us
+  name: Federal
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-medicaid-sources.yaml
+  target_scope:
+    jurisdiction: us
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 32
+    needs_review: 51
+    excluded_secondary: 38
+  candidate_sources:
+  - url: https://docs.legis.wisconsin.gov/statutes/statutes/49/iv/471
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: statute
+    host: docs.legis.wisconsin.gov
+    jurisdiction_inferred: us-wi
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://dssmanuals.mo.gov/family-mo-healthnet-magi/1805-000-00/1805-030-00/1805-030-10/1805-030-10-25
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: dssmanuals.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/parent/is_parent_for_medicaid_nfc.py
+  - url: https://dssmanuals.mo.gov/family-mo-healthnet-magi/1805-000-00/1805-030-00/1805-030-20/1805-030-20-20/1805-030-20-20-05
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: dssmanuals.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/older_child/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/young_child/income_limit.yaml
+  - url: https://dssmanuals.mo.gov/family-mo-healthnet-magi/1810-000-00/1810-020-00/1810-020-20/1810-020-20-10
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: dssmanuals.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/parent/is_parent_for_medicaid_nfc.py
+  - url: https://dssmanuals.mo.gov/family-mo-healthnet-magi/1810-000-00/1810-020-00/1810-020-20/1810-020-20-20
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: dssmanuals.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_age_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://dssmanuals.mo.gov/family-mo-healthnet-magi/1830-000-00/1830-010-00/1830-010-05
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: dssmanuals.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/older_child/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/young_child/income_limit.yaml
+  - url: https://dssmanuals.mo.gov/family-mo-healthnet-magi/1865-000-00/1865-010-00
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: dssmanuals.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/excludes_ssi_recipients.yaml
+  - url: https://dssmanuals.mo.gov/family-mo-healthnet-magi/1865-000-00/1865-020-00
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: dssmanuals.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/excludes_ssi_recipients.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/adult/is_adult_for_medicaid_nfc.py
+  - url: https://dssmanuals.mo.gov/mo-healthnet-for-the-aged-blind-and-disabled/0805-000-00/0805-015-00/0805-015-45-income-maximum
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: dssmanuals.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/medicaid_optional_senior_or_disabled_income_limit.py
+  - url: https://ecfr.gov/current/title-42/part-435/section-435.554
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: regulation
+    host: ecfr.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/medicaid_community_engagement_pass_through_eligible.py
+  - url: https://federalregister.gov/d/2016-27424
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/fmap.yaml
+  - url: https://federalregister.gov/d/2017-24953
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/fmap.yaml
+  - url: https://federalregister.gov/d/2018-25944
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/fmap.yaml
+  - url: https://federalregister.gov/d/2019-26207
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/fmap.yaml
+  - url: https://federalregister.gov/d/2020-26387
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/fmap.yaml
+  - url: https://federalregister.gov/d/2021-25798
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/fmap.yaml
+  - url: https://federalregister.gov/d/2022-26390
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/fmap.yaml
+  - url: https://federalregister.gov/d/2023-25636
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/fmap.yaml
+  - url: https://federalregister.gov/d/2024-27910
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/fmap.yaml
+  - url: https://federalregister.gov/documents/2026/06/03/2026-11094/medicaid-program-community-engagement-requirement-for-certain-individuals
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/medicaid_community_engagement_pass_through_eligible.py
+  - url: https://fhb.hhs.texas.gov/handbooks/texas-works-handbook/a-520-relationship
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: fhb.hhs.texas.gov
+    jurisdiction_inferred: us-tx
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://govinfo.gov/link/cfr/42/435?link-type=pdf&sectionnum=121&year=mostrecent
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: regulation
+    host: govinfo.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/is_209b_ssi_recipient_for_medicaid.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/is_209b_ssi_recipient_income_eligible_for_medicaid.py
+  - url: https://medicaid.gov/federal-policy-guidance/downloads
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/was_recently_incarcerated_for_medicaid_ce.py
+  - url: https://medicaid.gov/federal-policy-guidance/downloads/cib04272026.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/long_term_care/home_equity/agricultural_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/long_term_care/home_equity/limit.yaml
+  - url: https://medicaid.gov/federal-policy-guidance/downloads/cib05282025.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/long_term_care/home_equity/agricultural_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/long_term_care/home_equity/limit.yaml
+  - url: https://medicaid.gov/federal-policy-guidance/downloads/cib11182025.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/long_term_care/home_equity/agricultural_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/long_term_care/home_equity/limit.yaml
+  - url: https://medicaid.gov/federal-policy-guidance/downloads/cib12082025.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/work_requirements/applies.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/work_requirements/former_foster_care_age_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/work_requirements/monthly_hours_threshold.yaml
+  - url: https://medicaid.gov/federal-policy-guidance/downloads/cib12092025.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/long_term_care/home_equity/agricultural_limit.yaml
+  - url: https://medicaid.gov/medicaid/national-medicaid-chip-program-information/medicaid-childrens-health-insurance-program-basic-health-program-eligibility-levels
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: form
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: us-medicaid-chip-eligibility-levels
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/age_range/in_ca.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/age_range/in_mn.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/age_range/other.yaml
+  - url: https://medicaid.gov/medicaid/national-medicaid-chip-program-information/medicaid-childrens-health-insurance-program-basic-health-program-eligibility-levels/index.html
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: form
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/older_child/income_limit.yaml
+  - url: https://nd.gov/dhs/policymanuals/51003/Content/510-03-30-05.htm
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: nd.gov
+    jurisdiction_inferred: us-nd
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/excludes_ssi_recipients.yaml
+  - url: https://uscode.house.gov/view.xhtml?edition=prelim&num=0&req=granuleid%3AUSC-prelim-title8-section1613
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: statute
+    host: uscode.house.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/bar_exempt_immigration_statuses.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/five_year_bar_years.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/is_medicaid_immigration_status_eligible.py
+  - url: https://admincode.legislature.state.al.us/api/chapter/560-X-25
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: admincode.legislature.state.al.us
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/age_limit.yaml
+  - url: https://ahca.myflorida.com/content/download/7808/file/S25_CMS_Approval_FL-13-0015-MM1-2.pdf
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: ahca.myflorida.com
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://congress.gov/119/plaws/publ21/PLAW-119publ21.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: congress.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/is_medically_frail_or_has_special_medical_needs_for_medicaid_ce.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/was_recently_incarcerated_for_medicaid_ce.py
+  - url: https://congress.gov/bill/111th-congress/house-bill/3590/text
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: congress.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/expansion_fmap.yaml
+  - url: https://congress.gov/bill/119th-congress/house-bill/1/text
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: congress.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/long_term_care/home_equity/agricultural_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/long_term_care/home_equity/limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/work_requirements/age_range.yaml
+  - url: https://data.medicaid.gov/dataset/d7e4cccb-1c56-5b5d-acce-5e7744c6d3b4
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: data.medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/older_child/income_limit.yaml
+  - url: https://dhcs.ca.gov/services/medi-cal/eligibility/Pages/Asset-Limit-Changes-for-Non-MAGI-Medi-Cal.aspx
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dhcs.ca.gov
+    jurisdiction_inferred: us-ca
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/assets/limit/couple.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/assets/limit/individual.yaml
+  - url: https://dhcs.ca.gov/services/medi-cal/eligibility/letters/Documents/25-14.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dhcs.ca.gov
+    jurisdiction_inferred: us-ca
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/assets/limit/couple.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/assets/limit/individual.yaml
+  - url: https://dhcs.ca.gov/services/working-disabled-program
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dhcs.ca.gov
+    jurisdiction_inferred: us-ca
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/is_working_disabled_buy_in_for_medicaid.py
+    - policyengine-us#variables/gov/hhs/medicaid/medicaid_working_disabled_buy_in_premium.py
+    - policyengine-us#variables/gov/hhs/medicaid/medicaid_working_disabled_buy_in_premium_person.py
+  - url: https://dhhs.nh.gov/mam_htm/html/230_01_granite_advantage_eligibility_criteria_mam.htm
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dhhs.nh.gov
+    jurisdiction_inferred: us-nh
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/excludes_ssi_recipients.yaml
+  - url: https://dhs.state.il.us/page.aspx?item=61206
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dhs.state.il.us
+    jurisdiction_inferred: null
+    already_registered: us-il-snap-manual
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/excludes_ssi_recipients.yaml
+  - url: https://dmas.virginia.gov/media/0aynyhxk/m04-1-1-26a.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dmas.virginia.gov
+    jurisdiction_inferred: us-va
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/parent/medicaid_parent_income_limit.py
+  - url: https://dmas.virginia.gov/media/ifujac10/m03-7-1-24.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dmas.virginia.gov
+    jurisdiction_inferred: us-va
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/excludes_ssi_recipients.yaml
+  - url: https://download.medicaid.gov/data/medicaid-and-chip-eligibility-levels.xy8t-auhk.csv
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: download.medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/older_child/income_limit.yaml
+  - url: https://ecom.wyo.gov/m1200-family-and-childrens-programs/m1204-family-care/m1204a-family-care
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ecom.wyo.gov
+    jurisdiction_inferred: us-wy
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://flrules.org/gateway/ruleno.asp?id=65A-1.703
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: flrules.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://govinfo.gov/content/pkg/FR-2026-06-03/pdf/2026-11094.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: govinfo.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/is_in_medicaid_community_engagement_treatment_program.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/is_medically_frail_or_has_special_medical_needs_for_medicaid_ce.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/is_medically_frail_or_has_special_medical_needs_for_medicaid_ce.py
+  - url: https://hbx.dc.gov/sites/default/files/dc/sites/hbx/event_content/attachments/PROPOSED%20EXTENSION%20OF%20LOSS%20OF%20MEDICAID%20SEP%20Nov%202025_0.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: hbx.dc.gov
+    jurisdiction_inferred: us-dc
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/income_limit.yaml
+  - url: https://hcopub.dhs.state.mn.us/epm/2_2_2_1.htm
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: hcopub.dhs.state.mn.us
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/excludes_ssi_recipients.yaml
+  - url: https://healthcare.gov/glossary/federal-poverty-level-fpl
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: healthcare.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/income/tax_unit_medicaid_income_level.py
+  - url: https://healthcare.gov/glossary/modified-adjusted-gross-income-magi
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: healthcare.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/income/modification.yaml
+  - url: https://hfs.illinois.gov/medicalprograms/hbwd.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: hfs.illinois.gov
+    jurisdiction_inferred: us-il
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/is_working_disabled_buy_in_for_medicaid.py
+  - url: https://hfs.illinois.gov/medicalprograms/hbwd/premiums.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: hfs.illinois.gov
+    jurisdiction_inferred: us-il
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/medicaid_working_disabled_buy_in_premium.py
+    - policyengine-us#variables/gov/hhs/medicaid/medicaid_working_disabled_buy_in_premium_person.py
+  - url: https://humanservices.hawaii.gov/wp-content/uploads/2016/12/HAR-17-1718-ADULT-GROUP-Final-10-31-16-1.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: humanservices.hawaii.gov
+    jurisdiction_inferred: us-hi
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/excludes_ssi_recipients.yaml
+  - url: https://irs.gov/publications/p501
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: irs.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/income/medicaid_person_is_required_to_file.py
+  - url: https://khap.kdhe.ks.gov/kfmam/main.asp?tier1=02000&tier2=02100
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: khap.kdhe.ks.gov
+    jurisdiction_inferred: us-ks
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/age_limit.yaml
+  - url: https://legis.iowa.gov/docs/publications/FN/1449063.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: legis.iowa.gov
+    jurisdiction_inferred: us-ia
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/income_limit.yaml
+  - url: https://macpac.gov/wp-content/uploads/2024/12/EXHIBIT-36.-Medicaid-Income-Eligibility-Levels-as-a-Percentage-of-the-FPL-for-Non-Aged-Non-Disabled-Non-Pregnant-Adults-July-2024.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: macpac.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/income_limit.yaml
+  - url: https://macpac.gov/wp-content/uploads/2026/01/EXHIBIT-36.-Medicaid-Income-Eligibility-Levels-as-a-Percentage-of-the-Federal-Poverty-Level-for-Non-Aged-Non-Disabled-Non-Pregnant-Adults-by-State-2025.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: macpac.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/income_limit.yaml
+  - url: https://medicaid.gov/State-resource-center/Medicaid-State-Plan-Amendments/Downloads/AL/AL-13-0021-MM1.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/age_limit.yaml
+  - url: https://medicaid.gov/State-resource-center/Medicaid-State-Plan-Amendments/Downloads/MS/MS-13-0019-MM1.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://medicaid.gov/State-resource-center/Medicaid-State-Plan-Amendments/Downloads/SC/SC-13-0014-MM1.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://medicaid.gov/State-resource-center/Medicaid-State-Plan-Amendments/Downloads/WI/WI-13-021-MM1.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://medicaid.gov/State-resource-center/Medicaid-State-Plan-Amendments/Downloads/WY/WY-13-0008-MM1.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://medicaid.gov/medicaid-spa/2025-05-07/179381
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/pregnant/income_limit.yaml
+  - url: https://medicaid.gov/medicaid/section-1115-demonstrations
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/medicaid_premium.py
+  - url: https://medicaid.gov/resources-for-states/downloads/macpro-ig-more-restrictive-requirements-1902f-209bstates.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/is_209b_ssi_recipient_for_medicaid.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/is_209b_ssi_recipient_income_eligible_for_medicaid.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/is_ssi_recipient_for_medicaid.py
+  - url: https://medicaid.gov/state-resource-center/mac-learning-collaboratives/downloads/household-composition-and-income-training.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/income/medicaid_income_level.py
+  - url: https://medicaid.ms.gov/medicaid-coverage/who-qualifies-for-coverage/working-disabled
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.ms.gov
+    jurisdiction_inferred: us-ms
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/is_working_disabled_buy_in_for_medicaid.py
+    - policyengine-us#variables/gov/hhs/medicaid/medicaid_working_disabled_buy_in_premium.py
+    - policyengine-us#variables/gov/hhs/medicaid/medicaid_working_disabled_buy_in_premium_person.py
+  - url: https://medicaid.ms.gov/wp-content/uploads/2017/10/Chapter-101.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.ms.gov
+    jurisdiction_inferred: us-ms
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://medicaid.nv.gov/Downloads/provider/web_announcement_3748_20251020.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.nv.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/pregnant/income_limit.yaml
+  - url: https://medicaidscreener.com/?p=table
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: medicaidscreener.com
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/older_child/income_limit.yaml
+  - url: https://mydss.mo.gov/benefit-program-income-limits
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: mydss.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/older_child/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/young_child/income_limit.yaml
+  - url: https://pamms.dhs.ga.gov/dfcs/medicaid/2162
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: pamms.dhs.ga.gov
+    jurisdiction_inferred: us-ga
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/age_limit.yaml
+  - url: https://pamms.dhs.ga.gov/dfcs/medicaid/2255
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: pamms.dhs.ga.gov
+    jurisdiction_inferred: us-ga
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/age_limit.yaml
+  - url: https://portal.ct.gov/-/media/Departments-and-Agencies/DSS/HIT/MedCoverageGroupsOLD.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: portal.ct.gov
+    jurisdiction_inferred: us-ct
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/excludes_ssi_recipients.yaml
+  - url: https://portal.ct.gov/-/media/aginganddisability/agingservices/choices/benefitsquickguide.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: portal.ct.gov
+    jurisdiction_inferred: us-ct
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/disregard/couple.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/disregard/individual.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/limit/couple.yaml
+  - url: https://portal.ct.gov/-/media/aginganddisability/agingservices/choices/quick-guide---accessible-version-21523.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: portal.ct.gov
+    jurisdiction_inferred: us-ct
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/disregard/couple.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/disregard/individual.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/limit/couple.yaml
+  - url: https://portal.ct.gov/ads/-/media/ads-beta/choices/choices-benefits-quick-guide.pdf?rev=3b8c59ca12224218bc4c4438649e7ac7
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: portal.ct.gov
+    jurisdiction_inferred: us-ct
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/disregard/couple.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/disregard/individual.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/limit/couple.yaml
+  - url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501715010
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/ssi_recipient/classification/section_1634.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/ssi_recipient/classification/section_209b.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/ssi_recipient/classification/ssi_criteria.yaml
+  - url: https://tn.gov/content/dam/tn/tenncare/documents2/SSPPParentsAndOtherCaretakerRelatives.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: tn.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://files.kff.org/attachment/REPORT-Medicaid-and-CHIP-Eligibility-and-Enrollment-Policies-as-of-January-2022.pdf
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: files.kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/age_range.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/income_limit.yaml
+  - url: https://files.kff.org/attachment/Report-Medicaid-and-CHIP-Eligibility-Enrollment-Renewal-and-Cost-Sharing-Policies-as-of-January-2018
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: files.kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/older_child/income_limit.yaml
+  - url: https://files.kff.org/attachment/Table-3-Medicaid-and-CHIP-Eligibility-Enrollment-and-Renewal-Policies-as-States-Prepare-for-the-Unwinding-of-the-Pandemic-Era-Continuous-Enrollment-Provision.pdf
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: files.kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/undocumented_immigrant.yaml
+  - url: https://files.kff.org/attachment/Table-3-Medicaid-and-CHIP-Eligibility-and-Enrollment-Policies-as-of-January-2022.pdf
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: files.kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/undocumented_immigrant.yaml
+  - url: https://files.kff.org/attachment/Table-3-State-Adoption-of-Options-to-Cover-Immigrant-Populations-January-2021.pdf
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: files.kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/undocumented_immigrant.yaml
+  - url: https://kff.org/affordable-care-act/state-indicator/medicaid-and-chip-income-eligibility-limits-for-pregnant-women-as-a-percent-of-the-federal-poverty-level?currentTimeframe=0&sortModel=%7B%22colId%22%3A%22Location%22%2C%22sort%22%3A%22asc%22%7D
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/pregnant/income_limit.yaml
+  - url: https://kff.org/medicaid/medicaid-financial-eligibility-for-seniors-and-people-with-disabilities-findings-from-a-50-state-survey
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/income/medicaid_optional_senior_or_disabled_countable_income.py
+  - url: https://kff.org/medicaid/state-indicator/medicaid-income-eligibility-limits-for-children-ages-1-5?currentTimeframe=0&selectedDistributions=january-2018--january-2021--january-2025&sortModel=%7B%22colId%22%3A%22Location%22%2C%22sort%22%3A%22asc%22%7D
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/young_child/income_limit.yaml
+  - url: https://kff.org/medicaid/state-indicator/medicaid-income-eligibility-limits-for-children-ages-6-18?currentTimeframe=0&selectedDistributions=january-2018--january-2021--january-2025&sortModel=%7B%22colId%22%3A%22Location%22%2C%22sort%22%3A%22asc%22%7D
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/older_child/income_limit.yaml
+  - url: https://kff.org/medicaid/state-indicator/medicaid-income-eligibility-limits-for-infants-ages-0-1?currentTimeframe=0&selectedDistributions=january-2018--january-2021--january-2025&sortModel=%7B%22colId%22%3A%22Location%22%2C%22sort%22%3A%22asc%22%7D
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/infant/income_limit.yaml
+  - url: https://kff.org/medicaid/state-indicator/medicaid-income-eligibility-limits-for-other-adults?currentTimeframe=0&selectedDistributions=january-2018--january-2021--january-2025&sortModel=%7B%22colId%22%3A%22Location%22%2C%22sort%22%3A%22asc%22%7D
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/income_limit.yaml
+  - url: https://kff.org/medicaid/state-indicator/medicaid-income-eligibility-limits-for-parents
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/requires_deprivation.yaml
+  - url: https://kff.org/racial-equity-and-health-policy/fact-sheet/key-facts-on-health-coverage-of-immigrants
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: manual
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/is_medicaid_eligible.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/is_medicaid_immigration_status_eligible.py
+  - url: https://kff.org/report-section/medicaid-eligibility-and-enrollment-policies-for-seniors-and-people-with-disabilities-non-magi-during-the-unwinding-appendix
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/assets/limit/individual.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/limit/couple.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/senior_or_disabled/income/limit/individual.yaml
+  - url: https://kff.org/report-section/medicaid-financial-eligibility-for-seniors-and-people-with-disabilities-findings-from-a-50-state-survey-appendix-tables
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/medically_needy/categories/child/child.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/medically_needy/categories/child/child_categories.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/medically_needy/categories/disabled.yaml
+  - url: https://kff.org/tracking-the-medicaid-provisions-in-the-2025-budget-bill
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/eligible_immigration_statuses.yaml
+  - url: https://law.cornell.edu/cfr/text/20/416.1163
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/income/deemed/from_ineligible_spouse/medicaid_optional_senior_or_disabled_income_deemed_from_ineligible_spouse.py
+  - url: https://law.cornell.edu/cfr/text/20/416.1165
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/income/deemed/from_ineligible_parent/medicaid_optional_senior_or_disabled_unearned_income_deemed_from_ineligible_parent.py
+  - url: https://law.cornell.edu/cfr/text/42/435.110
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/age_limit.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/parent/is_parent_for_medicaid_nfc.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/parent/medicaid_parent_income_limit.py
+  - url: https://law.cornell.edu/cfr/text/42/435.119
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/adult/excludes_ssi_recipients.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/adult/is_adult_for_medicaid_nfc.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/medicaid_category.py
+  - url: https://law.cornell.edu/cfr/text/42/435.4
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/age_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_age_limit.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/student_option.yaml
+  - url: https://law.cornell.edu/cfr/text/42/435.406
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/emergency_medicaid/uses_medicaid_income_thresholds.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/emergency_medicaid/is_emergency_medicaid_eligible.py
+  - url: https://law.cornell.edu/cfr/text/42/435.603
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/household/child_age_limit/non_student.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/household/child_age_limit/student.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/household/uses_full_time_student_under_21_rule.yaml
+  - url: https://law.cornell.edu/cfr/text/42/440.255
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/emergency_medicaid/has_emergency_medical_condition.py
+  - url: https://law.cornell.edu/cfr/text/42/part-435/subpart-B
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/medicaid_category.py
+  - url: https://law.cornell.edu/cfr/text/42/part-435/subpart-D
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/medically_needy/is_medically_needy_for_medicaid.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/medically_needy/medicaid_medically_needy_medical_expenses.py
+  - url: https://law.cornell.edu/regulations/massachusetts/130-CMR-505-002
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/dependent_child/age_limit.yaml
+  - url: https://law.cornell.edu/uscode/text/26/36B
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/income/modification.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/income/medicaid_magi.py
+    - policyengine-us#variables/gov/hhs/medicaid/income/medicaid_magi_person.py
+  - url: https://law.cornell.edu/uscode/text/26/61
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/income/medicaid_irs_gross_income.py
+  - url: https://law.cornell.edu/uscode/text/26/62
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/medicaid/income/medicaid_adjusted_gross_income_person.py
+  - url: https://law.cornell.edu/uscode/text/42/1396
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/covered.yaml
+  - url: https://law.cornell.edu/uscode/text/42/1396a
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/pregnant/postpartum_coverage.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/ssi_recipient/is_covered.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/adult/is_adult_for_medicaid.py
+  - url: https://law.cornell.edu/uscode/text/42/1396b
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/eligible_immigration_statuses.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/emergency_medicaid/enabled.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/emergency_medicaid/uses_medicaid_income_thresholds.yaml
+  - url: https://law.cornell.edu/uscode/text/42/1396d
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/expansion_fmap.yaml
+    - policyengine-us#parameters/gov/hhs/medicaid/cost_share/fmap.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/costs/medicaid_federal_share.py
+  - url: https://law.cornell.edu/uscode/text/42/1396p
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/long_term_care/home_equity/family_exception/child_age_threshold.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/is_medicaid_long_term_care_eligible.py
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/medicaid_home_equity_limit_family_exception.py
+  - url: https://law.cornell.edu/uscode/text/42/1396u-1
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/categories/parent/requires_deprivation.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/categories/parent/is_parent_for_medicaid.py
+  - url: https://law.cornell.edu/uscode/text/8/1611
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/emergency_medicaid/enabled.yaml
+  - url: https://law.cornell.edu/uscode/text/8/1641
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/medicaid/eligibility/eligible_immigration_statuses.yaml
+    - policyengine-us#variables/gov/hhs/medicaid/eligibility/is_medicaid_immigration_status_eligible.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-ar
+  name: Arkansas
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-ar-medicaid-sources.yaml
+  target_scope:
+    jurisdiction: us-ar
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 1
+    needs_review: 1
+    excluded_secondary: 3
+  candidate_sources:
+  - url: https://medicaid.gov/Medicaid-CHIP-Program-Information/By-Topics/Waivers/1115/downloads/ar/Health-Care-Independence-Program-Private-Option/ar-works-annl-rpt-jan-dec-2018.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: form
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ar/dhs/medicaid/work_requirements/age_range.yaml
+    - policyengine-us#parameters/gov/states/ar/dhs/medicaid/work_requirements/applies.yaml
+    - policyengine-us#parameters/gov/states/ar/dhs/medicaid/work_requirements/income_limit.yaml
+  - url: https://medicaid.gov/medicaid/section-1115-demo/demonstration-and-waiver-list/81021
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ar/dhs/medicaid/work_requirements/applies.yaml
+    - policyengine-us#variables/gov/states/ar/dhs/medicaid/eligibility/ar_medicaid_work_requirement_eligible.py
+    - policyengine-us#variables/gov/states/ar/dhs/medicaid/eligibility/ar_medicaid_work_requirement_subject.py
+  - url: https://kff.org/medicaid/issue-brief/an-early-look-at-implementation-of-medicaid-work-requirements-in-arkansas
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ar/dhs/medicaid/work_requirements/monthly_hours_threshold.yaml
+  - url: https://kff.org/medicaid/issue-brief/state-data-for-medicaid-work-requirements-in-arkansas
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ar/dhs/medicaid/work_requirements/age_range.yaml
+    - policyengine-us#parameters/gov/states/ar/dhs/medicaid/work_requirements/dependent_age_limit.yaml
+    - policyengine-us#parameters/gov/states/ar/dhs/medicaid/work_requirements/income_limit.yaml
+  - url: https://law.cornell.edu/regulations/arkansas/016-20-18-Ark-Code-R-003
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ar/dhs/medicaid/work_requirements/dependent_age_limit.yaml
+    - policyengine-us#variables/gov/states/ar/dhs/medicaid/eligibility/ar_medicaid_work_requirement_eligible.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-va
+  name: Virginia
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-va-medicaid-sources.yaml
+  target_scope:
+    jurisdiction: us-va
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 1
+  candidate_sources:
+  - url: https://dmas.virginia.gov/media/0aynyhxk/m04-1-1-26a.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dmas.virginia.gov
+    jurisdiction_inferred: us-va
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/va/dmas/medicaid/lifc/in_effect.yaml
+    - policyengine-us#parameters/gov/states/va/dmas/medicaid/lifc/income_limit/group1/additional.yaml
+    - policyengine-us#parameters/gov/states/va/dmas/medicaid/lifc/income_limit/group1/main.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
