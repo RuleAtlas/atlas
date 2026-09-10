@@ -26,6 +26,8 @@ policy:
     POMS SI 01415.010 / SI 01415.058 (AZ, AR, MS, ND, TN, WV have no optional program and get no row).'
   - '2026-09-10 SSI run: POMS SI family manifest built by scripts/build_ssi_poms_si_manifests.py; state rows categorised from
     POMS SI 01415.010 / SI 01415.058 (AZ, AR, MS, ND, TN, WV have no optional program and get no row).'
+  - '2026-09-10 SSI state-supplement batch 1: scripts/build_ssi_state_supplement_manifests.py; ten largest needs_review states
+    by population attempted (TX, FL, NY, IL, OH, NC, VA, WA, MA, CO) with replacements MN, SC, AL; docs/ingest-runs/2026-09-10-ssi-state-supplements-batch-1.md.'
 lead_list:
   source: policyengine-us
   commit: 84253b6afafbb1875c65f12e654c6535744728b7
@@ -33,9 +35,10 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  agent_ready: 10
-  needs_review: 29
-  done: 7
+  agent_ready: 14
+  needs_review: 16
+  done: 13
+  blocked_primary_source: 3
 states:
 - jurisdiction: us
   name: Federal
@@ -603,20 +606,24 @@ states:
   name: Alabama
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
+  queue_status: done
+  source_kind: official_state_or_ssa_document
   primary_source_url: null
-  target_manifest: null
+  target_manifest: manifests/us-al-admin-code-660-2-4.yaml
   target_scope:
     jurisdiction: us-al
-    document_class: null
-    version: null
-  index_url: null
+    document_class: regulation
+    version: 2026-06-30-al-admin-code-660-2-4
+  index_url: https://dhr.alabama.gov/
   index_document_count: null
   taken_count: 0
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+  notes: Done by pointer (replacement 3, after SC blocked). Alabama's optional supplementation rule, Alabama Administrative
+    Code Chapter 660-2-4 'Optional Supplementation' (DHR), is already in the corpus (62 rows, page granularity) as us-al/regulation/...
+    from the 2026-06-30 run. dhr.alabama.gov answered HTTP 200 to a plain client on 2026-09-10; medicaid.alabama.gov did not
+    answer TCP. (2026-09-10 state-supplement batch 1.)
+  index_families: 'pointer to Alabama Administrative Code chapter 660-2-4 Optional Supplementation (62 rows, in the corpus):
+    1 chapter found / 0 new documents taken'
 - jurisdiction: us-ca
   name: California
   lead_counts: {}
@@ -642,20 +649,24 @@ states:
   name: Colorado
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
+  queue_status: done
+  source_kind: official_state_or_ssa_document
   primary_source_url: null
   target_manifest: null
   target_scope:
     jurisdiction: us-co
-    document_class: null
-    version: null
-  index_url: null
+    document_class: regulation
+    version: 2026-06-19-co-oap-9-ccr-2503-5
+  index_url: https://www.sos.state.co.us/CCR/NumericalCCRDocList.do?deptID=9&agencyID=31
   index_document_count: null
   taken_count: 0
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+  notes: 'Done by pointer. Colorado''s supplements to SSI are the Old Age Pension (OAP) and Aid to the Needy Disabled - State
+    Only (AND-SO) programs under the Adult Financial rule 9 CCR 2503-5, already in the corpus in full (92 rows: 3.500-3.587
+    incl. 3.530 OAP and 3.540 AND-SO) as us-co/regulation/9-ccr-2503-5/... from the Secretary of State CCR PDF (adapter scope,
+    no manifest). (2026-09-10 state-supplement batch 1.)'
+  index_families: 'pointer to 9 CCR 2503-5 Adult Financial (92 rows incl. 3.530 OAP and 3.540 AND-SO, all in the corpus):
+    1 rule found / 0 new documents taken'
 - jurisdiction: us-ct
   name: Connecticut
   lead_counts: {}
@@ -715,20 +726,23 @@ states:
   name: Florida
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
-  primary_source_url: null
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_state_regulation
+  primary_source_url: https://flrules.org/gateway/RuleNo.asp?title=OPTIONAL%20STATE%20SUPPLEMENTATION&ID=65A-2.022
+  target_manifest: manifests/us-fl-ssi-state-supplement.yaml
   target_scope:
     jurisdiction: us-fl
-    document_class: null
-    version: null
-  index_url: null
-  index_document_count: null
-  taken_count: 0
+    document_class: regulation
+    version: 2026-09-10-ssi-state-supplement
+  index_url: https://flrules.org/gateway/ChapterHome.asp?Chapter=65A-2
+  index_document_count: 8
+  taken_count: 8
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+  notes: 'Optional State Supplementation (OSS): FAC chapter 65A-2 (8 rules, each rule''s .doc text from flrules.org, the Department
+    of State''s FAC publisher; rule pages print the effective dates 2001-12-16 to 2025-06-24). DCF''s own site has no OSS
+    page (guessed paths 404) and the ESS Program Policy Manual scope carries no OSS text. document_class regulation, citation
+    us-fl/regulation/fac/65a-2/<section> (the FAC 65A-1 convention).'
+  index_families: 'FAC chapter 65A-2 Optional State Supplementation rules: 8 found / 8 taken'
 - jurisdiction: us-ga
   name: Georgia
   lead_counts: {}
@@ -803,21 +817,26 @@ states:
   name: Illinois
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
+  queue_status: done
+  source_kind: official_state_or_ssa_document
   primary_source_url: null
-  target_manifest: null
+  target_manifest: manifests/us-il-snap-manual.yaml
   target_scope:
     jurisdiction: us-il
-    document_class: null
-    version: null
-  index_url: null
+    document_class: manual
+    version: 2026-05-27-il-cash-snap-medical-manual-r2026-07-15-self-contained
+  index_url: https://www.dhs.state.il.us/page.aspx?item=13108
   index_document_count: null
   taken_count: 0
   administration: S
-  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
-    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
-    regional description in the federal family: us/manual/ssa/poms/si/chi01401.002.'
+  notes: Done by pointer. Illinois' supplement is AABD Cash (Aid to the Aged, Blind or Disabled), governed by the IDHS Cash,
+    SNAP and Medical Policy Manual / Workers' Action Guide, which is in the corpus in full (12,450 rows). AABD sections present
+    include PM I-02-02 (csmm/12262), PM I-03-03 Adult Programs (12286), PM/WAG 11-01-00 AABD Cash Assistance Standard (15910,
+    15911), PM/WAG 11-02-03 Using the AABD Cash Assistance Standard (15967, 15968), WAG 03-03-02 SSI and AABD Cash (13254),
+    WAG 25-03-03 AABD Fuel and Utility Allowances (12668) and PM 22-05-01 Excess Shelter Allowance (18641); 493 rows mention
+    AABD. (2026-09-10 state-supplement batch 1.)
+  index_families: 'pointer to the IDHS Cash, SNAP and Medical Policy Manual / WAG scope (12,450 rows; AABD Cash sections present):
+    0 new documents taken'
 - jurisdiction: us-in
   name: Indiana
   lead_counts: {}
@@ -893,22 +912,24 @@ states:
   name: Massachusetts
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
-  primary_source_url: null
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_state_regulation
+  primary_source_url: https://www.mass.gov/regulations/106-CMR-32700-eligibility-requirements-for-state-supplement-program-ssp
+  target_manifest: manifests/us-ma-ssi-state-supplement.yaml
   target_scope:
     jurisdiction: us-ma
-    document_class: null
-    version: null
-  index_url: null
-  index_document_count: null
-  taken_count: 0
+    document_class: regulation
+    version: 2026-09-10-ssi-state-supplement
+  index_url: https://www.mass.gov/law-library/106-cmr
+  index_document_count: 18
+  taken_count: 1
   administration: S
-  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
-    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
-    regional description in the federal family: us/manual/ssa/poms/si/bos01415.024, us/manual/ssa/poms/si/bos01415.930. mass.gov
-    answered 403 to a plain client on 2026-09-10.'
+  notes: 'State Supplement Program (SSP): 106 CMR 327.000 Eligibility Requirements for SSP (DTA), one regulation PDF from
+    the mass.gov law library 106 CMR index (18 chapters listed; 327 taken), 24 section rows 327.010-327.410 (the TOC misprints
+    327.160 as 322.160). document_class regulation, citation us-ma/regulation/106-cmr/327/<section>. mass.gov answered HTTP
+    200 to a paced plain client on 2026-09-10 (the guessed law-library/106-cmr-327 path is 404; the regulation page is /regulations/106-CMR-32700-...).'
+  index_families: 'SSP (327): 1 found / 1 taken; Fair hearing rules (343): 1 found / 0 taken; SNAP (360-367): 8 found / 0
+    taken; TCAP / TAFDC / EAEDC (701-708): 8 found / 0 taken'
 - jurisdiction: us-md
   name: Maryland
   lead_counts: {}
@@ -967,21 +988,25 @@ states:
   name: Minnesota
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
+  queue_status: done
+  source_kind: official_state_or_ssa_document
   primary_source_url: null
-  target_manifest: null
+  target_manifest: manifests/us-mn-combined-manual.yaml
   target_scope:
     jurisdiction: us-mn
-    document_class: null
-    version: null
-  index_url: null
+    document_class: manual
+    version: 2026-05-27-mn-combined-manual-r2026-07-15-self-contained
+  index_url: https://www.dhs.state.mn.us/main/idcplg?IdcService=GET_DYNAMIC_CONVERSION&RevisionSelectionMethod=LatestReleased&dDocName=CM_MANUAL
   index_document_count: null
   taken_count: 0
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run. mn.gov/dhs answered
-    with a Radware bot-manager challenge to a plain client on 2026-09-10.
+  notes: Done by pointer (replacement 1, after NY blocked). Minnesota Supplemental Aid (MSA) is governed by the DHS Combined
+    Manual, in the corpus as one PDF (dhs-327301.pdf, 1,354 rows; 523 pages mention MSA, incl. 0020.21 MSA Assistance Standards),
+    plus the MSA revised sections issued 01/2026 (us-mn/manual/2026-06-27-mn-dhs-msa-revised-sections-2026-01, mndhs-073585.pdf).
+    mn.gov/dhs answered a Radware challenge to a plain client on 2026-09-10 (federal run); the corpus copies came from dhs.state.mn.us.
+    (2026-09-10 state-supplement batch 1.)
+  index_families: 'pointer to the DHS Combined Manual scope (1 PDF, 1,354 rows) and the MSA revised sections 01/2026 scope:
+    0 new documents taken'
 - jurisdiction: us-mo
   name: Missouri
   lead_counts: {}
@@ -1020,20 +1045,24 @@ states:
   name: North Carolina
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
-  primary_source_url: null
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual
+  primary_source_url: https://policies.ncdhhs.gov/document/special-assistance-manual/
+  target_manifest: manifests/us-nc-ssi-state-supplement.yaml
   target_scope:
     jurisdiction: us-nc
-    document_class: null
-    version: null
-  index_url: null
-  index_document_count: null
-  taken_count: 0
+    document_class: manual
+    version: 2026-09-10-ssi-state-supplement
+  index_url: https://policies.ncdhhs.gov/divisional-n-z/social-services/special-assistance/special-assistance/
+  index_document_count: 111
+  taken_count: 2
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+  notes: 'State/County Special Assistance (SA, adult care home) and SA In-Home: the two DSS program manuals (PDF, revised
+    2026-06-01; 368 and 48 pages) from the NCDHHS Policies and Manuals Special Assistance index, which also lists change notices,
+    administrative letters, forms and EIS documents (not taken). document_class manual, citation us-nc/manual/dss/special-assistance/{manual,in-home-manual},
+    page granularity.'
+  index_families: 'EIS system documents: 3 found / 0 taken; administrative letters: 33 found / 0 taken; change notices: 50
+    found / 0 taken; forms and notices: 23 found / 0 taken; program manuals: 2 found / 2 taken'
 - jurisdiction: us-ne
   name: Nebraska
   lead_counts: {}
@@ -1124,39 +1153,46 @@ states:
   name: New York
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
+  queue_status: blocked_primary_source
   source_kind: state_agency_document
-  primary_source_url: null
+  primary_source_url: https://otda.ny.gov/programs/ssp/
   target_manifest: null
   target_scope:
     jurisdiction: us-ny
     document_class: null
     version: null
-  index_url: null
+  index_url: https://otda.ny.gov/programs/ssp/
   index_document_count: null
   taken_count: 0
   administration: S
-  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
-    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
-    regional description in the federal family: us/manual/ssa/poms/si/ny01415.026.'
+  notes: 'Blocked 2026-09-10 (state-supplement batch 1): otda.ny.gov (OTDA State Supplement Program page): plain client TCP
+    connection reset by peer (site root too); curl-cffi chrome120 impersonation HTTP 200 but a 5,615-byte JavaScript challenge
+    (''Please enable JavaScript to view the page content. Your support ID is ...'') with no page content. No index inventory
+    possible. SSA regional description remains in the federal family: us/manual/ssa/poms/si/ny01415.026.'
+  index_families: no index inventory possible (publisher blocked; see notes)
 - jurisdiction: us-oh
   name: Ohio
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
+  queue_status: blocked_primary_source
   source_kind: state_agency_document
-  primary_source_url: null
+  primary_source_url: https://codes.ohio.gov/ohio-administrative-code/chapter-5122-36
   target_manifest: null
   target_scope:
     jurisdiction: us-oh
     document_class: null
     version: null
-  index_url: null
+  index_url: https://codes.ohio.gov/ohio-administrative-code/chapter-5122-36
   index_document_count: null
   taken_count: 0
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+  notes: 'Blocked 2026-09-10 (state-supplement batch 1): Ohio''s Residential State Supplement is governed by OAC chapter 5122-36
+    (Department of Behavioral Health, formerly OhioMHAS). codes.ohio.gov: connect timeout at 20 s for a plain client and for
+    chrome120 impersonation (same as the 2026-09-10 Medicaid batch). Agency site: mha.ohio.gov redirects to dbh.ohio.gov,
+    which answers HTTP 404 (5,264-byte error shell) to every plain request and, impersonated, HTTP 200 generic ''Community''
+    pages without the RSS program text or rule documents; its Rules & Regulations page carries no 5122-36 links. No index
+    inventory possible.'
+  index_families: no index inventory possible (publisher blocked; see notes)
 - jurisdiction: us-ok
   name: Oklahoma
   lead_counts: {}
@@ -1232,20 +1268,23 @@ states:
   name: South Carolina
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
+  queue_status: blocked_primary_source
   source_kind: state_agency_document
-  primary_source_url: null
+  primary_source_url: https://www.scdhhs.gov/resources/mppm
   target_manifest: null
   target_scope:
     jurisdiction: us-sc
     document_class: null
     version: null
-  index_url: null
+  index_url: https://www.scdhhs.gov/resources/mppm
   index_document_count: null
   taken_count: 0
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+  notes: 'Blocked 2026-09-10 (state-supplement batch 1): South Carolina''s Optional State Supplementation is administered
+    by SCDHHS (Medicaid Policy and Procedures Manual). scdhhs.gov answers HTTP 403 (919-byte body) to a plain client for the
+    site root and the MPPM page, and HTTP 403 (919 bytes) to chrome120 impersonation (replacement 2, after OH blocked). No
+    index inventory possible.'
+  index_families: no index inventory possible (publisher blocked; see notes)
 - jurisdiction: us-sd
   name: South Dakota
   lead_counts: {}
@@ -1269,22 +1308,27 @@ states:
   name: Texas
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
+  queue_status: done
+  source_kind: official_state_or_ssa_document
   primary_source_url: null
-  target_manifest: null
+  target_manifest: manifests/us-tx-medicaid-eligibility-manual.yaml
   target_scope:
     jurisdiction: us-tx
-    document_class: null
-    version: null
-  index_url: null
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
+  index_url: https://fhb.hhs.texas.gov/handbooks/medicaid-elderly-people-disabilities-handbook
   index_document_count: null
   taken_count: 0
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run. Lead-list HHSC
-    handbook page H-6000 (hhs.texas.gov) answered 403 to a plain client on 2026-09-10; a future extraction needs the manifest
-    browser_impersonation option.
+  notes: 'Done by pointer. Texas supplements only institutionalized SSI recipients: HHSC MEPD Handbook H-6000 ''Co-Payment
+    for SSI Cases'' (Revision 26-1, effective 2026-03-01) states that HHSC supplements the $30 reduced SSI payment standard
+    by $45 so recipients keep a $75 personal needs allowance. H-6000, Appendix VIII (effects of institutionalization on SSI)
+    and Appendix XXXI (budget reference chart) are already in the 2026-09-10 Medicaid eligibility-manual scope as us-tx/manual/hhsc/medicaid/mepd-h-6000,
+    mepd-appendix-viii and mepd-appendix-xxxi (manifest on branch discovery/ingest-medicaid). The MEPD handbook index (fhb.hhs.texas.gov,
+    HTTP 200 to a plain client on 2026-09-10; the hhs.texas.gov alias redirects there) lists chapters A-R plus appendices,
+    glossary, forms, revisions and bulletins; Chapter H lists H-1000 to H-8000. (2026-09-10 state-supplement batch 1.)'
+  index_families: 'pointer to the 2026-09-10 Medicaid MEPD handbook scope (H-6000, Appendix VIII, Appendix XXXI already taken
+    there): 0 new documents taken; MEPD index chapters A-R, appendices, glossary, forms, revisions, bulletins not re-inventoried'
 - jurisdiction: us-ut
   name: Utah
   lead_counts: {}
@@ -1307,20 +1351,25 @@ states:
   name: Virginia
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
-  primary_source_url: null
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual
+  primary_source_url: https://www.dsa.virginia.gov/apps/DocumentRepositoryViewer/fileviewer/1245
+  target_manifest: manifests/us-va-ssi-state-supplement.yaml
   target_scope:
     jurisdiction: us-va
-    document_class: null
-    version: null
-  index_url: null
-  index_document_count: null
-  taken_count: 0
+    document_class: manual
+    version: 2026-09-10-ssi-state-supplement
+  index_url: https://dars.virginia.gov/benefits/auxiliary-grant/for-providers/
+  index_document_count: 21
+  taken_count: 12
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+  notes: 'Auxiliary Grant (AG): DARS Auxiliary Grant Program Manual chapters A-L (12 PDFs) listed on the DARS AG ''for providers''
+    page and served by the agency repository www.dsa.virginia.gov (linked as www.vadsa.org). Manual transmittal DARS-APSD-18
+    and provider documents not taken; the adopted rule 22VAC30-80 (Virginia LIS, 12 sections) is the alternative family, not
+    taken. document_class manual, citation us-va/manual/dars/auxiliary-grant/chapter-<x>, page granularity.'
+  index_families: 'Auxiliary Grant Program Manual chapters: 12 found / 12 taken; manual transmittals: 1 found / 0 taken; provider
+    manuals, agreements, certification and forms: 8 found / 0 taken; 22VAC30-80 Auxiliary Grants Program sections on Virginia
+    LIS (https://law.lis.virginia.gov/admincode/title22/agency30/chapter80/; separate index): 12 found / 0 taken'
 - jurisdiction: us-vt
   name: Vermont
   lead_counts: {}
@@ -1341,21 +1390,23 @@ states:
   name: Washington
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
+  queue_status: done
+  source_kind: official_state_or_ssa_document
   primary_source_url: null
   target_manifest: null
   target_scope:
     jurisdiction: us-wa
-    document_class: null
-    version: null
-  index_url: null
+    document_class: regulation
+    version: 2026-07-01-388-474
+  index_url: https://app.leg.wa.gov/WAC/default.aspx?cite=388-474
   index_document_count: null
   taken_count: 0
   administration: S
-  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
-    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
-    regional description in the federal family: us/manual/ssa/poms/si/sea01415.034.'
+  notes: Done by pointer. Washington's SSI State Supplemental Payment is governed by WAC chapter 388-474, which is in the
+    corpus in full (388-474-0001, -0010, -0012 'What is a state supplemental payment and who can get it?', -0020) as us-wa/regulation/388/388-474/...
+    from the Legislature's WAC site (adapter scope, no manifest; selected in manifests/releases/us-rulespec-2026-07-17.json).
+    The DSHS EA-Z manual scope (2026-07-21) carries no SSP page. (2026-09-10 state-supplement batch 1.)
+  index_families: 'pointer to WAC chapter 388-474 (4 sections, all in the corpus): 4 found / 0 new documents taken'
 - jurisdiction: us-wi
   name: Wisconsin
   lead_counts: {}
