@@ -1,0 +1,62 @@
+{
+  "applied_files": [
+    {
+      "path": "data/corpus/coverage/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors.json",
+      "sha256": "7e5511099b83c063cca95ad793142205f8bfc7f438fd74b2b7bb334126051f00"
+    },
+    {
+      "path": "data/corpus/inventory/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors.json",
+      "sha256": "d3362fd15495f6fb668aeef49ad448fe22570a03890895523019a4785e9b6660"
+    },
+    {
+      "path": "data/corpus/provisions/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors.jsonl",
+      "sha256": "2b38ec56ca738752cc9432b0fa9a6642f31f67469fbc44345fa808ded1861504"
+    },
+    {
+      "path": "data/corpus/sources/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors/official-documents/de-kindergeld-eu-2013-1288.pdf",
+      "sha256": "13b72c32f1929f094876a86a6ee36737b104afa93eb1f82d630fe981a9bd4528"
+    },
+    {
+      "path": "data/corpus/sources/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors/official-documents/de-kindergeld-eu-2018-1475.pdf",
+      "sha256": "4b51416c446f9866607e7f87eff571a0cda1a60f3895e228dfe3df26cae0d0f2"
+    }
+  ],
+  "axiom_corpus_git": {
+    "commit": "53ae61cc62a8dc00b5b4fdec4113fdb4cfe6ed33",
+    "dirty_tracked": false,
+    "root": "."
+  },
+  "axiom_corpus_version": "0.1.0",
+  "command": {
+    "text": "PYTHONPATH=src axiom-corpus-ingest extract-official-documents --base data/corpus --version 2026-09-10-de-kindergeld-eu-service-predecessors --manifest manifests/de-kindergeld-eu-service-predecessors.yaml"
+  },
+  "coverage": {
+    "complete": true,
+    "extra_count": 0,
+    "matched_count": 4,
+    "missing_count": 0,
+    "provision_count": 4,
+    "source_count": 4
+  },
+  "document_class": "regulation",
+  "generated_at": "2026-09-10T18:51:54.636590+00:00",
+  "jurisdiction": "de",
+  "reasoning_logs": [
+    {
+      "path": "docs/ingest-runs/2026-09-10-de-kindergeld-eu-service-predecessors-audit.json",
+      "sha256": "dca0f2345cd06c390bb9aa008a042370a0f2173d99c77282e4986ba2c2a67b2e"
+    },
+    {
+      "path": "docs/ingest-runs/2026-09-10-de-kindergeld-eu-service-predecessors.md",
+      "sha256": "57375b42f9a0c671dcb748ed988d98ce78b5f0e28a2f5b5e63504b297dbe6949"
+    }
+  ],
+  "schema_version": "axiom-corpus/ingest-manifest/v1",
+  "signature": {
+    "algorithm": "ed25519",
+    "key_id": "axiom-corpus-ingest-v1",
+    "value": "Jbif2UpuQ+zGc9/0DHvgKT6He3Q2qGY/S8AkUQzEDOLvMQc8Mm/EAYQXFhlAFjPL1MpDO6XkBxtVzTw0WPtTDg=="
+  },
+  "tool": "axiom-corpus-ingest signed ingest manifest",
+  "version": "2026-09-10-de-kindergeld-eu-service-predecessors"
+}
