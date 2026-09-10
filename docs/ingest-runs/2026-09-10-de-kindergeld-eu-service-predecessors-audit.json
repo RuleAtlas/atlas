@@ -1,0 +1,52 @@
+{
+  "schema": "de-kindergeld.eu-service-predecessor-capture.v1",
+  "scope": "2026-09-10-de-kindergeld-eu-service-predecessors",
+  "capture_date": "2026-09-10",
+  "source_manifest": "manifests/de-kindergeld-eu-service-predecessors.yaml",
+  "sources": [
+    {
+      "citation_path": "de/regulation/eu-2018-1475",
+      "source_url": "https://eur-lex.europa.eu/legal-content/DE/TXT/PDF/?uri=CELEX:32018R1475",
+      "source_sha256": "4b51416c446f9866607e7f87eff571a0cda1a60f3895e228dfe3df26cae0d0f2",
+      "source_bytes": 521046,
+      "pages": 20,
+      "every_page_has_extractable_text": true,
+      "body_citation_path": "de/regulation/eu-2018-1475/document-1",
+      "body_sha256": "0b132ef52aa7981ddcbc7280c11ae829d3ee7d13214dc2296ff05405881159ba",
+      "body_characters": 87452,
+      "first_page_prefix": "4.10.2018          DE                              Amtsblatt der Europäischen Union                                                  L 250/1\n\n\n\n                                                                     I\n\n                                                            (Gesetzgebungsakte)\n\n\n\n\n                                                    VERORDNUNGEN\n\n                  VERORDNUNG (EU) ",
+      "last_page_suffix": "Europäischen Solidaritätskorps erhalten haben,\n     i) Gesamtzufriedenheit der Teilnehmer mit der Qualität der Aktivitäten,\n     j) Anzahl der unmittelbar oder mittelbar durch solidarische Aktivitäten unterstützten Personen.\n     Außerdem ist gegebenenfalls für Kohärenz mit den in Anhang I der Verordnung (EU) Nr. 288/2013 genannten\n     wichtigsten Indikatoren für das Programm „Jugend“ zu sorgen.\n",
+      "expression_date": "2018-10-02",
+      "source_path": "data/corpus/sources/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors/official-documents/de-kindergeld-eu-2018-1475.pdf"
+    },
+    {
+      "citation_path": "de/regulation/eu-2013-1288",
+      "source_url": "https://eur-lex.europa.eu/legal-content/DE/TXT/PDF/?uri=CELEX:32013R1288",
+      "source_sha256": "13b72c32f1929f094876a86a6ee36737b104afa93eb1f82d630fe981a9bd4528",
+      "source_bytes": 1288021,
+      "pages": 24,
+      "every_page_has_extractable_text": true,
+      "body_citation_path": "de/regulation/eu-2013-1288/document-1",
+      "body_sha256": "04fae9469ebf8abff1ea7f9dbfe301a21ce53af6e2e151f03c780905eb575a29",
+      "body_characters": 115047,
+      "first_page_prefix": "L 347/50              DE                               Amtsblatt der Europäischen Union                                         20.12.2013\n\n\n                 VERORDNUNG (EU) Nr. 1288/2013 DES EUROPÄISCHEN PARLAMENTS UND DES RATES\n                                                           vom 11. Dezember 2013\n              zur Einrichtung von \"Erasmus+\", dem Programm der Union für allgemeine und b",
+      "last_page_suffix": "Förderung der Bürgschaftsfazilität\n                für Studiendarlehen, indem sie künftige Studierende informieren. Zu diesem Zweck übermittelt die Kommission unter\n                anderem den nationalen Agenturen in den Programmländern die erforderlichen Informationen, damit sie als Infor­\n                mationsstellen hinsichtlich der Bürgschaftsfazilität für Studiendarlehen tätig sein können.\n",
+      "expression_date": "2013-12-11",
+      "source_path": "data/corpus/sources/de/regulation/2026-09-10-de-kindergeld-eu-service-predecessors/official-documents/de-kindergeld-eu-2013-1288.pdf"
+    }
+  ],
+  "coverage": {
+    "complete": true,
+    "document_class": "regulation",
+    "duplicate_provision_citations": [],
+    "duplicate_source_citations": [],
+    "extra_provisions": [],
+    "jurisdiction": "de",
+    "matched_count": 4,
+    "missing_from_provisions": [],
+    "provision_count": 4,
+    "source_count": 4,
+    "version": "2026-09-10-de-kindergeld-eu-service-predecessors"
+  },
+  "review_scope": "Original German Official Journal document identity, page counts, extractable text on every page, first-page titles, article/signature and final-annex boundaries inspected. No claim that all44 pages received legal review. Current consolidation, amendments, continuation of individual service activities and historical applicability remain for a separate source-bound review. No executable module or certified claim."
+}
