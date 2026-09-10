@@ -1,7 +1,7 @@
 version: '2026-09-10'
 document_family: tanf_policy_sources
 program: TANF
-queue_status: draft
+queue_status: in_progress
 policy:
   canonical_pipeline: source-first
   source_policy: primary_official_only
@@ -29,13 +29,16 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 29
+  needs_review: 5
+  done: 14
+  agent_ready: 8
+  blocked_primary_source: 2
 states:
 - jurisdiction: us
   name: Federal
   queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
+  source_kind: federal_regulation_and_state_plan_index
+  primary_source_url: https://www.ecfr.gov/current/title-45/subtitle-B/chapter-II/part-260
   target_manifest: manifests/us-tanf-sources.yaml
   target_scope:
     jurisdiction: us
@@ -264,18 +267,26 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/hhs/tanf/non_cash/income_limit/gross.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Checked 2026-09-10: 45 CFR parts 260-265 are NOT in the corpus (data/corpus/coverage/us/regulation has title 45
+    part 1302 only; no manifest or ingest-run note references parts 260-265). Not re-ingested in this run (federal eCFR adapter
+    extract-ecfr --only-title 45 --only-part 260..265 is the path). ACF Office of Family Assistance TANF state plans are a
+    separate later document family (state plans are published by each state; the OFA program page and the acf.gov resource
+    library do not expose a consolidated plan index to a non-browser client on 2026-09-10 - acf.gov/ofa/programs/tanf/state-plans
+    is 404 and the resource-library type filter returns an HTTP 202 challenge). index_document_count unknown; record once
+    an index is located.'
+  index_url: https://acf.gov/ofa/programs/temporary-assistance-needy-families-tanf
+  index_document_count: null
+  taken_count: 0
 - jurisdiction: us-al
   name: Alabama
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-al-tanf-sources.yaml
+  target_manifest: manifests/us-al-tanf-official-documents.yaml
   target_scope:
     jurisdiction: us-al
-    document_class: null
-    version: null
+    document_class: policy
+    version: 2026-07-02-al-tanf-official-documents
   lead_counts:
     ready_for_manifest: 1
     needs_review: 4
@@ -332,18 +343,20 @@ states:
     - policyengine-us#parameters/gov/states/al/dhs/tanf/max_unit_size.yaml
     - policyengine-us#parameters/gov/states/al/dhs/tanf/payment_standard.yaml
     - policyengine-us#variables/gov/states/al/dhs/tanf/al_tanf_payment_standard.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Alabama Family Assistance: Admin Code 660-2-2 (regulation, 2026-07-02-al-admin-code-660-2-2), TANF State Plan 2024
+    and Public Assistance Payment Manual Appendix N Sec 2 (policy). Reviewer judgment: the DHR-published payment manual appendix
+    plus the adopted rule is the state''s primary policy document set; no separate DHR TANF policy manual index exists. Done
+    per the prior-ingest list.'
 - jurisdiction: us-az
   name: Arizona
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-az-tanf-sources.yaml
+  target_manifest: manifests/us-az-des-faa5-manual.yaml
   target_scope:
     jurisdiction: us-az
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2025-10-30-az-des-faa5-manual
   lead_counts:
     ready_for_manifest: 1
     needs_review: 6
@@ -418,18 +431,18 @@ states:
     - policyengine-us#parameters/gov/states/az/hhs/tanf/income/deductions/care_expenses/amounts.yaml
     - policyengine-us#parameters/gov/states/az/hhs/tanf/income/deductions/flat.yaml
     - policyengine-us#parameters/gov/states/az/hhs/tanf/income/deductions/percentage.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Arizona DES FAA policy manual (combined CA/NA) already ingested; recovery scope 2026-07-17-faa5-recovery also exists.
+    Done per the prior-ingest list.
 - jurisdiction: us-ca
   name: California
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-ca-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_docx_regulation_manual
+  primary_source_url: https://www.cdss.ca.gov/inforesources/Rules-Regulations/Legislation-and-Regulations/CalWORKs-CalFresh-Regulations/Eligibility-and-Assistance-Standards
+  target_manifest: manifests/us-ca-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-ca
-    document_class: null
-    version: null
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 25
     needs_review: 10
@@ -789,18 +802,22 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/ca/cdss/tanf/cash/income/monthly_limit/region2/main.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1. Primary source confirmed from the publisher''s own index. Inventory: 27 EAS DOCX files (Div 40 through
+    Div 91); taken 13 (Div 40-44, CalWORKs/AFDC eligibility and assistance standards); Div 46-91 (refugee, IHSS, adoptions,
+    admin, hearings) not taken. Extraction proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://www.cdss.ca.gov/inforesources/Rules-Regulations/Legislation-and-Regulations/CalWORKs-CalFresh-Regulations/Eligibility-and-Assistance-Standards
+  index_document_count: 27
+  taken_count: 13
 - jurisdiction: us-co
   name: Colorado
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-co-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_regulation
+  primary_source_url: https://www.coloradosos.gov/CCR/GenerateRulePdf.do?ruleVersionId=12030&fileName=9%20CCR%202503-6
+  target_manifest: manifests/us-co-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-co
-    document_class: null
-    version: null
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     needs_review: 3
   candidate_sources:
@@ -835,18 +852,22 @@ states:
     - policyengine-us#parameters/gov/states/co/cdhs/tanf/grant_standard/additional_child.yaml
     - policyengine-us#parameters/gov/states/co/cdhs/tanf/grant_standard/main.yaml
     - policyengine-us#parameters/gov/states/co/cdhs/tanf/grant_standard/pregnancy_allowance.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1. Primary source confirmed from the publisher''s own index. Inventory: SoS rule-info page: 1 current version
+    (eff. 2025-07-01, PDF+DOCX) and 30 archived versions; taken the current PDF. Extraction proven 2026-09-10 (coverage complete,
+    0 missing/extra/duplicate).'
+  index_url: https://www.coloradosos.gov/CCR/DisplayRule.do?action=ruleinfo&ruleId=3145&deptID=9&agencyID=53&deptName=Department+of+Human+Services&agencyName=Income+Maintenance+(Volume+3)&seriesNum=9+CCR+2503-6
+  index_document_count: 31
+  taken_count: 1
 - jurisdiction: us-dc
   name: District of Columbia
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-dc-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_manual
+  primary_source_url: https://dhs.dc.gov/sites/default/files/dc/sites/dhs/publication/attachments/ESA-Policy-Manual-Combined-Revised-2.pdf
+  target_manifest: manifests/us-dc-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-dc
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 13
     needs_review: 5
@@ -1036,18 +1057,22 @@ states:
     - policyengine-us#parameters/gov/states/dc/dhs/tanf/income/deductions/child_care/amount.yaml
     - policyengine-us#parameters/gov/states/dc/dhs/tanf/income/deductions/earned_income_disregard/percentage.yaml
     - policyengine-us#parameters/gov/states/dc/dhs/tanf/income/deductions/work_related_expense/amount.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1. Primary source confirmed from the publisher''s own index. Inventory: 2 PDFs on the ESA Policy Manuals page
+    (ESA SNAP Policy Manual 1-24-25, already ingested as us-dc/manual/dhs/esa/snap-policy-manual; ESA Policy Manual Combined
+    Revised 2); taken 1. Extraction proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://dhs.dc.gov/publication/esa-policy-manuals
+  index_document_count: 2
+  taken_count: 1
 - jurisdiction: us-de
   name: Delaware
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-de-tanf-sources.yaml
+  target_manifest: manifests/us-de-tanf-rules.yaml
   target_scope:
     jurisdiction: us-de
-    document_class: null
-    version: null
+    document_class: regulation
+    version: 2026-07-03-de-tanf-rules
   lead_counts:
     ready_for_manifest: 2
     needs_review: 4
@@ -1142,18 +1167,17 @@ states:
     - policyengine-us#parameters/gov/states/de/dhss/tanf/benefit/deficit_rate.yaml
     - policyengine-us#parameters/gov/states/de/dhss/tanf/income/deductions/child_support.yaml
     - policyengine-us#parameters/gov/states/de/dhss/tanf/income/deductions/dependent_care.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Delaware DSSM 3000 TANF rules (state-published adopted rule) already ingested. Done per the prior-ingest list.
 - jurisdiction: us-fl
   name: Florida
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-fl-tanf-sources.yaml
+  target_manifest: manifests/us-fl-ess-manual.yaml
   target_scope:
     jurisdiction: us-fl
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-05-27-fl-ess-manual
   lead_counts:
     needs_review: 7
     excluded_secondary: 2
@@ -1249,18 +1273,18 @@ states:
     - policyengine-us#parameters/gov/states/fl/dcf/tanf/income/gross_test/gross_income_limit_rate.yaml
     - policyengine-us#parameters/gov/states/fl/dcf/tanf/payment_standard/high_shelter.yaml
     - policyengine-us#parameters/gov/states/fl/dcf/tanf/payment_standard/low_shelter.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Florida DCF ESS Program Policy Manual is the combined FS/TCA/Medicaid manual (48 chapters incl. 1400/1800 TCA chapters,
+    2600 benefit calculation). Reviewer judgment: combined manual counts as the TCA policy manual; not re-ingested.'
 - jurisdiction: us-ga
   name: Georgia
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-ga-tanf-sources.yaml
+  target_manifest: manifests/us-ga-tanf-manual.yaml
   target_scope:
     jurisdiction: us-ga
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-06-25-ga-tanf
   lead_counts:
     ready_for_manifest: 1
     needs_review: 11
@@ -1388,18 +1412,17 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/ga/dfcs/tanf/resources/limit.yaml
     - policyengine-us#variables/gov/states/ga/dfcs/tanf/eligibility/ga_tanf_resources_eligible.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Georgia DFCS TANF Policy Manual already ingested. Done per the prior-ingest list.
 - jurisdiction: us-hi
   name: Hawaii
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-hi-tanf-sources.yaml
+  target_manifest: manifests/us-hi-tanf-admin-rules.yaml
   target_scope:
     jurisdiction: us-hi
-    document_class: null
-    version: null
+    document_class: regulation
+    version: 2026-07-03-hi-tanf-admin-rules
   lead_counts:
     ready_for_manifest: 1
     needs_review: 7
@@ -1478,18 +1501,17 @@ states:
     - policyengine-us#parameters/gov/states/hi/dhs/tanf/deductions/dependent_care/amount.yaml
     - policyengine-us#parameters/gov/states/hi/dhs/tanf/deductions/eidr_rate.yaml
     - policyengine-us#parameters/gov/states/hi/dhs/tanf/deductions/flat_amount.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Hawaii HAR TANF rules already ingested. Done per the prior-ingest list.
 - jurisdiction: us-il
   name: Illinois
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-il-tanf-sources.yaml
+  target_manifest: manifests/us-il-snap-manual.yaml
   target_scope:
     jurisdiction: us-il
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-05-27-il-cash-snap-medical-manual
   lead_counts:
     needs_review: 9
     excluded_secondary: 14
@@ -1723,18 +1745,18 @@ states:
     discovered_via:
     - policyengine-us#variables/gov/states/il/dhs/tanf/eligibility/il_tanf_demographic_eligible_person.py
     - policyengine-us#variables/gov/states/il/dhs/tanf/eligibility/il_tanf_eligible_child.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Illinois DHS Cash, SNAP and Medical Manual (combined; PM chapters incl. cash/TANF) already ingested as us-il/manual/dhs/csmm.
+    Reviewer judgment: combined manual counts; not re-ingested.'
 - jurisdiction: us-in
   name: Indiana
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-in-tanf-sources.yaml
+  target_manifest: manifests/us-in-snap-manual.yaml
   target_scope:
     jurisdiction: us-in
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-05-27-in-snap-manual
   lead_counts:
     ready_for_manifest: 2
     needs_review: 8
@@ -1839,18 +1861,18 @@ states:
     discovered_via:
     - policyengine-us#parameters/gov/states/in/fssa/tanf/resources/limit/while_receiving/amount.yaml
     - policyengine-us#parameters/gov/states/in/fssa/tanf/resources/vehicle_exemption/amount.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Indiana FSSA/DFR SNAP/TANF Program Policy Manual (combined) already ingested at page granularity. Reviewer judgment:
+    combined manual counts; chapter-level re-segmentation is a later improvement, not a batch item.'
 - jurisdiction: us-ks
   name: Kansas
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-ks-tanf-sources.yaml
+  target_manifest: manifests/us-ks-keesm.yaml
   target_scope:
     jurisdiction: us-ks
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-05-27-ks-keesm
   lead_counts:
     ready_for_manifest: 2
     needs_review: 11
@@ -2051,18 +2073,17 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/ks/dcf/tanf/eligibility/ks_tanf_eligible.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Kansas KEESM (combined) already ingested. Done per the prior-ingest list.
 - jurisdiction: us-me
   name: Maine
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-me-tanf-sources.yaml
+  target_manifest: manifests/us-me-tanf-regulation-official-documents.yaml
   target_scope:
     jurisdiction: us-me
-    document_class: null
-    version: null
+    document_class: regulation
+    version: 2026-07-03-me-tanf-regulation
   lead_counts:
     ready_for_manifest: 1
     needs_review: 4
@@ -2159,18 +2180,18 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/me/dhhs/tanf/income/deductions/me_tanf_child_care_deduction.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Maine TANF rule (10-144 CMR ch. 331) and rule 125A already ingested; Maine publishes its TANF policy as adopted rules.
+    Done per the prior-ingest list.
 - jurisdiction: us-mo
   name: Missouri
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-mo-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_html_manual
+  primary_source_url: https://dssmanuals.mo.gov/temporary-assistance-case-management/
+  target_manifest: manifests/us-mo-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-mo
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 13
     needs_review: 1
@@ -2347,18 +2368,21 @@ states:
     discovered_via:
     - policyengine-us#variables/gov/states/mo/dss/tanf/assistance_unit/mo_tanf_dependent_child.py
     - policyengine-us#variables/gov/states/mo/dss/tanf/eligibility/mo_tanf_eligible.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1. Primary source confirmed from the publisher''s own index. Inventory: landing page + 472 section pages (WordPress
+    sitemap, chapters 0200-0330) + 13 appendix PDFs; taken all 486. Extraction proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://dssmanuals.mo.gov/temporary-assistance-case-management/
+  index_document_count: 486
+  taken_count: 486
 - jurisdiction: us-ms
   name: Mississippi
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-ms-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_manual
+  primary_source_url: https://www.sos.ms.gov/adminsearch/ACCode/00000330c.pdf
+  target_manifest: manifests/us-ms-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-ms
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     needs_review: 5
     excluded_secondary: 2
@@ -2436,18 +2460,22 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/ms/dhs/tanf/eligibility/ms_tanf_eligible.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1. Primary source confirmed from the publisher''s own index. Inventory: MDHS TANF page links 2 documents (TANF
+    Policy Manual on sos.ms.gov, flyer(s), client forms); taken the TANF Policy Manual. Extraction proven 2026-09-10 (coverage
+    complete, 0 missing/extra/duplicate).'
+  index_url: https://www.mdhs.ms.gov/help/tanf/
+  index_document_count: 2
+  taken_count: 1
 - jurisdiction: us-mt
   name: Montana
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-mt-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_pdf_manual_sections
+  primary_source_url: https://dphhs.mt.gov/hcsd/Manuals/TANFpolicymanual
+  target_manifest: manifests/us-mt-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-mt
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 8
     needs_review: 3
@@ -2662,18 +2690,22 @@ states:
     - policyengine-us#parameters/gov/states/mt/dhs/tanf/income_standards/benefit_fpg_rate.yaml
     - policyengine-us#parameters/gov/states/mt/dhs/tanf/income_standards/benefit_fpg_year.yaml
     - policyengine-us#parameters/gov/states/mt/dhs/tanf/income_standards/payment_fpg_rate.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1. Primary source confirmed from the publisher''s own index. Inventory: 93 section PDFs listed with effective
+    dates (TOC, index, introduction, definitions, income standards, sections 101-1 through 1702-1); taken all 93. Extraction
+    proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://dphhs.mt.gov/hcsd/Manuals/TANFpolicymanual
+  index_document_count: 93
+  taken_count: 93
 - jurisdiction: us-nc
   name: North Carolina
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-nc-tanf-sources.yaml
+  target_manifest: manifests/us-nc-work-first-manual-official-documents.yaml
   target_scope:
     jurisdiction: us-nc
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-07-03-nc-work-first-manual
   lead_counts:
     needs_review: 4
   candidate_sources:
@@ -2719,18 +2751,19 @@ states:
     - policyengine-us#parameters/gov/states/nc/ncdhhs/tanf/benefit/payment_percentage.yaml
     - policyengine-us#parameters/gov/states/nc/ncdhhs/tanf/eligibility/average_reduced_need_standard_threshold.yaml
     - policyengine-us#parameters/gov/states/nc/ncdhhs/tanf/income/earned.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'North Carolina Work First Manual section 114 (Income and Budgeting) already ingested. Reviewer judgment: done per
+    the prior-ingest list, but only section 114 of the manual is in the corpus; the remaining Work First manual sections are
+    a follow-up, not a batch-1 item.'
 - jurisdiction: us-nd
   name: North Dakota
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-nd-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_html_manual
+  primary_source_url: https://www.nd.gov/dhs/policymanuals/40019/40019.htm
+  target_manifest: manifests/us-nd-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-nd
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 10
     excluded_secondary: 3
@@ -2863,18 +2896,22 @@ states:
     - policyengine-us#parameters/gov/states/nd/dhs/tanf/income/deductions/standard_employment_expense/minimum.yaml
     - policyengine-us#parameters/gov/states/nd/dhs/tanf/income/deductions/standard_employment_expense/rate.yaml
     - policyengine-us#parameters/gov/states/nd/dhs/tanf/income/deductions/time_limited_percentage/rate.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1. Primary source confirmed from the publisher''s own index. Inventory: MadCap TriPane manual: TOC lists 307
+    topic pages (400-19-05 definitions through the sanction/hearing sections) plus landing page and release log; taken all
+    310 (release 26.1, effective 2026-04-01). Extraction proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://www.nd.gov/dhs/policymanuals/40019/40019.htm
+  index_document_count: 310
+  taken_count: 310
 - jurisdiction: us-nv
   name: Nevada
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-nv-tanf-sources.yaml
+  target_manifest: manifests/us-nv-eligibility-payments-manual.yaml
   target_scope:
     jurisdiction: us-nv
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-05-27-nv-eligibility-payments-manual
   lead_counts:
     ready_for_manifest: 1
     needs_review: 10
@@ -2991,18 +3028,18 @@ states:
     - policyengine-us#parameters/gov/states/nv/dwss/tanf/income/gross_income_limit_rate.yaml
     - policyengine-us#parameters/gov/states/nv/dwss/tanf/income/work_expense_disregard/flat_amount.yaml
     - policyengine-us#parameters/gov/states/nv/dwss/tanf/income/work_expense_disregard/rate.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Nevada DWSS Eligibility and Payments Manual (combined TANF/SNAP/Medicaid, 51 chapter PDFs) already ingested. Reviewer
+    judgment: combined manual counts as the TANF policy manual; not re-ingested.'
 - jurisdiction: us-ny
   name: New York
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-ny-tanf-sources.yaml
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_manual
+  primary_source_url: https://otda.ny.gov/programs/temporary-assistance/TASB.pdf
+  target_manifest: manifests/us-ny-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-ny
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 7
     needs_review: 1
@@ -3128,18 +3165,24 @@ states:
     - policyengine-us#parameters/gov/states/ny/otda/tanf/need_standard/shelter/max_table_size.yaml
     - policyengine-us#parameters/gov/states/ny/otda/tanf/need_standard/shelter/maximum.yaml
     - policyengine-us#variables/gov/states/ny/otda/tanf/ny_tanf_shelter_allowance.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'BLOCKED 2026-09-10: OTDA Temporary Assistance Source Book (TASB.pdf, HTTP Last-Modified 2024-11-27). Plain requests/curl
+    to otda.ny.gov: TCP connection reset by peer. curl-cffi browser impersonation (chrome, chrome110, chrome124, edge101,
+    firefox): HTTP 200 text/html 6.7 KB JavaScript bot-challenge page (''Please enable JavaScript to view the page content.
+    Your support ID is ...'') instead of the PDF; safari profiles: connection reset. No workaround attempted. The 2024-2026
+    TANF State Plan (policy) is already in the corpus (us-ny-tanf-state-plan); the Employment Policy Manual is in 2026-07-17-ny-snap-manuals.'
+  index_url: https://otda.ny.gov/programs/temporary-assistance/
+  index_document_count: 1
+  taken_count: 0
 - jurisdiction: us-ok
   name: Oklahoma
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-ok-tanf-sources.yaml
+  queue_status: agent_ready
+  source_kind: official_json_regulation
+  primary_source_url: https://rules.ok.gov/home
+  target_manifest: manifests/us-ok-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-ok
-    document_class: null
-    version: null
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     ready_for_manifest: 1
     needs_review: 1
@@ -3235,18 +3278,23 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/ok/dhs/tanf/eligibility/ok_tanf_eligible.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Batch 1. Primary source confirmed from the publisher''s own index. Inventory: chapter API returns 190 segments ({''Chapter:Undefined'':
+    1, ''Subchapter:Undefined'': 17, ''Section:Undefined'': 62, ''Section:Revoked'': 64, ''Part:Undefined'': 4, ''Subchapter:Revoked'':
+    3, ''Appendix:Revoked'': 39}); taken the chapter as one document, 62 non-revoked sections become records. Extraction proven
+    2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://rules.ok.gov/home
+  index_document_count: 190
+  taken_count: 1
 - jurisdiction: us-or
   name: Oregon
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-or-tanf-sources.yaml
+  queue_status: blocked_primary_source
+  source_kind: official_rule_pdfs
+  primary_source_url: https://ch461rules.odhs.oregon.gov/
+  target_manifest: manifests/us-or-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-or
-    document_class: null
-    version: null
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual
   lead_counts:
     needs_review: 6
     excluded_secondary: 9
@@ -3392,8 +3440,17 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/or/odhs/tanf/or_tanf.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'BLOCKED 2026-09-10: Oregon publishes TANF policy as OAR chapter 461 (ODHS per-rule PDFs at ch461rules.odhs.oregon.gov;
+    Secretary of State OARD at secure.sos.state.or.us). Neither host resolved from the ingest environment: system resolver
+    and 8.8.8.8/9.9.9.9 return SERVFAIL/no answer for ch461rules.odhs.oregon.gov, www.oregon.gov and secure.sos.state.or.us
+    (dig EDE: ''at delegation oregon.gov''); 1.1.1.1 resolves them, but Python getaddrinfo, requests and curl all fail with
+    name-resolution errors, so no index could be inventoried. Not a publisher block of the client; re-try from another network.
+    Note for the retry: chapter 461 is a combined rulebook for all ODHS self-sufficiency programs (SNAP, TANF, ERDC ...),
+    so the TANF family would be a filtered division set, and an OAR adapter already exists (extract-oregon-administrative-rules).
+    The existing us-or manual scope (OPEN eligibility notebook) is not the TANF policy manual.'
+  index_url: https://ch461rules.odhs.oregon.gov/
+  index_document_count: null
+  taken_count: 0
 - jurisdiction: us-pa
   name: Pennsylvania
   queue_status: needs_review
@@ -3544,8 +3601,8 @@ states:
     - policyengine-us#variables/gov/states/pa/dhs/tanf/eligibility/pa_tanf_disregard_eligible.py
     - policyengine-us#variables/gov/states/pa/dhs/tanf/income/pa_tanf_countable_earned_income.py
     - policyengine-us#variables/gov/states/pa/dhs/tanf/income/pa_tanf_earned_income_after_deductions_person.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1 (batch 1 = first ten queue rows needing a new extraction: CA, CO, DC, MO, MS, MT, ND, NY, OK, OR).
+    Falls in batch 2 together with the remaining rows in queue order (PA, SC, SD, VA).'
 - jurisdiction: us-sc
   name: South Carolina
   queue_status: needs_review
@@ -3592,8 +3649,8 @@ states:
     discovered_via:
     - policyengine-us#variables/gov/states/sc/tanf/eligibility/sc_tanf_eligible.py
     - policyengine-us#variables/gov/states/sc/tanf/eligibility/sc_tanf_resources_eligible.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1 (batch 1 = first ten queue rows needing a new extraction: CA, CO, DC, MO, MS, MT, ND, NY, OK, OR).
+    Falls in batch 2 together with the remaining rows in queue order (PA, SC, SD, VA).'
 - jurisdiction: us-sd
   name: South Dakota
   queue_status: needs_review
@@ -3738,18 +3795,18 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/sd/dss/tanf/resources/limit.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1 (batch 1 = first ten queue rows needing a new extraction: CA, CO, DC, MO, MS, MT, ND, NY, OK, OR).
+    Falls in batch 2 together with the remaining rows in queue order (PA, SC, SD, VA).'
 - jurisdiction: us-tx
   name: Texas
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-tx-tanf-sources.yaml
+  target_manifest: manifests/us-tx-manuals.yaml
   target_scope:
     jurisdiction: us-tx
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-05-27-tx-manuals
   lead_counts:
     ready_for_manifest: 12
     needs_review: 3
@@ -4091,8 +4148,7 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/tx/tanf/eligibility/tx_tanf_eligible.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Texas Works Handbook (combined) already ingested. Done per the prior-ingest list.
 - jurisdiction: us-va
   name: Virginia
   queue_status: needs_review
@@ -4217,18 +4273,18 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#parameters/gov/states/va/dss/tanf/standard_multiplier.yaml
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'Not in batch 1 (batch 1 = first ten queue rows needing a new extraction: CA, CO, DC, MO, MS, MT, ND, NY, OK, OR).
+    Falls in batch 2 together with the remaining rows in queue order (PA, SC, SD, VA).'
 - jurisdiction: us-wa
   name: Washington
-  queue_status: needs_review
-  source_kind: null
+  queue_status: done
+  source_kind: already_ingested
   primary_source_url: null
-  target_manifest: manifests/us-wa-tanf-sources.yaml
+  target_manifest: manifests/us-wa-eaz-manual.yaml
   target_scope:
     jurisdiction: us-wa
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-07-21-wa-eaz-manual
   lead_counts:
     needs_review: 20
     excluded_secondary: 1
@@ -4438,5 +4494,4 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/wa/dshs/tanf/eligibility/wa_tanf_immigration_status_eligible.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: Washington EA-Z Manual (combined) already ingested. Done per the prior-ingest list.
