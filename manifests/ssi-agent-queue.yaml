@@ -1,7 +1,7 @@
 version: '2026-09-10'
 document_family: ssi_policy_sources
 program: SSI
-queue_status: draft
+queue_status: in_progress
 policy:
   canonical_pipeline: source-first
   source_policy: primary_official_only
@@ -22,6 +22,10 @@ policy:
   - The lead list under-names agency manuals and state plans. Reviewers must add them from the official publisher before the
     queue is agent_ready.
   - 'policyengine-us 84253b6afafb (2026-08-17); lead file: policyengine-us-committed-program-references.jsonl'
+  - '2026-09-10 SSI run: POMS SI family manifest built by scripts/build_ssi_poms_si_manifests.py; state rows categorised from
+    POMS SI 01415.010 / SI 01415.058 (AZ, AR, MS, ND, TN, WV have no optional program and get no row).'
+  - '2026-09-10 SSI run: POMS SI family manifest built by scripts/build_ssi_poms_si_manifests.py; state rows categorised from
+    POMS SI 01415.010 / SI 01415.058 (AZ, AR, MS, ND, TN, WV have no optional program and get no row).'
 lead_list:
   source: policyengine-us
   commit: 84253b6afafbb1875c65f12e654c6535744728b7
@@ -29,18 +33,20 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 1
+  agent_ready: 10
+  needs_review: 29
+  done: 7
 states:
 - jurisdiction: us
   name: Federal
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: manifests/us-ssi-sources.yaml
-  target_scope:
+  queue_status: agent_ready
+  source_kind: official_html_agency_manual
+  primary_source_url: https://secure.ssa.gov/poms.nsf/chapterlist!openview&restricttocategory=05
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: &id001
     jurisdiction: us
-    document_class: null
-    version: null
+    document_class: manual
+    version: 2026-09-10-ssi-poms-si
   lead_counts:
     ready_for_manifest: 4
     needs_review: 31
@@ -563,5 +569,827 @@ states:
     - policyengine-us#variables/gov/ssa/ssi/eligibility/status/is_ssi_aged_blind_disabled.py
     - policyengine-us#variables/gov/ssa/ssi/eligibility/status/is_ssi_disabled.py
     - policyengine-us#variables/gov/ssa/ssi/eligibility/status/is_ssi_eligible_spouse.py
-  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
-    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+  notes: 'SSA POMS part SI, one document per section, citation path us/manual/ssa/poms/si/<section>. Taken subchapters: SI
+    00501, SI 00502, SI 00520, SI 00810, SI 00815, SI 00820, SI 00830, SI 00835, SI 01110, SI 01120, SI 01130, SI 01140, SI
+    01310, SI 01320, SI 01330, SI 01400, SI 01401, SI 01403, SI 01405, SI 01410, SI 01415, SI 02001, SI 02005 (every section
+    the subchapter list enumerates, national and regional). Primary source confirmed from the publisher''s own chapter/subchapter
+    lists. 42 USC 1381-1382j (2026-06-20 run) and the 20 CFR 416 deeming slice (2026-07-23 run, 14 rows) already exist and
+    are not re-ingested; the rest of 20 CFR 416 remains a separate follow-up. Sibling POMS documents already under us/guidance
+    (SI 01415.058 2026, SI PHI01415.009 from the DC run) keep their guidance citation paths; the manual family re-takes them
+    under the section-number path.'
+  index_url: https://secure.ssa.gov/poms.nsf/chapterlist!openview&restricttocategory=05
+  index_document_count: 1693
+  taken_count: 915
+- jurisdiction: us-ak
+  name: Alaska
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-ak
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
+    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
+    regional description in the federal family: us/manual/ssa/poms/si/sea01415.034.'
+- jurisdiction: us-al
+  name: Alabama
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-al
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-ca
+  name: California
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: official_state_or_ssa_document
+  primary_source_url: null
+  target_manifest: manifests/us-ca-ssi-state-supplement.yaml
+  target_scope:
+    jurisdiction: us-ca
+    document_class: guidance
+    version: 2026-06-27-ca-dor-ssi-ssp-newsletter
+  index_url: null
+  index_document_count: null
+  taken_count: null
+  administration: F
+  notes: '2026-06 run: California DOR January 2026 Spotlight on Social Security newsletter (SSI/SSP levels); SSA-administered
+    levels also in POMS SI 01415.058B (federal family). Federal-family POMS paths for this state: us/manual/ssa/poms/si/01415.058
+    (subsection B), us/manual/ssa/poms/si/sf01415.100, us/manual/ssa/poms/si/sf01415.110, us/manual/ssa/poms/si/sf01415.120,
+    us/manual/ssa/poms/si/sf01415.130, us/manual/ssa/poms/si/sf01415.140, us/manual/ssa/poms/si/sf01415.150, us/manual/ssa/poms/si/sf01415.160,
+    us/manual/ssa/poms/si/sf01415.170, us/manual/ssa/poms/si/sf01415.180, us/manual/ssa/poms/si/sf01415.190.'
+- jurisdiction: us-co
+  name: Colorado
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-co
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-ct
+  name: Connecticut
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: official_state_or_ssa_document
+  primary_source_url: null
+  target_manifest: manifests/us-ct-ssp-official-documents.yaml
+  target_scope:
+    jurisdiction: us-ct
+    document_class: policy
+    version: 2026-07-02-ct-ssp-upm-and-standards
+  index_url: null
+  index_document_count: null
+  taken_count: null
+  administration: S
+  notes: '2026-07-02 runs: CT DSS UPM 4005/4520/5000/5030/5045/5050/5520/6000/6005 and the 2026-01-01 program standards chart
+    (docs/ingest-runs/2026-07-02-ct-ssp-*.md).'
+- jurisdiction: us-dc
+  name: District of Columbia
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: official_state_or_ssa_document
+  primary_source_url: null
+  target_manifest: manifests/us-dc-ossp-ssa-poms.yaml
+  target_scope:
+    jurisdiction: us
+    document_class: guidance
+    version: 2026-07-03-dc-ossp-ssa-poms
+  index_url: null
+  index_document_count: null
+  taken_count: null
+  administration: F/S
+  notes: '2026-07-03 run: POMS SI 01415.058 (2026) and SI PHI01415.009 under us/guidance/ssa/poms/...; the same two sections
+    are re-taken in the federal manual family under us/manual/ssa/poms/si/ (different citation paths, same documents). Federal-family
+    POMS paths for this state: us/manual/ssa/poms/si/01415.058 (subsection D), us/manual/ssa/poms/si/phi01415.009.'
+- jurisdiction: us-de
+  name: Delaware
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: official_state_or_ssa_document
+  primary_source_url: null
+  target_manifest: manifests/us-de-ssi-state-supplement-poms.yaml
+  target_scope:
+    jurisdiction: us-de
+    document_class: guidance
+    version: 2026-07-03-de-ssi-state-supplement-poms
+  index_url: null
+  index_document_count: null
+  taken_count: null
+  administration: F/S
+  notes: '2026-07-03 run: POMS SI 01415.058 Delaware subsection (us-de/guidance) plus DSSM 13000 (us-de/regulation); docs/ingest-runs/2026-07-03-de-ssi-state-supplement.md.
+    Federal-family POMS paths for this state: us/manual/ssa/poms/si/01415.058 (subsection C), us/manual/ssa/poms/si/phi01415.008.'
+- jurisdiction: us-fl
+  name: Florida
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-fl
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-ga
+  name: Georgia
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: official_state_or_ssa_document
+  primary_source_url: null
+  target_manifest: manifests/us-ga-ssp-manual.yaml
+  target_scope:
+    jurisdiction: us-ga
+    document_class: manual
+    version: 2026-06-24-ga-ssp
+  index_url: null
+  index_document_count: null
+  taken_count: null
+  administration: S
+  notes: '2026-06 run: Georgia DFCS Medicaid Policy Manual 2578 and 2136 (us-ga/manual).'
+- jurisdiction: us-hi
+  name: Hawaii
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415058#e
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 4
+  taken_count: 4
+  administration: F
+  notes: 'SSA administers the optional supplement (POMS SI 01415.010 column Optional = F; listed in SI 01415.058A for January
+    2026). Primary source is the per-state SSA POMS text, extracted as part of the federal family: us/manual/ssa/poms/si/01415.058
+    (subsection E), us/manual/ssa/poms/si/sf01415.200, us/manual/ssa/poms/si/sf01415.210, us/manual/ssa/poms/si/sf01415.220.
+    No separate state extraction.'
+- jurisdiction: us-ia
+  name: Iowa
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415058#f
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 1
+  taken_count: 1
+  administration: F/S
+  notes: 'SSA administers the optional supplement (POMS SI 01415.010 column Optional = F/S; listed in SI 01415.058A for January
+    2026). Primary source is the per-state SSA POMS text, extracted as part of the federal family: us/manual/ssa/poms/si/01415.058
+    (subsection F). No separate state extraction. F/S: the state also administers part of its program itself; that state-administered
+    part is not covered here.'
+- jurisdiction: us-id
+  name: Idaho
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-id
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
+    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
+    regional description in the federal family: us/manual/ssa/poms/si/sea01415.034.'
+- jurisdiction: us-il
+  name: Illinois
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-il
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
+    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
+    regional description in the federal family: us/manual/ssa/poms/si/chi01401.002.'
+- jurisdiction: us-in
+  name: Indiana
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: official_state_or_ssa_document
+  primary_source_url: null
+  target_manifest: manifests/us-in-ssp-sapn-official-documents.yaml
+  target_scope:
+    jurisdiction: us-in
+    document_class: manual
+    version: 2026-07-04-in-ssp-sapn
+  index_url: null
+  index_document_count: null
+  taken_count: null
+  administration: S
+  notes: '2026-07-04 run: Indiana FSSA Medicaid Policy Manual Chapter 5000 (SAPN); docs/ingest-runs/2026-07-04-in-ssp-sapn.md.
+    SSA regional description SI CHI01401.001 is in the federal family. Federal-family POMS paths for this state: us/manual/ssa/poms/si/chi01401.001.'
+- jurisdiction: us-ks
+  name: Kansas
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: official_state_or_ssa_document
+  primary_source_url: null
+  target_manifest: manifests/us-ks-sspp-guidance-official-documents.yaml
+  target_scope:
+    jurisdiction: us-ks
+    document_class: guidance
+    version: 2026-07-04-ks-sspp-guidance
+  index_url: null
+  index_document_count: null
+  taken_count: null
+  administration: S
+  notes: '2026-07-04 runs: K.S.A. 39-972 (us-ks/statute) and KHPA Policy 2007-05-01 (us-ks/guidance); docs/ingest-runs/2026-07-04-ks-sspp.md.'
+- jurisdiction: us-ky
+  name: Kentucky
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-ky
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-la
+  name: Louisiana
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-la
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-ma
+  name: Massachusetts
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-ma
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
+    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
+    regional description in the federal family: us/manual/ssa/poms/si/bos01415.024, us/manual/ssa/poms/si/bos01415.930. mass.gov
+    answered 403 to a plain client on 2026-09-10.'
+- jurisdiction: us-md
+  name: Maryland
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-md
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-me
+  name: Maine
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-me
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
+    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
+    regional description in the federal family: us/manual/ssa/poms/si/bos01415.010, us/manual/ssa/poms/si/bos01415.910.'
+- jurisdiction: us-mi
+  name: Michigan
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415058#g
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 2
+  taken_count: 2
+  administration: F/S
+  notes: 'SSA administers the optional supplement (POMS SI 01415.010 column Optional = F/S; listed in SI 01415.058A for January
+    2026). Primary source is the per-state SSA POMS text, extracted as part of the federal family: us/manual/ssa/poms/si/01415.058
+    (subsection G), us/manual/ssa/poms/si/chi01415.001. No separate state extraction. F/S: the state also administers part
+    of its program itself; that state-administered part is not covered here.'
+- jurisdiction: us-mn
+  name: Minnesota
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-mn
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run. mn.gov/dhs answered
+    with a Radware bot-manager challenge to a plain client on 2026-09-10.
+- jurisdiction: us-mo
+  name: Missouri
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-mo
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-mt
+  name: Montana
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415058#h
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 2
+  taken_count: 2
+  administration: F
+  notes: 'SSA administers the optional supplement (POMS SI 01415.010 column Optional = F; listed in SI 01415.058A for January
+    2026). Primary source is the per-state SSA POMS text, extracted as part of the federal family: us/manual/ssa/poms/si/01415.058
+    (subsection H), us/manual/ssa/poms/si/den01415.010. No separate state extraction.'
+- jurisdiction: us-nc
+  name: North Carolina
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-nc
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-ne
+  name: Nebraska
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-ne
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-nh
+  name: New Hampshire
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-nh
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-nj
+  name: New Jersey
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415058#j
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 2
+  taken_count: 2
+  administration: F
+  notes: 'SSA administers the optional supplement (POMS SI 01415.010 column Optional = F; listed in SI 01415.058A for January
+    2026). Primary source is the per-state SSA POMS text, extracted as part of the federal family: us/manual/ssa/poms/si/01415.058
+    (subsection J), us/manual/ssa/poms/si/ny01415.025. No separate state extraction.'
+- jurisdiction: us-nm
+  name: New Mexico
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-nm
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-nv
+  name: Nevada
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415058#i
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 2
+  taken_count: 2
+  administration: F
+  notes: 'SSA administers the optional supplement (POMS SI 01415.010 column Optional = F; listed in SI 01415.058A for January
+    2026). Primary source is the per-state SSA POMS text, extracted as part of the federal family: us/manual/ssa/poms/si/01415.058
+    (subsection I), us/manual/ssa/poms/si/sf01415.300. No separate state extraction.'
+- jurisdiction: us-ny
+  name: New York
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-ny
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
+    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
+    regional description in the federal family: us/manual/ssa/poms/si/ny01415.026.'
+- jurisdiction: us-oh
+  name: Ohio
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-oh
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-ok
+  name: Oklahoma
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-ok
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-or
+  name: Oregon
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-or
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
+    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
+    regional description in the federal family: us/manual/ssa/poms/si/sea01415.034.'
+- jurisdiction: us-pa
+  name: Pennsylvania
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415058#k
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 2
+  taken_count: 2
+  administration: F/S
+  notes: 'SSA administers the optional supplement (POMS SI 01415.010 column Optional = F/S; listed in SI 01415.058A for January
+    2026). Primary source is the per-state SSA POMS text, extracted as part of the federal family: us/manual/ssa/poms/si/01415.058
+    (subsection K), us/manual/ssa/poms/si/phi01415.010. No separate state extraction. F/S: the state also administers part
+    of its program itself; that state-administered part is not covered here.'
+- jurisdiction: us-ri
+  name: Rhode Island
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415058#l
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 3
+  taken_count: 3
+  administration: F/S
+  notes: 'SSA administers the optional supplement (POMS SI 01415.010 column Optional = F/S; listed in SI 01415.058A for January
+    2026). Primary source is the per-state SSA POMS text, extracted as part of the federal family: us/manual/ssa/poms/si/01415.058
+    (subsection L), us/manual/ssa/poms/si/bos01415.012, us/manual/ssa/poms/si/bos01415.950. No separate state extraction.
+    F/S: the state also administers part of its program itself; that state-administered part is not covered here.'
+- jurisdiction: us-sc
+  name: South Carolina
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-sc
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-sd
+  name: South Dakota
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-sd
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
+    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
+    regional description in the federal family: us/manual/ssa/poms/si/den01415.011.'
+- jurisdiction: us-tx
+  name: Texas
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-tx
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run. Lead-list HHSC
+    handbook page H-6000 (hhs.texas.gov) answered 403 to a plain client on 2026-09-10; a future extraction needs the manifest
+    browser_impersonation option.
+- jurisdiction: us-ut
+  name: Utah
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-ut
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-va
+  name: Virginia
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-va
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-vt
+  name: Vermont
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415058#m
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 3
+  taken_count: 3
+  administration: F
+  notes: 'SSA administers the optional supplement (POMS SI 01415.010 column Optional = F; listed in SI 01415.058A for January
+    2026). Primary source is the per-state SSA POMS text, extracted as part of the federal family: us/manual/ssa/poms/si/01415.058
+    (subsection M), us/manual/ssa/poms/si/bos01415.013, us/manual/ssa/poms/si/bos01415.970. No separate state extraction.'
+- jurisdiction: us-wa
+  name: Washington
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-wa
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
+    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
+    regional description in the federal family: us/manual/ssa/poms/si/sea01415.034.'
+- jurisdiction: us-wi
+  name: Wisconsin
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-wi
+    document_class: null
+    version: null
+  index_url: https://www.dhs.wisconsin.gov/ssi/index.htm
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
+    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+- jurisdiction: us-wy
+  name: Wyoming
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: state_agency_document
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-wy
+    document_class: null
+    version: null
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  administration: S
+  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
+    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
+    regional description in the federal family: us/manual/ssa/poms/si/den01415.013.'
