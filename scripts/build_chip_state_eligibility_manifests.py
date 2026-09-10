@@ -1087,14 +1087,587 @@ DONE_BATCH2: dict[str, dict] = {
     },
 }
 
+
+# --- batch 3 (docs/ingest-runs/2026-09-10-chip-state-eligibility-manuals-batch-3.md) -----------
+# Next ten states by population not in the queue (KY, OR, OK, UT, NV, AR, MS, NM, NE, WV) with
+# replacements HI, NH, ME, MT, RI, SD. AR and WV are already covered by combined manuals in the
+# corpus; OR, NE, HI, NH, UT and MT publishers blocked on the first probe (see BLOCKED_BATCH3).
+
+BATCH3_DISCOVERED_VIA = (
+    "manual-review:chip-agent-queue batch 3; publisher index confirmed by agent 2026-09-10"
+)
+
+NEW_ROW_NAMES_BATCH3: dict[str, str] = {
+    "us-ar": "Arkansas", "us-hi": "Hawaii", "us-ky": "Kentucky", "us-me": "Maine",
+    "us-ms": "Mississippi", "us-mt": "Montana", "us-ne": "Nebraska", "us-nh": "New Hampshire",
+    "us-nm": "New Mexico", "us-nv": "Nevada", "us-ok": "Oklahoma", "us-or": "Oregon",
+    "us-ri": "Rhode Island", "us-sd": "South Dakota", "us-ut": "Utah", "us-wv": "West Virginia",
+}
+
+OK_OHCA_SUBCHAPTER_6_INDEX = (
+    "https://oklahoma.gov/ohca/policies-and-rules/xpolicy/"
+    "medical-assistance-for-adults-and-children-eligibility/"
+    "soonercare-for-pregnant-women-and-families-with-children.html"
+)
+OK_RULES_API_317_35 = (
+    "https://prod-ok-rules-api.tecuity.com/GetSegmentsByChapterNum?titleNum=317&chapterNum=35"
+)
+OK_RECORD_METADATA_FIELDS = [
+    "id", "parentId", "name", "titleNum", "chapterNum", "subChapterNum", "partNum", "sectionNum",
+    "appendixNum", "description", "statusName", "segmentStatusId", "segmentTypeId", "recordStatus",
+    "effectiveDate", "filingId", "hasEmergency", "segmentNotes",
+]
+
+
+MS_EPM_HEADING = r"^\s*(?P<num>{ch}\.\d{{2}}(?:\.\d{{2}}[A-Z]?)?)\s+(?P<heading>[A-Z][A-Z0-9 ,\-–’'()/&:.]+?)\s*$"
+MS_EPM_LABEL = r"^\s*(?P<num>{ch}\.\d{{2}}(?:\.\d{{2}}[A-Z]?)?)\s*$"
+MS_EPM_LABEL_HEADING = r"^\s*[A-Z][A-Z0-9 ,\-–’'()/&:.]+\s*$"
+MS_EPM_DROP = [
+    r"^\s*MISSISSIPPI DIVISION OF MEDICAID\s*$",
+    r"^\s*Eligibility Policy and Procedures Manual\s*$",
+    r"^\s*CHAPTER \d{3} – .*$",
+    r"^\s*P\s?a\s?g\s?e\s*\|\s*\d+\s*$",
+    r"^\s*Effective Month:.*$",
+]
+
+
+def _ms_chapter_extraction(chapter: str, start_page: int) -> dict:
+    return {
+        "segmentation": "labeled_sections",
+        "start_page": start_page,
+        "section_heading_pattern": MS_EPM_HEADING.format(ch=chapter),
+        "section_label_pattern": MS_EPM_LABEL.format(ch=chapter),
+        "label_only_heading_pattern": MS_EPM_LABEL_HEADING,
+        "label_only_requires_heading": True,
+        "section_label_template": "{num}",
+        "heading_continuation_pattern": NEVER_CONTINUE,
+        "drop_line_patterns": MS_EPM_DROP,
+    }
+
+
+NM_8_291_HEADING = (
+    r"^(?P<label>8\s*\.\s*291\s*\.\s*{part}\s*\.\s*(?P<num>\d+(?:\s*-\s*\d+)?))\s+(?P<heading>[A-Z][^:]{{0,180}}:|\[RESERVED\]|"
+    r"[A-Z][A-Z0-9 /()\[\]\-–—,'&]{{0,180}})(?:\s+(?P<body>.*))?$"
+)
+
+
+def _nm_part_doc(part: str, title: str, expression_date: str) -> dict:
+    d = doc(
+        "us-nm", f"nm-srca-nmac-8-291-{part}",
+        f"8.291.{part} NMAC {title}",
+        f"https://www.srca.nm.gov/parts/title08/08.291.0{part}.html",
+        f"us-nm/regulation/nmac/8/291/{part}", "html", expression_date,
+        document_class="regulation",
+        subtype="administrative_code",
+        authority="New Mexico State Records Center and Archives",
+        extraction={
+            "html_content_selector": ".WordSection1, .Section1",
+            "segmentation": "labeled_sections",
+            "section_heading_pattern": NM_8_291_HEADING.format(part=part),
+            "section_label_template": f"8.291.{part}.{{num}}",
+            "normalize_label_internal_whitespace": True,
+        },
+        metadata={
+            "issuing_agency": "New Mexico Health Care Authority",
+            "legal_identifier": f"8.291.{part} NMAC",
+            "nmac_title": "8", "nmac_chapter": "291", "nmac_part": part,
+            "nmac_title_index_url": "https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/",
+            "state_program": "Medicaid eligibility - affordable care (MAGI children incl. Title XXI-funded)",
+        },
+    )
+    d["metadata"]["discovered_via"] = BATCH3_DISCOVERED_VIA
+    return d
+
+
+def _sd_chapter_doc(chapter: str, title: str, expression_date: str) -> dict:
+    d = doc(
+        "us-sd", f"sd-lrc-arsd-67-46-{chapter}",
+        f"ARSD Chapter 67:46:{chapter} {title}",
+        f"https://sdlegislature.gov/api/Rules/67:46:{chapter}",
+        f"us-sd/regulation/arsd/67/46/{chapter}", "json", expression_date,
+        document_class="regulation",
+        subtype="administrative_rule_chapter",
+        authority="South Dakota Department of Social Services (ARSD Article 67:46), published by the South Dakota Legislative Research Council",
+        extraction={
+            "json_html_field": "Html",
+            "segmentation": "labeled_sections",
+            "section_heading_pattern": rf"^67:46:{chapter}:(?P<num>\d{{2}})\s*\.\s+(?P<heading>[^.]+\.)\s*(?P<body>.*)$",
+            "section_label_template": "{num}",
+        },
+        metadata={
+            "legal_identifier": f"ARSD 67:46:{chapter}",
+            "landing_page": f"https://sdlegislature.gov/Rules/Administrative/67:46:{chapter}",
+            "article_index": "https://sdlegislature.gov/api/Rules/67:46",
+        },
+    )
+    d["metadata"]["discovered_via"] = BATCH3_DISCOVERED_VIA
+    return d
+
+
+CONFIRMED_BATCH3: dict[str, dict] = {
+    "us-ky": {
+        "name": "Kentucky",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_html",
+        "index_url": "https://apps.legislature.ky.gov/law/kar/titles/907/004/",
+        "index_document_count": 2,
+        "index_families": {"kar_regulation_html": 2},
+        "primary_source_url": "https://apps.legislature.ky.gov/law/kar/titles/907/004/020/",
+        "notes": (
+            "Kentucky Legislative Research Commission index for 907 KAR Chapter 4 (Kentucky Children's "
+            "Health Insurance Program): 2 regulations, 907 KAR 4:020 KCHIP Medicaid Expansion and 907 KAR "
+            "4:030 KCHIP Phase III (separate CHIP), both last amended effective 2023-01-12 per their "
+            "HISTORY lines. Taken 2, one HTML document each (div.regulation-content), whole regulation "
+            "as one provision because the LRC page marks each section and paragraph as an h2 with the "
+            "text in spans. The DCBS Operations Manual Volume IVA (Medicaid) at chfs.ky.gov was not "
+            "located on a public index in this run."
+        ),
+        "documents": [
+            doc(
+                "us-ky", f"ky-lrc-907-kar-4-{num}",
+                f"907 KAR 4:{num}. {title}",
+                f"https://apps.legislature.ky.gov/law/kar/titles/907/004/{num}/",
+                f"us-ky/regulation/kar/907/004/{num}", "html", "2023-01-12",
+                document_class="regulation",
+                subtype="administrative_regulation",
+                authority="Kentucky Cabinet for Health and Family Services, Department for Medicaid Services (907 KAR), published by the Legislative Research Commission",
+                extraction={"html_content_selector": "div.regulation-content"},
+                metadata={"legal_identifier": f"907 KAR 4:{num}", "state_program": "KCHIP",
+                          "history_effective": "2023-01-12"},
+            )
+            for num, title in (
+                ("020", "Kentucky Children's Health Insurance Program Medicaid Expansion Title XXI of the Social Security Act"),
+                ("030", "Kentucky Children's Health Insurance Program Phase III Title XXI of the Social Security Act"),
+            )
+        ],
+    },
+    "us-ok": {
+        "name": "Oklahoma",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_json_records",
+        "index_url": OK_RULES_API_317_35,
+        "index_document_count": 397,
+        "index_families": {"oac_section": 350, "oac_part": 29, "oac_subchapter": 17, "oac_chapter": 1},
+        "primary_source_url": "https://rules.ok.gov/home",
+        "notes": (
+            "Oklahoma Secretary of State Office of Administrative Rules (rules.ok.gov, the official OAC "
+            "publisher; same segments API as us-ok-snap-rules.yaml) chapter listing for OAC 317:35 "
+            "Medical Assistance for Adults and Children - Eligibility: 397 segments (350 sections, 29 "
+            "parts, 17 subchapters, the chapter; statuses 292 in force, 82 Revoked, 17 Terminated, 4 "
+            "Reserved, 2 AmendedAndRenumbered). Oklahoma's CHIP is Medicaid-expansion SoonerCare for "
+            "children, governed by Subchapter 6 SoonerCare for Pregnant Women and Families with Children. "
+            "Taken 1 document, the chapter JSON filtered to the 29 Subchapter 6 sections (label prefix "
+            "317:35-6-; Revoked and Reserved excluded; 62 and 62.1, AmendedAndRenumbered, carry no text in "
+            "the API and yield no provision, so 27 section provisions result). The OHCA "
+            "policy site lists the same 29 sections but states its copies are unofficial, so it is "
+            "recorded only as the agency index. The API returns HTTP 403 to the plain client and is read "
+            "through the manifest browser_impersonation fallback. Not taken: subchapters 5, 10, 22."
+        ),
+        "documents": [
+            doc(
+                "us-ok", "ok-oac-317-35-6-soonercare-children-families",
+                "Oklahoma Administrative Code Title 317 Chapter 35 Subchapter 6 SoonerCare for Pregnant Women and Families with Children",
+                "https://rules.ok.gov/home",
+                "us-ok/regulation/oac/317/35", "json", SOURCE_AS_OF,
+                document_class="regulation",
+                subtype="administrative_code_subchapter",
+                authority="Oklahoma Health Care Authority (OAC Title 317), published by the Oklahoma Secretary of State Office of Administrative Rules",
+                request=IMPERSONATE,
+                extraction={
+                    "segmentation": "records",
+                    "json_record_text_field": "text",
+                    "json_record_text_is_html": True,
+                    "json_record_label_field": "sectionNum",
+                    "json_record_heading_field": "description",
+                    "json_record_kind_field": "name",
+                    "json_record_status_field": "statusName",
+                    "json_record_exclude_statuses": ["Revoked", "Reserved"],
+                    "json_record_include_label_prefixes": ["317:35-6-"],
+                    "json_record_metadata_fields": OK_RECORD_METADATA_FIELDS,
+                },
+                metadata={
+                    "official_publisher": "Oklahoma Secretary of State Office of Administrative Rules",
+                    "rules_landing_page": "https://rules.ok.gov/home",
+                    "rules_api_url": OK_RULES_API_317_35,
+                    "agency_policy_site_index": OK_OHCA_SUBCHAPTER_6_INDEX,
+                    "legal_identifier": "OAC 317:35-6",
+                    "state_program": "SoonerCare (Medicaid-expansion CHIP for children)",
+                    "expression_date_note": "chapter compilation as served on source_as_of; per-section effectiveDate kept in record metadata",
+                },
+            ),
+        ],
+    },
+    "us-nv": {
+        "name": "Nevada",
+        "document_class": "manual",
+        "source_kind": "official_pdf_manual_chapter",
+        "index_url": "https://dwss.nv.gov/programs/medical/medical-assistance-manual/",
+        "index_document_count": 93,
+        "index_families": {"mam_chapter_pdf": 23, "mam_appendix_pdf": 9, "mam_full_manual_pdf": 1,
+                           "mam_table_of_contents_pdf": 1, "manual_transmittal_letter_pdf": 59},
+        "primary_source_url": "https://dwss.nv.gov/uploadedFiles/dwssnvgov/content/Medical/B-100%20MAGI%20Medical%20Categories%20Mar%2017.pdf",
+        "notes": (
+            "Nevada DWSS Medical Assistance Manual index: 93 documents (23 chapter PDFs A-100 to H-200, "
+            "9 appendices, the full manual, the table of contents, 59 manual transmittal letters). "
+            "Nevada Check Up (the separate CHIP) is determined under the MAM: section B-120.2 Nevada "
+            "Check Up in chapter B-100 MAGI Medical Categories (March 2017) and Appendix A MAGI Income "
+            "Charts (November 2024). Taken 2, page-level (the running page header repeats the section "
+            "label, so labeled sections would collide). Not taken: E-100 MAGI Budget Methodology, the "
+            "2014 'Nevada Check Up Manual revised sections' PDF linked from the Nevada Check Up page."
+        ),
+        "documents": [
+            doc(
+                "us-nv", "nv-dwss-mam-b-100",
+                "Nevada DWSS Medical Assistance Manual B-100 Modified Adjusted Gross Income (MAGI) Medical Categories",
+                "https://dwss.nv.gov/uploadedFiles/dwssnvgov/content/Medical/B-100%20MAGI%20Medical%20Categories%20Mar%2017.pdf",
+                "us-nv/manual/dwss/chip/mam-b-100", "pdf", "2017-03-01",
+                subtype="eligibility_manual_chapter_pdf",
+                authority="Nevada Division of Welfare and Supportive Services",
+                extraction=PAGES,
+                metadata={"state_program": "Nevada Check Up", "manual_section": "B-100",
+                          "chip_section": "B-120.2"},
+            ),
+            doc(
+                "us-nv", "nv-dwss-mam-appendix-a",
+                "Nevada DWSS Medical Assistance Manual Appendix A MAGI Income Charts",
+                "https://dwss.nv.gov/uploadedFiles/dwssnvgov/content/Medical/Appendix%20A%20MAGI%20Income%20Charts%20ADA%20Nov%20-%2024.pdf",
+                "us-nv/manual/dwss/chip/mam-appendix-a", "pdf", "2024-11-01",
+                subtype="income_standards_chart_pdf",
+                authority="Nevada Division of Welfare and Supportive Services",
+                extraction=PAGES,
+                metadata={"state_program": "Nevada Check Up", "manual_section": "Appendix A"},
+            ),
+        ],
+    },
+    "us-ms": {
+        "name": "Mississippi",
+        "document_class": "manual",
+        "source_kind": "official_pdf_manual_chapter",
+        "index_url": "https://medicaid.ms.gov/medicaid-coverage/eligibility-policy/",
+        "index_document_count": 27,
+        "index_families": {"eligibility_manual_chapter_pdf": 7, "eligibility_manual_appendix_pdf": 20},
+        "primary_source_url": "https://medicaid.ms.gov/wp-content/uploads/2025/09/Chapter-101-Coverage-Groups-and-Processing-Applications-and-Reviews-revised-September2025.pdf",
+        "notes": (
+            "Mississippi Division of Medicaid Eligibility Policy and Procedures Manual index: 7 chapter "
+            "PDFs (100, 101, 102, 200, 300, 400, 500) and 20 appendices. Mississippi's separate CHIP "
+            "(COE-099) is determined under this manual. Taken 3: Chapter 101 Coverage Groups and "
+            "Processing Applications and Reviews (revised September 2025; CHIP coverage group, 101.10.02 "
+            "beginning dates of CHIP eligibility), Chapter 400 ABD and MAGI Eligibility Criteria and "
+            "Budgeting (revised July 2025; 400.18-400.19 children and CHIP), labeled sections from the "
+            "chapter's own numbering after the table of contents; Appendix A-3 MAGI Income Limits chart "
+            "(uploaded March 2026), page-level. Not taken: chapters 100, 102, 200, 300, 500 and the "
+            "other appendices."
+        ),
+        "documents": [
+            doc(
+                "us-ms", "ms-dom-epm-chapter-101",
+                "Mississippi Division of Medicaid Eligibility Policy and Procedures Manual Chapter 101 Coverage Groups and Processing Applications and Reviews",
+                "https://medicaid.ms.gov/wp-content/uploads/2025/09/Chapter-101-Coverage-Groups-and-Processing-Applications-and-Reviews-revised-September2025.pdf",
+                "us-ms/manual/dom/chip/epm-chapter-101", "pdf", "2025-09-01",
+                subtype="eligibility_manual_chapter_pdf",
+                authority="Mississippi Division of Medicaid",
+                extraction=_ms_chapter_extraction("101", 6),
+                metadata={"state_program": "Mississippi CHIP (COE-099)", "manual_chapter": "101",
+                          "revised": "September 2025"},
+            ),
+            doc(
+                "us-ms", "ms-dom-epm-chapter-400",
+                "Mississippi Division of Medicaid Eligibility Policy and Procedures Manual Chapter 400 ABD and MAGI Eligibility Criteria and Budgeting",
+                "https://medicaid.ms.gov/wp-content/uploads/2025/07/Chapter-400-ABD-and-MAGI-Eligibility-Criteria-and-Budgeting.-Revised-July-2025v2.pdf",
+                "us-ms/manual/dom/chip/epm-chapter-400", "pdf", "2025-07-01",
+                subtype="eligibility_manual_chapter_pdf",
+                authority="Mississippi Division of Medicaid",
+                extraction=_ms_chapter_extraction("400", 4),
+                metadata={"state_program": "Mississippi CHIP (COE-099)", "manual_chapter": "400",
+                          "revised": "July 2025"},
+            ),
+            doc(
+                "us-ms", "ms-dom-epm-appendix-a-3",
+                "Mississippi Division of Medicaid Eligibility Policy and Procedures Manual Appendix A-3 Modified Adjusted Gross Income (MAGI) Limits Chart",
+                "https://medicaid.ms.gov/wp-content/uploads/2026/03/Appendix-A-3-MAGI-Income-Limits.-2014-to-present.pdf",
+                "us-ms/manual/dom/chip/epm-appendix-a-3", "pdf", "2026-03-01",
+                subtype="income_standards_chart_pdf",
+                authority="Mississippi Division of Medicaid",
+                extraction=PAGES,
+                metadata={"state_program": "Mississippi CHIP (COE-099)", "manual_appendix": "A-3",
+                          "expression_date_note": "publisher upload month (2026/03); the chart carries no cover date"},
+            ),
+        ],
+    },
+    "us-nm": {
+        "name": "New Mexico",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_html",
+        "index_url": "https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/",
+        "index_document_count": 4,
+        "index_families": {"nmac_part_html_in_force": 4},
+        "primary_source_url": "https://www.srca.nm.gov/parts/title08/08.291.0400.html",
+        "notes": (
+            "New Mexico State Records Center and Archives NMAC Title 8 index, Chapter 291 Medicaid "
+            "Eligibility - Affordable Care (the chapter link redirects to the title page, whose chapter "
+            "291 entry lists only reserved ranges; parts 400, 410, 420, 430 were confirmed by fetching, "
+            "440+ return 404). New Mexico's CHIP is Medicaid-expansion coverage determined under these "
+            "MAGI rules. Taken 4: 8.291.400 Eligibility Requirements (amended through 2024-09-01), "
+            "8.291.410 General Recipient Requirements (2024-07-01), 8.291.420 Recipient Rights and "
+            "Responsibilities (2024-07-01), 8.291.430 Financial Responsibility Requirements (2025-04-01), "
+            "labeled sections with the same pattern as us-nm-snap-regulations.yaml; expression_date is "
+            "the latest history date in each part."
+        ),
+        "documents": [
+            _nm_part_doc("400", "Eligibility Requirements", "2024-09-01"),
+            _nm_part_doc("410", "General Recipient Requirements", "2024-07-01"),
+            _nm_part_doc("420", "Recipient Rights and Responsibilities", "2024-07-01"),
+            _nm_part_doc("430", "Financial Responsibility Requirements", "2025-04-01"),
+        ],
+    },
+    "us-me": {
+        "name": "Maine",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_docx",
+        "index_url": "https://www.maine.gov/sos/cec/rules/10/ch332.htm",
+        "index_document_count": 6,
+        "index_families": {"rule_chapter_docx": 2, "rule_chapter_doc": 3, "rule_appendices_docx": 1},
+        "primary_source_url": "https://www.maine.gov/sos/sites/maine.gov.sos/files/inline-files/144c332-2025-101%20NSC.docx",
+        "notes": (
+            "Maine Secretary of State APA Office page for 10-144 C.M.R. Chapter 332 MaineCare Eligibility "
+            "Manual: 6 documents (Chapter 332 Word, its appendices and charts, Chapters 333-336). Part 5 "
+            "Children's Health Insurance Program (CHIP, formerly CubCare) of Chapter 332 is Maine's CHIP "
+            "eligibility rule; last updated (effective) 2025-04-29, filing 2025-101. Taken 1 document, "
+            "Part 5 only (start after the body 'PART 5' heading, stop at 'PART 6'; 10 sections). Not "
+            "taken: the other 11 parts of Chapter 332, the appendices, Chapters 333-336."
+        ),
+        "documents": [
+            doc(
+                "us-me", "me-ofi-mainecare-eligibility-manual-chapter-332-part-5",
+                "Maine 10-144 C.M.R. Chapter 332 MaineCare Eligibility Manual, Part 5: Children's Health Insurance Program (CHIP)",
+                "https://www.maine.gov/sos/sites/maine.gov.sos/files/inline-files/144c332-2025-101%20NSC.docx",
+                "us-me/regulation/dhhs/ofi/chapter-332/part-5", "docx", "2025-04-29",
+                document_class="regulation",
+                subtype="administrative_rules_part",
+                authority="Maine Department of Health and Human Services Office for Family Independence",
+                extraction={
+                    "segmentation": "labeled_sections",
+                    "start_after_pattern": r"^PART 5$",
+                    "stop_text_pattern": r"^PART 6$",
+                    "section_heading_pattern": r"^SECTION (?P<num>\d+):\s*(?P<heading>.+)$",
+                    "section_label_template": "section-{num}",
+                },
+                metadata={"publication_authority": "Maine Secretary of State Administrative Procedure Act Office",
+                          "rule_chapter": "10-144 C.M.R. Chapter 332", "rule_part": "5",
+                          "rule_filing": "2025-101", "state_program": "Maine CHIP (formerly CubCare)"},
+            ),
+        ],
+    },
+    "us-ri": {
+        "name": "Rhode Island",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_pdf",
+        "index_url": "https://rules.sos.ri.gov/Organizations/SubChapter/210-30-00",
+        "index_document_count": 4,
+        "index_families": {"ricr_part_active": 4},
+        "primary_source_url": "https://rules.sos.ri.gov/regulations/Part/210-30-00-1",
+        "notes": (
+            "Rhode Island Code of Regulations (Department of State) Title 210 EOHHS, Chapter 30 Medicaid "
+            "for Children, Families and ACA Adults (4 subchapters: 00 Affordable Coverage Groups, 05, 10, "
+            "15); Subchapter 00 lists 4 active parts (1, 3, 4, 5). RIte Care children including the "
+            "CHIP-funded group are determined under these parts. Taken 2: 210-RICR-30-00-1 Medicaid "
+            "Affordable Care Coverage Groups Overview and Eligibility Pathways (effective 2025-08-17) and "
+            "210-RICR-30-00-5 Medicaid MAGI Financial Eligibility Determinations and Verification "
+            "(effective 2025-08-28), the 'Download Regulation' PDFs, page-level like us-ri-snap-rules.yaml. "
+            "Not taken: parts 3 (application and renewal) and 4 (hospital presumptive eligibility)."
+        ),
+        "documents": [
+            doc(
+                "us-ri", "ri-eohhs-210-ricr-30-00-1",
+                "210-RICR-30-00-1 Medicaid Affordable Care Coverage Groups Overview and Eligibility Pathways",
+                "https://rules.sos.ri.gov/regulations/Part/210-30-00-1",
+                "us-ri/regulation/210-ricr/30/00/1", "pdf", "2025-08-17",
+                document_class="regulation",
+                subtype="administrative_regulation",
+                authority="Rhode Island Executive Office of Health and Human Services",
+                extraction=PAGES,
+                metadata={"official_publisher": "Rhode Island Department of State",
+                          "legal_identifier": "210-RICR-30-00-1", "regulation_effective_date": "2025-08-17",
+                          "download_url_note": "Download Regulation PDF REG_13314_20250728104245127.pdf"},
+            ),
+            doc(
+                "us-ri", "ri-eohhs-210-ricr-30-00-5",
+                "210-RICR-30-00-5 Medicaid MAGI Financial Eligibility Determinations and Verification",
+                "https://rules.sos.ri.gov/regulations/Part/210-30-00-5",
+                "us-ri/regulation/210-ricr/30/00/5", "pdf", "2025-08-28",
+                document_class="regulation",
+                subtype="administrative_regulation",
+                authority="Rhode Island Executive Office of Health and Human Services",
+                extraction=PAGES,
+                metadata={"official_publisher": "Rhode Island Department of State",
+                          "legal_identifier": "210-RICR-30-00-5", "regulation_effective_date": "2025-08-28",
+                          "download_url_note": "Download Regulation PDF REG_13331_20250808145837454.pdf"},
+            ),
+        ],
+    },
+    "us-sd": {
+        "name": "South Dakota",
+        "document_class": "regulation",
+        "source_kind": "official_adopted_rule_json_html",
+        "index_url": "https://sdlegislature.gov/api/Rules/67:46",
+        "index_document_count": 13,
+        "index_families": {"arsd_chapter": 13},
+        "primary_source_url": "https://sdlegislature.gov/api/Rules/67:46:14",
+        "notes": (
+            "South Dakota Legislature ARSD Article 67:46 Eligibility for Medical Services (13 chapters, "
+            "read from the Legislative Research Council's rules API because sdlegislature.gov/Rules/"
+            "Administrative/67:46 is script-rendered). Taken 2: Chapter 67:46:14 Nonmedicaid Children's "
+            "Health Insurance Program (the separate CHIP rule; latest effective 2024-11-11) and Chapter "
+            "67:46:12 MAGI Medicaid Eligibility Standards (Medicaid-expansion children; 2023-07-03), one "
+            "JSON document each (Html field), sections split on the body headings '67:46:14:NN.'; the "
+            "chapter's table-of-contents lines have no period after the number and are not sections."
+        ),
+        "documents": [
+            _sd_chapter_doc("14", "Nonmedicaid Children's Health Insurance Program", "2024-11-11"),
+            _sd_chapter_doc("12", "Modified Adjusted Gross Income (MAGI) Medicaid Eligibility Standards", "2023-07-03"),
+        ],
+    },
+}
+for _spec in CONFIRMED_BATCH3.values():
+    for _d in _spec["documents"]:
+        _d["metadata"]["discovered_via"] = BATCH3_DISCOVERED_VIA
+CONFIRMED_BATCH3["us-ok"]["documents"][0]["download_url"] = OK_RULES_API_317_35
+CONFIRMED_BATCH3["us-ri"]["documents"][0]["download_url"] = (
+    "https://risos-apa-production-public.s3.amazonaws.com/EOHHS/REG_13314_20250728104245127.pdf"
+)
+CONFIRMED_BATCH3["us-ri"]["documents"][1]["download_url"] = (
+    "https://risos-apa-production-public.s3.amazonaws.com/EOHHS/REG_13331_20250808145837454.pdf"
+)
+
+BLOCKED_BATCH3: dict[str, dict] = {
+    "us-or": {
+        "name": "Oregon",
+        "index_url": "https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=94",
+        "index_document_count": None,
+        "primary_source_url": "https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=94",
+        "notes": (
+            "Blocked. Oregon's CHIP is Medicaid-expansion Oregon Health Plan coverage governed by OAR "
+            "chapter 410 division 200 (OHA Health Systems Division, published by the Secretary of State's "
+            "OARD). On 2026-09-10 the oregon.gov DNS zone did not resolve: secure.sos.state.or.us and "
+            "www.oregon.gov returned SERVFAIL from the authoritative servers (dig @1.1.1.1 and @8.8.8.8, "
+            "NS lookup for oregon.gov SERVFAIL), so both the plain and chrome120 probes failed with name "
+            "resolution errors after 20 s. Probably transient; retry before treating as durable. 0 taken."
+        ),
+    },
+    "us-ne": {
+        "name": "Nebraska",
+        "index_url": "https://rules.nebraska.gov/rules?agencyId=41",
+        "index_document_count": None,
+        "primary_source_url": "https://dhhs.ne.gov/Pages/Medicaid-Regulations.aspx",
+        "notes": (
+            "Blocked. Nebraska's CHIP is Medicaid-expansion coverage under 477 NAC (DHHS Medicaid "
+            "eligibility regulations). dhhs.ne.gov did not accept TCP connections on 443 (ConnectTimeout "
+            "20 s plain; curl (28) 20 s chrome120). The Secretary of State's Nebraska Administrative "
+            "Code site rules.nebraska.gov serves its leaf certificate without the DigiCert Global G2 TLS "
+            "RSA SHA256 2020 CA1 intermediate; with the already-committed data/certs/"
+            "digicert-global-g2-tls-rsa-sha256-2020-ca1.pem in REQUESTS_CA_BUNDLE the chain verifies, "
+            "after which the site root and the agency listing return HTTP 403 to plain and chrome120 "
+            "clients. TLS verification was never disabled. 0 taken."
+        ),
+    },
+    "us-hi": {
+        "name": "Hawaii",
+        "index_url": "https://medquest.hawaii.gov/en/plans-providers/har.html",
+        "index_document_count": None,
+        "primary_source_url": "https://medquest.hawaii.gov/en/plans-providers/har.html",
+        "notes": (
+            "Blocked. Hawaii's CHIP is Medicaid-expansion QUEST coverage governed by Med-QUEST Division "
+            "administrative rules (HAR Title 17); medquest.hawaii.gov returned HTTP 522 (Cloudflare origin "
+            "timeout, empty body, ~20 s) to plain and chrome120 clients. 0 taken."
+        ),
+    },
+    "us-nh": {
+        "name": "New Hampshire",
+        "index_url": "https://www.gencourt.state.nh.us/rules/state_agencies/he-w800.html",
+        "index_document_count": None,
+        "primary_source_url": "https://www.gencourt.state.nh.us/rules/state_agencies/he-w800.html",
+        "notes": (
+            "Blocked. New Hampshire's CHIP eligibility rules are DHHS He-W 800 (medical assistance) "
+            "published by the Office of Legislative Services at gencourt.state.nh.us: HTTP 403 'Error 403' "
+            "to the plain client; the chrome120 request was closed abruptly (curl 56). 0 taken."
+        ),
+    },
+    "us-ut": {
+        "name": "Utah",
+        "index_url": "https://oepmanuals-chip.dhhs.utah.gov/Welcome_page.htm",
+        "index_document_count": None,
+        "primary_source_url": "https://oepmanuals-chip.dhhs.utah.gov/Welcome_page.htm",
+        "notes": (
+            "Blocked. Utah DHHS Office of Eligibility Policy publishes a separate CHIP eligibility policy "
+            "manual at oepmanuals-chip.dhhs.utah.gov (effective 2024-05-01); the host returns HTTP 403 "
+            "AccessDenied (111-byte XML) to plain and chrome120 clients for the welcome page and the site "
+            "root. The former Medicaid eligibility manual hosts medicaidpolicy.utah.gov and "
+            "bepmanuals.health.utah.gov are NXDOMAIN. The adopted rule R382-10 lives only in the Office of "
+            "Administrative Rules eRules single-page app (adminrules.utah.gov; plain client 404, no public "
+            "rule endpoint found in its bundle), and medicaid.utah.gov publishes no eligibility manual. "
+            "The existing us-ut/manual DWS Eligibility Manual scope has no CHIP chapter. 0 taken."
+        ),
+    },
+    "us-mt": {
+        "name": "Montana",
+        "index_url": "https://rules.mt.gov/gateway/ChapterHome.asp?Chapter=37%2E79",
+        "index_document_count": None,
+        "primary_source_url": "https://rules.mt.gov/gateway/ChapterHome.asp?Chapter=37%2E79",
+        "notes": (
+            "Blocked. Montana's CHIP (Healthy Montana Kids) eligibility rule is ARM 37.79, published by "
+            "the Secretary of State at rules.mt.gov. The site (plain client HTTP 200) is now the Esper "
+            "'policy-library-public' single-page application: the HTML shell carries no rule text, its "
+            "search API returns HTTP 403 AccessDenied to the plain client and the HTML shell to the "
+            "chrome120 client, and no document endpoint is discoverable. dphhs.mt.gov/hmk answers (HTTP "
+            "200) but publishes only the member guide and evidence of coverage, not an eligibility "
+            "manual or rule. 0 taken."
+        ),
+    },
+}
+
+DONE_BATCH3: dict[str, dict] = {
+    "us-ar": {
+        "name": "Arkansas",
+        "index_url": "https://humanservices.arkansas.gov/divisions-shared-services/county-operations/policy/",
+        "index_document_count": 1,
+        "target_manifest": f"discovery/ingest-medicaid: us-ar/manual {MEDICAID_RUN_VERSION}",
+        "target_scope": {"jurisdiction": "us-ar", "document_class": "manual", "version": MEDICAID_RUN_VERSION},
+        "pointer": "us-ar/manual/dco/medicaid/policy-manual (DCO Medical Services Policy Manual, 563 page provisions; ARKids First-B is determined under it)",
+        "notes": (
+            "Done by pointer (reviewer judgment). Arkansas's separate CHIP, ARKids First-B, is determined "
+            "under the DHS Division of County Operations Medical Services Policy Manual (MS-Policy-9.26-"
+            "New.pdf), which the parallel Medicaid run ingested in full on 2026-09-10 (563 page provisions "
+            "at us-ar/manual/dco/medicaid/policy-manual, version " + MEDICAID_RUN_VERSION + "); the text "
+            "names ARKids A and ARKids B throughout. " + MEDICAID_RUN_NOTE + " Nothing separate to add."
+        ),
+    },
+    "us-wv": {
+        "name": "West Virginia",
+        "index_url": "https://bfa.wv.gov/income-maintenance-manual",
+        "index_document_count": 1,
+        "target_manifest": "manifests/us-wv-manuals.yaml",
+        "target_scope": {"jurisdiction": "us-wv", "document_class": "manual", "version": "2026-07-21-wv-income-maintenance-manual"},
+        "pointer": "us-wv/manual/bfa/income-maintenance-manual (Income Maintenance Manual effective 2026-07-01, 2276 page provisions; WVCHIP eligibility chapters included)",
+        "notes": (
+            "Done by pointer (reviewer judgment). West Virginia CHIP (WVCHIP) eligibility is determined "
+            "under the Bureau for Family Assistance Income Maintenance Manual, already in the corpus as "
+            "us-wv-manuals.yaml (single combined PDF effective 2026-07-01, 2276 page-level provisions, "
+            "version 2026-07-21-wv-income-maintenance-manual); the WVCHIP provisions (MAGI Medicaid/WVCHIP "
+            "chapters) are inside it. The former dhhr.wv.gov manual index returns 404; the current landing "
+            "page is bfa.wv.gov/income-maintenance-manual. Nothing separate to add."
+        ),
+    },
+}
+
+
 def main() -> int:
     queue = yaml.safe_load(QUEUE.read_text())
     rows = {s["jurisdiction"]: s for s in queue["states"]}
-    for jur, name in NEW_ROW_NAMES.items():
+    for jur, name in {**NEW_ROW_NAMES, **NEW_ROW_NAMES_BATCH3}.items():
         rows.setdefault(jur, {"jurisdiction": jur, "name": name, "lead_counts": {},
                               "candidate_sources": []})
     written: list[str] = []
-    for jur, spec in {**CONFIRMED, **CONFIRMED_BATCH2}.items():
+    for jur, spec in {**CONFIRMED, **CONFIRMED_BATCH2, **CONFIRMED_BATCH3}.items():
         stem = f"{jur}-chip-state-eligibility-manual"
         manifest = {"version": VERSION, "documents": spec["documents"]}
         (ROOT / "manifests" / f"{stem}.yaml").write_text(
@@ -1115,7 +1688,7 @@ def main() -> int:
         })
         if "index_families" in spec:
             row["index_families"] = spec["index_families"]
-    for jur, spec in {**BLOCKED, **BLOCKED_BATCH2}.items():
+    for jur, spec in {**BLOCKED, **BLOCKED_BATCH2, **BLOCKED_BATCH3}.items():
         row = rows[jur]
         row.update({
             "queue_status": "blocked_primary_source",
@@ -1128,7 +1701,7 @@ def main() -> int:
             "taken_count": 0,
             "notes": spec["notes"] + (f" {RETRY_NOTES[jur]}" if jur in RETRY_NOTES else ""),
         })
-    for jur, spec in {**DONE, **DONE_BATCH2}.items():
+    for jur, spec in {**DONE, **DONE_BATCH2, **DONE_BATCH3}.items():
         row = rows[jur]
         row.update({
             "queue_status": "done",
