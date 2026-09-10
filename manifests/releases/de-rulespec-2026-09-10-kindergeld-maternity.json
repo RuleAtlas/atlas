@@ -1,5 +1,5 @@
 {
-  "description": "Preserve all 41 preceding DE scopes and add the complete current MuSchG act, both official § 3 versions spanning 2025, and the complete 2025 amending acts Nos. 59 and 371. Current capture is not blanket historical applicability.",
+  "description": "Preserve all 41 preceding DE scopes; add the complete current MuSchG, both official § 3 versions spanning 2025, full 2025 amending acts Nos. 59 and 371, and the complete BFH III R 42/22 decision omitted from the DA-KG discovery snapshot. Current capture is not blanket historical applicability.",
   "name": "de-rulespec-2026-09-10-kindergeld-maternity",
   "quality_profile": "complete-expression-dates-v1",
   "scopes": [
@@ -222,6 +222,11 @@
       "jurisdiction": "de",
       "document_class": "statute",
       "version": "2026-09-10-de-kindergeld-maternity-amendments"
+    },
+    {
+      "jurisdiction": "de",
+      "document_class": "guidance",
+      "version": "2026-09-10-de-kindergeld-disability-case"
     }
   ]
 }
