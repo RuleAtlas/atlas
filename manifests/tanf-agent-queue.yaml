@@ -29,10 +29,10 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 2
+  needs_review: 1
   done: 26
-  agent_ready: 16
-  blocked_primary_source: 8
+  agent_ready: 24
+  blocked_primary_source: 1
 states:
 - jurisdiction: us
   name: Federal
@@ -2148,9 +2148,9 @@ states:
   notes: Kansas KEESM (combined) already ingested. Done per the prior-ingest list.
 - jurisdiction: us-ky
   name: Kentucky
-  queue_status: blocked_primary_source
-  source_kind: official_html_manual
-  primary_source_url: https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/opmanual.aspx
+  queue_status: agent_ready
+  source_kind: official_pdf_manual_volumes
+  primary_source_url: https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/default.aspx
   target_manifest: manifests/us-ky-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-ky
@@ -2158,12 +2158,20 @@ states:
     version: 2026-09-10-tanf-state-policy-manual
   lead_counts: null
   candidate_sources: []
-  notes: 'BLOCKED 2026-09-10: Kentucky CHFS DCBS Operation Manual index (Volume IIIA K-TAP). Plain requests and curl-cffi
-    chrome impersonation both receive HTTP 403 text/html 1484 bytes ''Service unavailable - The request is blocked.'' with
-    an x-azure-ref header (Azure Front Door WAF). No index could be inventoried; no workaround attempted.'
-  index_url: https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/opmanual.aspx
-  index_document_count: null
-  taken_count: 0
+  notes: 'Batch 4 (retry). Primary source confirmed from the publisher''s own index. Inventory: 12 Operation Manual volumes
+    linked from the DFS page (Vol. I General Administration; Vol. II Supplemental Nutrition Assistance Program; Vol. IIA Supplemental
+    Nutrition Assistance Program (SNAP) Work Requirements; Vol. III Kentucky Transitional Assistance Program (KTAP); Vol.
+    IIIA Kentucky Works Program (KWP); Vol. IV Vacant; Vol. IVA Non-MAGI Medicaid (MA); Vol. IVB MAGI Medicaid, APTC/CSR and
+    QHP; Vol. V State Supplementation; Vol. VIII Child Care Assistance Program (CCAP); Vol. IX OMTL Cover Letters; Vol. X
+    Policy Updates); taken Volume III (KTAP) and Volume IIIA (KWP, the KTAP work program). Not taken: volumes I (general administration),
+    II/IIA (SNAP, already in the corpus), IV/IVA/IVB (Medicaid), V (State Supplementation), VIII (CCAP), IX (OMTL cover letters),
+    X (policy updates). The lead list''s opmanual.aspx index is now HTTP 404 (the K-TAP program page moved to /agencies/dcbs/dfs/fssb/Pages/ktap.aspx
+    and links the Policy Development Branch); the DFS page carries the volume list. Retried 2026-09-10T21:34Z from a US network
+    (batch 4): the publisher answered plain and browser clients (no Azure Front Door 403). Extraction proven 2026-09-10 (coverage
+    complete, 0 missing/extra/duplicate).'
+  index_url: https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/default.aspx
+  index_document_count: 12
+  taken_count: 2
 - jurisdiction: us-la
   name: Louisiana
   queue_status: agent_ready
@@ -3076,9 +3084,9 @@ states:
   taken_count: 310
 - jurisdiction: us-ne
   name: Nebraska
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   source_kind: official_pdf_regulation
-  primary_source_url: https://rules.nebraska.gov/
+  primary_source_url: https://rules.nebraska.gov/rules?agencyId=37&titleId=223
   target_manifest: manifests/us-ne-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-ne
@@ -3086,16 +3094,17 @@ states:
     version: 2026-09-10-tanf-state-policy-manual
   lead_counts: null
   candidate_sources: []
-  notes: 'BLOCKED 2026-09-10: Nebraska ADC policy is 468 NAC, published by the Secretary of State at rules.nebraska.gov (www.nebraska.gov/rules-and-regs
-    redirects there); DHHS program pages (dhhs.ne.gov) time out on TCP connect. rules.nebraska.gov serves only its leaf certificate
-    (issuer DigiCert Global G2 TLS RSA SHA256 2020 CA1), so the public intermediate was added as data/certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem
-    (fetched from the leaf''s AIA URL; verification never disabled). With the repaired chain the host answers plain requests
-    and chrome impersonation with HTTP 403 (Microsoft-Azure-Application-Gateway/v2) ''403 - Access Denied / Forbidden ...
-    You are accessing this site from an IP Address out[side the allowed range]''. No index could be inventoried; no workaround
-    attempted. Retry from a US network.'
-  index_url: https://rules.nebraska.gov/
-  index_document_count: null
-  taken_count: 0
+  notes: 'Batch 4 (retry). Primary source confirmed from the publisher''s own index. Inventory: DHHS (agency 37) has 45 titles
+    on rules.nebraska.gov; title 468 Aid to Dependent Children (ADC) has 5 chapters (1 GENERAL BACKGROUND (eff. 2022-08-29);
+    2 ELIGIBILITY REQUIREMENTS (eff. 2022-08-29); 3 CALCULATION OF AID TO DEPENDENT CHILDREN BENEFITS (eff. 2022-08-29); 4
+    EMPLOYMENT FIRST SELF-SUFFICIENCY PROGRAM (EF) (eff. 2022-08-29); 5 EMERGENCY ASSISTANCE TO NEEDY FAMILIES WITH CHILDREN
+    (EA) (eff. 2022-08-29)); taken all 5 as the publisher''s chapter PDF blobs (the API carries no signed official blob for
+    this title). Not taken: 469 AABD, 470 refugee programs, 475 SNAP (already in the corpus). Retried 2026-09-10T21:34Z from
+    a US network (batch 4): the publisher answered plain and browser clients (HTTP 200 JSON and PDF with the repaired chain;
+    no Azure gateway 403). Extraction proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://rules.nebraska.gov/rules?agencyId=37&titleId=223
+  index_document_count: 5
+  taken_count: 5
 - jurisdiction: us-nh
   name: New Hampshire
   queue_status: agent_ready
@@ -3131,7 +3140,7 @@ states:
     scope. Done with that caveat.'
 - jurisdiction: us-nm
   name: New Mexico
-  queue_status: needs_review
+  queue_status: agent_ready
   source_kind: official_html_regulation_parts
   primary_source_url: https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/chapter-102-cash-assistance-programs/
   target_manifest: manifests/us-nm-tanf-state-policy-manual.yaml
@@ -3141,17 +3150,16 @@ states:
     version: 2026-09-10-tanf-state-policy-manual
   lead_counts: null
   candidate_sources: []
-  notes: 'Batch 2, attempted 2026-09-10, not extracted: New Mexico''s TANF policy is NMAC 8.102 (Cash Assistance Programs,
-    adopted rule) published by the Commission of Public Records / State Records Center and Archives. The part files are served
-    by the publisher (https://www.srca.nm.gov/parts/title08/08.102.0100.html and .pdf answer 200), but the publisher''s chapter
-    index is a RealFile folder widget (rts-realfile-folder-search plugin, rf_sdk.js, a.rf-folder data-folder-id b5ca2d14-a03f-466c-998d-8b8ff7c4c7b9)
-    whose listing comes from the vendor API (rf-sb-prod.rtssaas.com / AWS Lambda, embedded authTokenGUID); the static page
-    only lists the reserved part ranges. No mirror or probe-by-number was used. Reviewer decision needed: accept the vendor
-    folder listing as the publisher''s index (then an inventory of the non-reserved parts 100-640 follows) or find an HCA/ISD-published
-    parts index.'
-  index_url: https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/
-  index_document_count: null
-  taken_count: 0
+  notes: 'Batch 4 (retry). Primary source confirmed from the publisher''s own index. Inventory: HCA Income Support Division
+    page lists 85 SRCA NMAC part files (8.100 x10, 8.102 x17, 8.106 x17, 8.119 x7, 8.139 x17, 8.150 x17); the 8.102 Cash Assistance
+    Programs family has 17 parts (100, 110, 120, 230, 400, 410, 420, 460, 461, 462, 500, 501, 510, 520, 610, 611, 620), taken
+    all. Not taken: 8.100 general provisions and 8.139 SNAP (already in the corpus as us-nm SNAP regulations), 8.106 (GA),
+    8.119 (LIHEAP), 8.150 (child care). The SRCA chapter page itself lists only reserved ranges (its listing is a vendor RealFile
+    widget); the agency-published parts index resolves the batch-2 review question. Extraction proven 2026-09-10 (coverage
+    complete, 0 missing/extra/duplicate).'
+  index_url: https://www.hca.nm.gov/lookingforinformation/income-support-division-1/
+  index_document_count: 85
+  taken_count: 17
 - jurisdiction: us-nv
   name: Nevada
   queue_status: done
@@ -3421,31 +3429,36 @@ states:
     Your support ID is ...'') instead of the PDF; safari profiles: connection reset. No workaround attempted. The 2024-2026
     TANF State Plan (policy) is already in the corpus (us-ny-tanf-state-plan); the Employment Policy Manual is in 2026-07-17-ny-snap-manuals.
     Retried 2026-09-10T20:37+02:00 (batch 2: one plain curl HEAD, connection reset by peer; one curl-cffi chrome/firefox GET,
-    HTTP 200 text/html 5.5 KB challenge page; 15 s timeouts), same failure.'
+    HTTP 200 text/html 5.5 KB challenge page; 15 s timeouts), same failure. Retried 2026-09-10T21:34Z from a US network (batch
+    4: one plain requests GET, ''Remote end closed connection without response''; one curl-cffi chrome GET, HTTP 200 text/html
+    7.6 KB bot-challenge page (window[''bobcmn''] ... TSPD); 20 s timeouts), same failure.'
   index_url: https://otda.ny.gov/programs/temporary-assistance/
   index_document_count: 1
   taken_count: 0
 - jurisdiction: us-oh
   name: Ohio
-  queue_status: blocked_primary_source
-  source_kind: official_html_manual
-  primary_source_url: https://emanuals.jfs.ohio.gov/CashFoodAssist/CAM/
+  queue_status: agent_ready
+  source_kind: official_html_regulation_agency
+  primary_source_url: https://codes.ohio.gov/ohio-administrative-code/5101:1
   target_manifest: manifests/us-oh-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-oh
-    document_class: manual
-    version: 2026-09-10-tanf-state-policy-manual
+    document_class: regulation
+    version: 2026-09-10-tanf-state-policy-manual-agency-5101-1
   lead_counts: null
   candidate_sources: []
-  notes: 'BLOCKED 2026-09-10: Ohio Works First policy is published by ODJFS as the Cash Assistance Manual (CAM) on its eManuals
-    site (emanuals.jfs.ohio.gov/CashFoodAssist/CAM/) and codified as OAC 5101:1 on codes.ohio.gov (Legislative Service Commission;
-    the host of the ingested OAC 5101:4 SNAP scope). Both hosts, probed once each at 20:46-20:47Z with 20 s timeouts: plain
-    requests ConnectTimeout (TCP connect never completed) and curl-cffi chrome impersonation ''curl: (28) Connection timed
-    out after 20002 milliseconds''. No index could be inventoried; no workaround attempted. Retry from another network (codes.ohio.gov
-    answered plain clients in July).'
-  index_url: https://emanuals.jfs.ohio.gov/CashFoodAssist/CAM/
-  index_document_count: null
-  taken_count: 0
+  notes: 'Batch 4 (retry). Primary source confirmed from the publisher''s own index. Inventory: codes.ohio.gov agency 5101:1
+    Division of Public Assistance: 5 chapters (5101:1-1 General Provisions; 5101:1-2 Application Process; Verification; 5101:1-3
+    Ohio Works First; 5101:1-23 Income; 5101:1-24 Prevention, Retention, and Contingency (PRC) Program), 63 rule links on
+    the chapter pages; taken the whole agency division through the existing OAC adapter, run id 2026-09-10-tanf-state-policy-manual-agency-5101-1
+    (as the us-oh SNAP scope took 5101:4). emanuals.jfs.ohio.gov retried 2026-09-10T21:34Z from a US network: TCP connects
+    but the TLS handshake is dropped (plain requests SSLError after 12 s; curl-cffi chrome ''curl: (35) TLS connect error'';
+    curl ''SSL_ERROR_SYSCALL'' on the ClientHello; http:// ''Empty reply from server''), so the Cash Assistance Manual stays
+    unreachable; the OAC rules are the adopted text the CAM reproduces. Extraction proven 2026-09-10 (coverage complete, 0
+    missing/extra/duplicate).'
+  index_url: https://codes.ohio.gov/ohio-administrative-code/5101:1
+  index_document_count: 63
+  taken_count: 1
 - jurisdiction: us-ok
   name: Oklahoma
   queue_status: agent_ready
@@ -3560,14 +3573,14 @@ states:
   taken_count: 1
 - jurisdiction: us-or
   name: Oregon
-  queue_status: blocked_primary_source
-  source_kind: official_rule_pdfs
-  primary_source_url: https://ch461rules.odhs.oregon.gov/
+  queue_status: agent_ready
+  source_kind: official_html_regulation_chapter
+  primary_source_url: https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=90
   target_manifest: manifests/us-or-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-or
     document_class: regulation
-    version: 2026-09-10-tanf-state-policy-manual
+    version: 2026-09-10-tanf-state-policy-manual-chapter-461
   lead_counts:
     needs_review: 6
     excluded_secondary: 9
@@ -3713,19 +3726,23 @@ states:
     already_registered: null
     discovered_via:
     - policyengine-us#variables/gov/states/or/odhs/tanf/or_tanf.py
-  notes: 'BLOCKED 2026-09-10: Oregon publishes TANF policy as OAR chapter 461 (ODHS per-rule PDFs at ch461rules.odhs.oregon.gov;
-    Secretary of State OARD at secure.sos.state.or.us). Neither host resolved from the ingest environment: system resolver
-    and 8.8.8.8/9.9.9.9 return SERVFAIL/no answer for ch461rules.odhs.oregon.gov, www.oregon.gov and secure.sos.state.or.us
-    (dig EDE: ''at delegation oregon.gov''); 1.1.1.1 resolves them, but Python getaddrinfo, requests and curl all fail with
-    name-resolution errors, so no index could be inventoried. Not a publisher block of the client; re-try from another network.
-    Note for the retry: chapter 461 is a combined rulebook for all ODHS self-sufficiency programs (SNAP, TANF, ERDC ...),
-    so the TANF family would be a filtered division set, and an OAR adapter already exists (extract-oregon-administrative-rules).
-    The existing us-or manual scope (OPEN eligibility notebook) is not the TANF policy manual. Retried 2026-09-10T20:37+02:00
-    (batch 2: one plain curl, ''Resolving timed out''; one curl-cffi chrome GET of ch461rules.odhs.oregon.gov and secure.sos.state.or.us,
-    ''Could not resolve host''; 15 s timeouts), same failure.'
-  index_url: https://ch461rules.odhs.oregon.gov/
-  index_document_count: null
-  taken_count: 0
+  notes: 'Batch 4 (retry). Primary source confirmed from the publisher''s own index. Inventory: OARD chapter 461 listing:
+    28 divisions (1 GENERAL DEFINITIONS AND RULEMAKING; 25 HEARINGS; 101 PROGRAM ACRONYMS AND OVERVIEW; 105 RIGHTS AND RESPONSIBILITIES;
+    110 ELIGIBILITY GROUPS; 115 APPLICATION, REDETERMINATION, AND VERIFICATION; 120 GENERAL NONFINANCIAL ELIGIBILITY REQUIREMENTS;
+    125 BASIS OF NEED; 130 EMPLOYMENT PROGRAM REQUIREMENTS; 135 SPECIFIC PROGRAM REQUIREMENTS; 140 GENERAL FINANCIAL ELIGIBILITY;
+    145 TREATMENTS OF SPECIFIC ASSETS; 150 RETROSPECTIVE/PROSPECTIVE ELIGIBILITY AND BUDGETING; 155 INCOME AND PAYMENT STANDARDS,
+    AND SPECIAL NEEDS; 160 DETERMINING FINANCIAL ELIGIBILITY AND CALCULATING BENEFIT LEVEL; 165 ISSUING BENEFITS; 170 REPORTING
+    CHANGES; 175 DECISION NOTICES; 180 EFFECTIVE DATES; 185 TRUST AND AGENCY (T & A) ACCOUNTS AND CLIENT PAY-IN; 190 EMPLOYMENT
+    PROGRAM COMPONENTS; 191 EMERGENCY FOOD ASSISTANCE PROGRAM; 192 OREGON HUNGER RESPONSE FUND; 194 TAX INFRASTRUCTURE GRANT
+    PROGRAM; 195 LIENS, OVERPAYMENTS AND IPVS; 196 SUMMER EBT PROGRAM; 197 YOUTH EXPERIENCING HOMELESSNESS ENHANCEMENT GRANT
+    PROGRAM; 198 YOUTH EXPERIENCING HOMELESSNESS HOST HOME PROGRAM), 541 current rules; taken the whole chapter (combined
+    rulebook, as combined manuals were taken whole in batches 1-3) through the existing OAR adapter, run id 2026-09-10-tanf-state-policy-manual-chapter-461.
+    The lead list''s ODHS rule site (ch461rules.odhs.oregon.gov) answers too but labels itself unofficial. Retried 2026-09-10T21:34Z
+    from a US network (batch 4): the publisher answered plain and browser clients (both oregon.gov hosts resolve; no DNS failure).
+    Extraction proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
+  index_url: https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=90
+  index_document_count: 541
+  taken_count: 1
 - jurisdiction: us-pa
   name: Pennsylvania
   queue_status: agent_ready
@@ -3910,9 +3927,9 @@ states:
   taken_count: 1
 - jurisdiction: us-sc
   name: South Carolina
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   source_kind: official_pdf_manual
-  primary_source_url: https://dss.sc.gov/media/ojqddxsk/tanf-policy-manual-volume-65.pdf
+  primary_source_url: https://dss.sc.gov/media/bxwc1jdj/tanf-policy-manual-volume-67-final.pdf
   target_manifest: manifests/us-sc-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-sc
@@ -3954,14 +3971,15 @@ states:
     discovered_via:
     - policyengine-us#variables/gov/states/sc/tanf/eligibility/sc_tanf_eligible.py
     - policyengine-us#variables/gov/states/sc/tanf/eligibility/sc_tanf_resources_eligible.py
-  notes: 'BLOCKED 2026-09-10: SC DSS TANF Policy Manual Volume 65 (dss.sc.gov, the host of the ingested SNAP manual volume
-    69). dss.sc.gov resolves to 167.7.60.200 but every TCP connection to :443 and :80 timed out (curl ''Connection timed out
-    after 12002 milliseconds''; Python requests ConnectTimeout; curl-cffi chrome impersonation ''Connection timed out after
-    30001 milliseconds''), at 20:35, 20:39 and 20:52 +02:00. No index could be inventoried; no workaround attempted. Retry
-    from another network.'
+  notes: 'Batch 4 (retry). Primary source confirmed from the publisher''s own index. Inventory: 27 PDF documents on the DSS
+    manuals page (APS policies, SNAP manual volume 71 - already in the corpus as the us-sc SNAP manual scope -, DSNAP manual,
+    TANF Policy Manual volume 67, SNAP/TANF Benefit Integrity manual, Refugee Resettlement manual, SC Voucher manual, child
+    welfare documents); taken the TANF Policy Manual (volume 67, HTTP Last-Modified 2026-07-31; the lead list''s volume 65
+    URL still serves the superseded volume). Retried 2026-09-10T21:34Z from a US network (batch 4): the publisher answered
+    plain and browser clients. Extraction proven 2026-09-10 (coverage complete, 0 missing/extra/duplicate).'
   index_url: https://dss.sc.gov/about/data-and-resources/manuals/
-  index_document_count: null
-  taken_count: 0
+  index_document_count: 27
+  taken_count: 1
 - jurisdiction: us-sd
   name: South Dakota
   queue_status: agent_ready
@@ -4117,7 +4135,7 @@ states:
   taken_count: 153
 - jurisdiction: us-tn
   name: Tennessee
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   source_kind: official_pdf_manual_sections
   primary_source_url: https://www.tn.gov/humanservices/information-and-resources/dhs-publications.html
   target_manifest: manifests/us-tn-tanf-state-policy-manual.yaml
@@ -4127,16 +4145,16 @@ states:
     version: 2026-09-10-tanf-state-policy-manual
   lead_counts: null
   candidate_sources: []
-  notes: 'BLOCKED 2026-09-10: Tennessee DHS publishes the Families First policy manual as section PDFs on www.tn.gov (DHS
-    publications page, the landing page of the ingested SNAP policy manual scope us-tn-snap-policies). Probed once at 20:47Z
-    with 20 s timeouts (Families First program page /humanservices/for-families/families-first-tanf.html): plain requests
-    GET connected but ReadTimeout after 20 s; curl-cffi chrome GET ''curl: (28) Connection timed out after 20001 milliseconds''.
-    No index could be inventoried; no workaround attempted. The Secretary of State''s Families First rule chapters (Tenn.
-    Comp. R. & Regs. 1240-01-47 through 1240-01-50) are not in the corpus either: the existing us-tn regulation scope holds
-    1240-01 chapters 02, 03, 04, 08, 12 and 14 only.'
+  notes: 'Batch 4 (retry). Primary source confirmed from the publisher''s own index. Inventory: 106 PDF documents on the DHS
+    publications page (APS, SSBG, CREVAA, child care, child support, Families First, SNAP and departmental policies); the
+    Families First (TANF) section lists 19 23-series policies (23.01, 23.02, 23.03, 23.04, 23.05, 23.06, 23.07, 23.11, 23.12,
+    23.13, 23.14, 23.16, 23.17, 23.18, 23.19, 23.21, 23.22, 23.23, 23.24; 23.08-23.10, 23.15 and 23.20 are not published),
+    taken all 19. Not taken: the 24-series SNAP policies (already in the corpus) and the other program sections. Retried 2026-09-10T21:34Z
+    from a US network (batch 4): the publisher answered plain and browser clients (no read timeout). Extraction proven 2026-09-10
+    (coverage complete, 0 missing/extra/duplicate).'
   index_url: https://www.tn.gov/humanservices/information-and-resources/dhs-publications.html
-  index_document_count: null
-  taken_count: 0
+  index_document_count: 106
+  taken_count: 19
 - jurisdiction: us-tx
   name: Texas
   queue_status: done
@@ -4635,9 +4653,9 @@ states:
   taken_count: 10
 - jurisdiction: us-vt
   name: Vermont
-  queue_status: blocked_primary_source
+  queue_status: agent_ready
   source_kind: official_pdf_regulation
-  primary_source_url: https://outside.vermont.gov/dept/DCF/Shared%20Documents/ESD/Rules/2200-Reach-Up.pdf
+  primary_source_url: https://dcf.vermont.gov/esd/laws-rules/current
   target_manifest: manifests/us-vt-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-vt
@@ -4645,19 +4663,18 @@ states:
     version: 2026-09-10-tanf-state-policy-manual
   lead_counts: null
   candidate_sources: []
-  notes: 'BLOCKED 2026-09-10: Vermont DCF Economic Services Division publishes Reach Up policy as adopted rules linked from
-    its Current ESD Rules page (dcf.vermont.gov/esd/laws-rules/current answers 200 to plain and chrome clients). Index inventory:
-    12 rule PDFs - 2000 All Programs, 2100 Reach First, 2200 Reach Up, 2300 Reach Up Services, 2400 Post Secondary Education,
-    2500 Reach Ahead, 2600 General Assistance, 2700 AABD-EP, 2800 Emergency Assistance, 2900 Seasonal Fuel Assistance, 3000
-    Refugee Cash Assistance, 3100 Crisis Fuel - plus the 3SquaresVT manual link (already in the corpus), the Emergency Housing
-    final proposed rules and the rules renumbering bulletin. The TANF family is 2000-2500 (6 files). Every rule file is hosted
-    on outside.vermont.gov (SharePoint behind an F5 gateway): plain requests GET and curl-cffi chrome HEAD/GET of 2200-Reach-Up.pdf
-    and 2000-All-Programs.pdf all return HTTP 403 text/html 309-311 bytes ''The requested URL was rejected. Please consult
-    with your administrator. Your support ID is ...'' (server volt-adc, ''F5 site: fr4-fra'') at 20:50-20:51Z. No document
-    retrievable; no workaround attempted. Retry from a US network.'
+  notes: 'Batch 4 (retry). Primary source confirmed from the publisher''s own index. Inventory: 14 rule PDFs linked from the
+    Current ESD Rules page: 12 numbered rule files (2000 All Programs; 2100 Reach First; 2200 Reach Up; 2300 Reach Up Services;
+    2400 Post Secondary Education; 2500 Reach Ahead; 2600 General Assistance; 2700 AABD-EP; 2800 Emergency Assistance; 2900
+    Seasonal Fuel Assistance; 3000 Refugee Cash Assistance; 3100 Crisis Fuel Assistance) plus Emergency Housing Final Proposed
+    Rules, Rules Renumbering, Renaming, and Reorganizing Bulletin; the page also links the 3SquaresVT manual (already in the
+    corpus). Taken the six TANF-family files 2000-2500; not taken 2600-3100 (GA, AABD, EA, fuel, refugee cash) and the other
+    two documents. Retried 2026-09-10T21:34Z from a US network (batch 4): the publisher answered plain and browser clients
+    (outside.vermont.gov served every file, HTTP 200 application/pdf; no F5 rejection). Extraction proven 2026-09-10 (coverage
+    complete, 0 missing/extra/duplicate).'
   index_url: https://dcf.vermont.gov/esd/laws-rules/current
-  index_document_count: 12
-  taken_count: 0
+  index_document_count: 14
+  taken_count: 6
 - jurisdiction: us-wa
   name: Washington
   queue_status: done

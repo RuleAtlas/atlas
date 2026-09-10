@@ -9,6 +9,11 @@ count; batch 1 is the first ten remaining rows. Batch 1 = CA, CO, DC, MO, MS, MT
 ND, NY, OK, OR. NY and OR are blocked publishers (see BLOCKED below); the other
 eight get one manifest each, generated here from the publisher's own index.
 
+Batch 4 (docs/ingest-runs/2026-09-10-tanf-state-policy-manuals-batch-4-retry.md) retried the
+blocked and needs-review rows from a US network: SC, KY, TN, VT, NM, NE build manifests here;
+OR and OH are descriptor manifests for the existing OAR/OAC adapters; NY stays blocked.
+The Nebraska builder needs ``REQUESTS_CA_BUNDLE`` (certifi plus data/certs/digicert-*.pem).
+
 Every index is fetched live from the publisher. Some publishers (Montana DPHHS,
 Mississippi SoS, CDSS) answer plain HTTP clients with 403/reset pages, so index
 fetches use curl-cffi browser impersonation; the manifests carry
@@ -52,10 +57,14 @@ BATCH_2 = ("us-pa", "us-sc", "us-sd", "us-va", "us-id", "us-ky", "us-la", "us-ne
 # Batch 3 (docs/ingest-runs/2026-09-10-tanf-state-policy-manuals-batch-3.md): the last jurisdictions
 # of the 50 states plus DC without a queue row.
 BATCH_3 = ("us-oh", "us-ri", "us-tn", "us-vt", "us-wi")
+# Batch 4 (docs/ingest-runs/2026-09-10-tanf-state-policy-manuals-batch-4-retry.md): retry of every
+# blocked_primary_source row and the NM needs_review row from a US network.
+BATCH_4 = ("us-ny", "us-or", "us-sc", "us-ky", "us-ne", "us-oh", "us-tn", "us-vt", "us-nm")
 BATCH_LABEL = {
     **dict.fromkeys(BATCH_1, "Batch 1"),
     **dict.fromkeys(BATCH_2, "Batch 2"),
     **dict.fromkeys(BATCH_3, "Batch 3"),
+    **dict.fromkeys(BATCH_4, "Batch 4 (retry)"),
 }
 # Rows added to the queue by batches 2 and 3 (not on the lead list): name per jurisdiction.
 NEW_ROWS = {
@@ -225,7 +234,9 @@ DONE: dict[str, dict[str, Any]] = {
     },
 }
 
-# Publishers that blocked retrieval on 2026-09-10. Exact failures observed by the agent.
+# Publishers that blocked retrieval on 2026-09-10 and again on the batch-4 retry from a US network. Exact
+# failures observed by the agent. The batch 2/3 blocked rows (SC, KY, NE, OH, TN, VT) and OR answered on the
+# retry and moved to BUILDERS; their earlier failures are recorded in the batch notes.
 BLOCKED: dict[str, dict[str, Any]] = {
     "us-ny": {
         "source_kind": "official_pdf_manual",
@@ -240,135 +251,16 @@ BLOCKED: dict[str, dict[str, Any]] = {
         "profiles: connection reset. No workaround attempted. The 2024-2026 TANF State Plan (policy) is already in "
         "the corpus (us-ny-tanf-state-plan); the Employment Policy Manual is in 2026-07-17-ny-snap-manuals. "
         "Retried 2026-09-10T20:37+02:00 (batch 2: one plain curl HEAD, connection reset by peer; one curl-cffi "
-        "chrome/firefox GET, HTTP 200 text/html 5.5 KB challenge page; 15 s timeouts), same failure.",
-    },
-    "us-or": {
-        "source_kind": "official_rule_pdfs",
-        "primary_source_url": "https://ch461rules.odhs.oregon.gov/",
-        "index_url": "https://ch461rules.odhs.oregon.gov/",
-        "index_document_count": None,
-        "document_class": "regulation",
-        "notes": "BLOCKED 2026-09-10: Oregon publishes TANF policy as OAR chapter 461 (ODHS per-rule PDFs at "
-        "ch461rules.odhs.oregon.gov; Secretary of State OARD at secure.sos.state.or.us). Neither host resolved from "
-        "the ingest environment: system resolver and 8.8.8.8/9.9.9.9 return SERVFAIL/no answer for "
-        "ch461rules.odhs.oregon.gov, www.oregon.gov and secure.sos.state.or.us (dig EDE: 'at delegation oregon.gov'); "
-        "1.1.1.1 resolves them, but Python getaddrinfo, requests and curl all fail with name-resolution errors, so "
-        "no index could be inventoried. Not a publisher block of the client; re-try from another network. Note for "
-        "the retry: chapter 461 is a combined rulebook for all ODHS self-sufficiency programs (SNAP, TANF, ERDC ...), "
-        "so the TANF family would be a filtered division set, and an OAR adapter already exists "
-        "(extract-oregon-administrative-rules). The existing us-or manual scope (OPEN eligibility notebook) is not "
-        "the TANF policy manual. Retried 2026-09-10T20:37+02:00 (batch 2: one plain curl, 'Resolving timed out'; "
-        "one curl-cffi chrome GET of ch461rules.odhs.oregon.gov and secure.sos.state.or.us, 'Could not resolve "
-        "host'; 15 s timeouts), same failure.",
-    },
-    # Batch 2 blocked publishers.
-    "us-sc": {
-        "source_kind": "official_pdf_manual",
-        "primary_source_url": "https://dss.sc.gov/media/ojqddxsk/tanf-policy-manual-volume-65.pdf",
-        "index_url": "https://dss.sc.gov/about/data-and-resources/manuals/",
-        "index_document_count": None,
-        "document_class": "manual",
-        "notes": "BLOCKED 2026-09-10: SC DSS TANF Policy Manual Volume 65 (dss.sc.gov, the host of the ingested SNAP "
-        "manual volume 69). dss.sc.gov resolves to 167.7.60.200 but every TCP connection to :443 and :80 timed out "
-        "(curl 'Connection timed out after 12002 milliseconds'; Python requests ConnectTimeout; curl-cffi chrome "
-        "impersonation 'Connection timed out after 30001 milliseconds'), at 20:35, 20:39 and 20:52 +02:00. No index "
-        "could be inventoried; no workaround attempted. Retry from another network.",
-    },
-    "us-ky": {
-        "source_kind": "official_html_manual",
-        "primary_source_url": "https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/opmanual.aspx",
-        "index_url": "https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/opmanual.aspx",
-        "index_document_count": None,
-        "document_class": "manual",
-        "notes": "BLOCKED 2026-09-10: Kentucky CHFS DCBS Operation Manual index (Volume IIIA K-TAP). Plain requests and "
-        "curl-cffi chrome impersonation both receive HTTP 403 text/html 1484 bytes 'Service unavailable - The request is "
-        "blocked.' with an x-azure-ref header (Azure Front Door WAF). No index could be inventoried; no workaround "
-        "attempted.",
-    },
-    "us-ne": {
-        "source_kind": "official_pdf_regulation",
-        "primary_source_url": "https://rules.nebraska.gov/",
-        "index_url": "https://rules.nebraska.gov/",
-        "index_document_count": None,
-        "document_class": "regulation",
-        "notes": "BLOCKED 2026-09-10: Nebraska ADC policy is 468 NAC, published by the Secretary of State at "
-        "rules.nebraska.gov (www.nebraska.gov/rules-and-regs redirects there); DHHS program pages (dhhs.ne.gov) time out "
-        "on TCP connect. rules.nebraska.gov serves only its leaf certificate (issuer DigiCert Global G2 TLS RSA SHA256 "
-        "2020 CA1), so the public intermediate was added as data/certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem "
-        "(fetched from the leaf's AIA URL; verification never disabled). With the repaired chain the host answers plain "
-        "requests and chrome impersonation with HTTP 403 (Microsoft-Azure-Application-Gateway/v2) '403 - Access Denied / "
-        "Forbidden ... You are accessing this site from an IP Address out[side the allowed range]'. No index could be "
-        "inventoried; no workaround attempted. Retry from a US network.",
-    },
-    # Batch 3 blocked publishers.
-    "us-oh": {
-        "source_kind": "official_html_manual",
-        "primary_source_url": "https://emanuals.jfs.ohio.gov/CashFoodAssist/CAM/",
-        "index_url": "https://emanuals.jfs.ohio.gov/CashFoodAssist/CAM/",
-        "index_document_count": None,
-        "document_class": "manual",
-        "notes": "BLOCKED 2026-09-10: Ohio Works First policy is published by ODJFS as the Cash Assistance Manual (CAM) on "
-        "its eManuals site (emanuals.jfs.ohio.gov/CashFoodAssist/CAM/) and codified as OAC 5101:1 on codes.ohio.gov "
-        "(Legislative Service Commission; the host of the ingested OAC 5101:4 SNAP scope). Both hosts, probed once each "
-        "at 20:46-20:47Z with 20 s timeouts: plain requests ConnectTimeout (TCP connect never completed) and curl-cffi "
-        "chrome impersonation 'curl: (28) Connection timed out after 20002 milliseconds'. No index could be "
-        "inventoried; no workaround attempted. Retry from another network (codes.ohio.gov answered plain clients in July).",
-    },
-    "us-tn": {
-        "source_kind": "official_pdf_manual_sections",
-        "primary_source_url": "https://www.tn.gov/humanservices/information-and-resources/dhs-publications.html",
-        "index_url": "https://www.tn.gov/humanservices/information-and-resources/dhs-publications.html",
-        "index_document_count": None,
-        "document_class": "manual",
-        "notes": "BLOCKED 2026-09-10: Tennessee DHS publishes the Families First policy manual as section PDFs on "
-        "www.tn.gov (DHS publications page, the landing page of the ingested SNAP policy manual scope "
-        "us-tn-snap-policies). Probed once at 20:47Z with 20 s timeouts (Families First program page "
-        "/humanservices/for-families/families-first-tanf.html): plain requests GET connected but ReadTimeout after 20 s; "
-        "curl-cffi chrome GET 'curl: (28) Connection timed out after 20001 milliseconds'. No index could be inventoried; "
-        "no workaround attempted. The Secretary of State's Families First rule chapters (Tenn. Comp. R. & Regs. "
-        "1240-01-47 through 1240-01-50) are not in the corpus either: the existing us-tn regulation scope holds "
-        "1240-01 chapters 02, 03, 04, 08, 12 and 14 only.",
-    },
-    "us-vt": {
-        "source_kind": "official_pdf_regulation",
-        "primary_source_url": "https://outside.vermont.gov/dept/DCF/Shared%20Documents/ESD/Rules/2200-Reach-Up.pdf",
-        "index_url": "https://dcf.vermont.gov/esd/laws-rules/current",
-        "index_document_count": 12,
-        "document_class": "regulation",
-        "notes": "BLOCKED 2026-09-10: Vermont DCF Economic Services Division publishes Reach Up policy as adopted rules "
-        "linked from its Current ESD Rules page (dcf.vermont.gov/esd/laws-rules/current answers 200 to plain and chrome "
-        "clients). Index inventory: 12 rule PDFs - 2000 All Programs, 2100 Reach First, 2200 Reach Up, 2300 Reach Up "
-        "Services, 2400 Post Secondary Education, 2500 Reach Ahead, 2600 General Assistance, 2700 AABD-EP, 2800 Emergency "
-        "Assistance, 2900 Seasonal Fuel Assistance, 3000 Refugee Cash Assistance, 3100 Crisis Fuel - plus the 3SquaresVT "
-        "manual link (already in the corpus), the Emergency Housing final proposed rules and the rules renumbering "
-        "bulletin. The TANF family is 2000-2500 (6 files). Every rule file is hosted on outside.vermont.gov "
-        "(SharePoint behind an F5 gateway): plain requests GET and curl-cffi chrome HEAD/GET of 2200-Reach-Up.pdf and "
-        "2000-All-Programs.pdf all return HTTP 403 text/html 309-311 bytes 'The requested URL was rejected. Please "
-        "consult with your administrator. Your support ID is ...' (server volt-adc, 'F5 site: fr4-fra') at 20:50-20:51Z. "
-        "No document retrievable; no workaround attempted. Retry from a US network.",
+        "chrome/firefox GET, HTTP 200 text/html 5.5 KB challenge page; 15 s timeouts), same failure. Retried "
+        "2026-09-10T21:34Z from a US network (batch 4: one plain requests GET, 'Remote end closed connection without "
+        "response'; one curl-cffi chrome GET, HTTP 200 text/html 7.6 KB bot-challenge page (window['bobcmn'] ... TSPD); "
+        "20 s timeouts), same failure.",
     },
 }
 
-# Batch 2 rows attempted but neither extracted nor blocked by the publisher: the index needs a
-# reviewer decision before extraction.
-NEEDS_REVIEW: dict[str, dict[str, Any]] = {
-    "us-nm": {
-        "source_kind": "official_html_regulation_parts",
-        "primary_source_url": "https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/chapter-102-cash-assistance-programs/",
-        "index_url": "https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/",
-        "index_document_count": None,
-        "document_class": "regulation",
-        "notes": "Batch 2, attempted 2026-09-10, not extracted: New Mexico's TANF policy is NMAC 8.102 (Cash Assistance "
-        "Programs, adopted rule) published by the Commission of Public Records / State Records Center and Archives. The "
-        "part files are served by the publisher (https://www.srca.nm.gov/parts/title08/08.102.0100.html and .pdf answer "
-        "200), but the publisher's chapter index is a RealFile folder widget (rts-realfile-folder-search plugin, "
-        "rf_sdk.js, a.rf-folder data-folder-id b5ca2d14-a03f-466c-998d-8b8ff7c4c7b9) whose listing comes from the "
-        "vendor API (rf-sb-prod.rtssaas.com / AWS Lambda, embedded authTokenGUID); the static page only lists the "
-        "reserved part ranges. No mirror or probe-by-number was used. Reviewer decision needed: accept the vendor folder "
-        "listing as the publisher's index (then an inventory of the non-reserved parts 100-640 follows) or find an "
-        "HCA/ISD-published parts index.",
-    },
-}
+# Rows attempted but neither extracted nor blocked by the publisher (index needs a reviewer decision).
+NEEDS_REVIEW: dict[str, dict[str, Any]] = {}  # NM moved to BUILDERS in batch 4 (HCA/ISD parts index found)
+
 
 DROP_EAS = [
     r"^\d\d-\d\d\d\s+\(Cont\.\)\s.*$",
@@ -1659,6 +1551,591 @@ def build_wi() -> dict[str, Any]:
     }
 
 
+# =========================================================================== batch 4 (retry)
+RETRY_STAMP = "2026-09-10T21:34Z"
+RETRY_NOTE = f"Retried {RETRY_STAMP} from a US network (batch 4): the publisher answered plain and browser clients"
+
+
+def plain_fetch(url: str, *, head: bool = False, timeout: int = 120, user_agent: str = "axiom-corpus-ingest") -> Any:
+    """Plain ``requests`` fetch for hosts where curl-cffi's chrome TLS profile is not wanted (honours REQUESTS_CA_BUNDLE)."""
+    import requests as plain_requests
+
+    headers = {"User-Agent": user_agent}
+    if head:
+        return plain_requests.head(url, timeout=timeout, headers=headers, allow_redirects=True)
+    response = plain_requests.get(url, timeout=timeout, headers=headers, allow_redirects=True)
+    response.raise_for_status()
+    return response
+
+
+def heading_case(value: str) -> str:
+    """Title-case an all-caps publisher heading, keeping program acronyms and lowercasing connectives."""
+    small = {"and", "or", "of", "the", "to", "for", "with", "in", "on", "by", "a", "an"}
+    keep = {"ADC", "EA", "EF", "TANF", "SNAP", "AABD", "EBT", "NMW", "NMAC", "GA", "LIHEAP", "SSI", "SSN", "DHHS", "HCA"}
+    words = []
+    for index, word in enumerate(value.split()):
+        core = re.sub(r"[^A-Za-z]", "", word)
+        if core.upper() in keep:
+            words.append(word)
+        elif index and word.lower() in small:
+            words.append(word.lower())
+        elif word.isupper():
+            words.append("-".join(part.capitalize() for part in word.split("-")))
+        else:
+            words.append(word)
+    return " ".join(words)
+
+
+# --------------------------------------------------------------------------- SC
+def build_sc() -> dict[str, Any]:
+    """SC DSS TANF Policy Manual (one PDF volume) from the DSS manuals page."""
+    host = "https://dss.sc.gov"
+    index = host + "/about/data-and-resources/manuals/"
+    page = fetch(index).text
+    pdfs = [(h, t) for h, t in links(page) if h.lower().endswith(".pdf")]
+    tanf = [(h, t) for h, t in pdfs if re.search(r"tanf-policy-manual-volume-\d+", h)]
+    if len(tanf) != 1:
+        raise RuntimeError(f"expected one TANF Policy Manual link on the DSS manuals page, found {tanf}")
+    href, title = tanf[0]
+    volume = int(re.search(r"volume-(\d+)", href).group(1))
+    url = host + href
+    modified = last_modified(url)
+    doc = base_doc(
+        source_id=f"us-sc-dss-tanf-policy-manual-volume-{volume}",
+        jurisdiction="us-sc",
+        document_class="manual",
+        title=f"South Carolina {title} (Volume {volume})",
+        source_url=url,
+        source_format="pdf",
+        citation_path="us-sc/manual/dss/tanf-policy-manual",
+        expression_date=modified,
+        authority="South Carolina Department of Social Services",
+        subtype="policy_manual",
+        state_program="South Carolina TANF (Family Independence)",
+        index_url=index,
+        extra={
+            "manual_volume": volume,
+            "official_listing_title": title,
+            "listing_section": "Economic Services Policy and Procedure Manuals",
+            "source_last_modified": modified,
+            "extraction_granularity": "pdf_page",
+            "extraction_note": "page-level like the us-sc SNAP manual scope (SNAP manual volume 71 on the same page)",
+            "superseded_lead_url": "https://dss.sc.gov/media/ojqddxsk/tanf-policy-manual-volume-65.pdf",
+        },
+    )
+    return {
+        "docs": [doc],
+        "index_url": index,
+        "index_document_count": len(pdfs),
+        "inventory": (
+            f"{len(pdfs)} PDF documents on the DSS manuals page (APS policies, SNAP manual volume 71 - already in the corpus "
+            f"as the us-sc SNAP manual scope -, DSNAP manual, TANF Policy Manual volume {volume}, SNAP/TANF Benefit Integrity "
+            f"manual, Refugee Resettlement manual, SC Voucher manual, child welfare documents); taken the TANF Policy Manual "
+            f"(volume {volume}, HTTP Last-Modified {modified}; the lead list's volume 65 URL still serves the superseded "
+            f"volume). {RETRY_NOTE}"
+        ),
+        "source_kind": "official_pdf_manual",
+        "document_class": "manual",
+        "primary_source_url": url,
+    }
+
+
+# --------------------------------------------------------------------------- KY
+KY_VOLUMES = {
+    "III": ("volume-iii-ktap", "Kentucky Transitional Assistance Program (KTAP)"),
+    "IIIA": ("volume-iiia-kwp", "Kentucky Works Program (KWP)"),
+}
+
+
+def build_ky() -> dict[str, Any]:
+    """CHFS DCBS Division of Family Support Operation Manual volumes III (KTAP) and IIIA (KWP) from the DFS page."""
+    import fitz
+
+    host = "https://www.chfs.ky.gov"
+    index = host + "/agencies/dcbs/dfs/Pages/default.aspx"
+    page = plain_fetch(index).text
+    volumes = []
+    for href, text in links(page):
+        match = re.match(r"^DFS Manual Volume (\S+) - (.*?)(?:\s*\(PDF\))?$", text)
+        if match and "/documents/omvol" in href.lower():
+            volumes.append((match.group(1), match.group(2), host + href if href.startswith("/") else href))
+    if not volumes:
+        raise RuntimeError("no DFS Manual Volume links on the DFS page")
+    docs = []
+    for numeral, (slug_part, program) in KY_VOLUMES.items():
+        hits = [v for v in volumes if v[0] == numeral]
+        if len(hits) != 1:
+            raise RuntimeError(f"Volume {numeral} not listed once on the DFS page: {volumes}")
+        _, listing_title, url = hits[0]
+        body = plain_fetch(url).content
+        head = plain_fetch(url, head=True)
+        modified = http_date(head.headers.get("Last-Modified"))
+        with fitz.open(stream=body, filetype="pdf") as pdf:
+            pages = len(pdf)
+            first = pdf[0].get_text("text")
+        omtl = re.search(r"OMTL-(\d+)", first)
+        revised = re.search(r"R\.\s*(\d{1,2})/(\d{1,2})/(\d{2})", first)
+        revision = f"20{revised.group(3)}-{int(revised.group(1)):02d}-{int(revised.group(2)):02d}" if revised else None
+        docs.append(
+            base_doc(
+                source_id=f"us-ky-dcbs-dfs-om-vol-{numeral.lower()}",
+                jurisdiction="us-ky",
+                document_class="manual",
+                title=f"Kentucky DFS Operation Manual Volume {numeral} - {listing_title}",
+                source_url=url,
+                source_format="pdf",
+                citation_path=f"us-ky/manual/dcbs/dfs/{slug_part}",
+                expression_date=modified or SOURCE_AS_OF,
+                authority="Kentucky Department for Community Based Services, Division of Family Support",
+                subtype="policy_manual_volume",
+                state_program=program,
+                index_url=index,
+                extra={
+                    "manual_volume": numeral,
+                    "official_listing_title": listing_title,
+                    "manual_revision_date": revision,
+                    "latest_omtl": omtl.group(1) if omtl else None,
+                    "pdf_page_count": pages,
+                    "source_last_modified": modified,
+                    "extraction_granularity": "pdf_page",
+                    "extraction_note": "page-level like the us-ky SNAP manual scope (volumes II and IIA from the same page)",
+                },
+            )
+        )
+    listing = "; ".join(f"Vol. {n} {t}" for n, t, _ in volumes)
+    return {
+        "docs": docs,
+        "index_url": index,
+        "index_document_count": len(volumes),
+        "inventory": (
+            f"{len(volumes)} Operation Manual volumes linked from the DFS page ({listing}); taken Volume III (KTAP) and "
+            f"Volume IIIA (KWP, the KTAP work program). Not taken: volumes I (general administration), II/IIA (SNAP, already "
+            f"in the corpus), IV/IVA/IVB (Medicaid), V (State Supplementation), VIII (CCAP), IX (OMTL cover letters), X "
+            f"(policy updates). The lead list's opmanual.aspx index is now HTTP 404 (the K-TAP program page moved to "
+            f"/agencies/dcbs/dfs/fssb/Pages/ktap.aspx and links the Policy Development Branch); the DFS page carries the "
+            f"volume list. {RETRY_NOTE} (no Azure Front Door 403)"
+        ),
+        "source_kind": "official_pdf_manual_volumes",
+        "document_class": "manual",
+        "primary_source_url": index,
+    }
+
+
+# --------------------------------------------------------------------------- TN
+def build_tn() -> dict[str, Any]:
+    """TDHS Families First policy manual: the 23-series policy PDFs on the DHS publications page."""
+    host = "https://www.tn.gov"
+    index = host + "/humanservices/information-and-resources/dhs-publications.html"
+    page = fetch(index).text
+    pdfs = [(h, t) for h, t in links(page) if ".pdf" in h.lower()]
+    family = []
+    for href, text in pdfs:
+        match = re.search(r"/23\.(\d\d)[ _%]", href)
+        if match:
+            family.append((int(match.group(1)), href, text))
+    family.sort()
+    if not family:
+        raise RuntimeError("no 23-series Families First policy PDFs on the DHS publications page")
+    docs = []
+    for number, href, text in family:
+        url = href if href.startswith("http") else host + href
+        label = re.sub(r"\s+", " ", text.replace("_", " ")).strip()
+        modified = last_modified(url)
+        docs.append(
+            base_doc(
+                source_id=f"us-tn-dhs-families-first-23-{number:02d}",
+                jurisdiction="us-tn",
+                document_class="manual",
+                title=f"Tennessee Families First Policy Manual: {label}",
+                source_url=url,
+                source_format="pdf",
+                citation_path=f"us-tn/manual/dhs/families-first/23-{number:02d}",
+                expression_date=modified,
+                authority="Tennessee Department of Human Services",
+                subtype="policy_manual_section",
+                state_program="Families First",
+                index_url=index,
+                extra={
+                    "policy_series": "23",
+                    "policy_number": f"23.{number:02d}",
+                    "official_listing_title": text,
+                    "listing_section": "Families First (TANF)",
+                    "source_last_modified": modified,
+                    "extraction_granularity": "pdf_page",
+                    "extraction_note": "page-level like the us-tn SNAP policy manual scope (24-series on the same page)",
+                },
+            )
+        )
+    numbers = ", ".join(f"23.{n:02d}" for n, _, _ in family)
+    return {
+        "docs": docs,
+        "index_url": index,
+        "index_document_count": len(pdfs),
+        "inventory": (
+            f"{len(pdfs)} PDF documents on the DHS publications page (APS, SSBG, CREVAA, child care, child support, "
+            f"Families First, SNAP and departmental policies); the Families First (TANF) section lists {len(family)} "
+            f"23-series policies ({numbers}; 23.08-23.10, 23.15 and 23.20 are not published), taken all {len(docs)}. Not "
+            f"taken: the 24-series SNAP policies (already in the corpus) and the other program sections. {RETRY_NOTE} "
+            f"(no read timeout)"
+        ),
+        "source_kind": "official_pdf_manual_sections",
+        "document_class": "manual",
+        "primary_source_url": index,
+    }
+
+
+# --------------------------------------------------------------------------- VT
+VT_TANF_RULES = range(2000, 2501)
+
+
+def build_vt() -> dict[str, Any]:
+    """DCF Economic Services Division adopted rules 2000-2500 (Reach Up family) from the Current ESD Rules page."""
+    index = "https://dcf.vermont.gov/esd/laws-rules/current"
+    page = fetch(index).text
+    rule_pdfs = [(h, t) for h, t in links(page) if "/ESD/Rules/" in h and h.lower().endswith(".pdf")]
+    numbered = []
+    for href, text in rule_pdfs:
+        match = re.search(r"/Rules/(\d{4})-", href)
+        if match:
+            numbered.append((int(match.group(1)), href, text))
+    numbered.sort()
+    taken = [n for n in numbered if n[0] in VT_TANF_RULES]
+    if len(taken) != 6:
+        raise RuntimeError(f"expected the six 2000-2500 rule files, found {taken}")
+    docs = []
+    for number, href, text in taken:
+        modified = http_date(plain_fetch(href, head=True).headers.get("Last-Modified"))
+        docs.append(
+            base_doc(
+                source_id=f"us-vt-dcf-esd-rule-{number}",
+                jurisdiction="us-vt",
+                document_class="regulation",
+                title=f"Vermont DCF Economic Services Division Rules {number}: {text}",
+                source_url=href,
+                source_format="pdf",
+                citation_path=f"us-vt/regulation/dcf/esd-rules/{number}",
+                expression_date=modified or SOURCE_AS_OF,
+                authority="Vermont Department for Children and Families, Economic Services Division",
+                subtype="administrative_rule",
+                state_program="Reach Up (Reach First, Reach Up Services, Postsecondary Education, Reach Ahead)",
+                index_url=index,
+                extra={
+                    "rule_series": number,
+                    "official_listing_title": text,
+                    "file_host": "outside.vermont.gov (DCF SharePoint document library)",
+                    "source_last_modified": modified,
+                    "extraction_granularity": "pdf_page",
+                    "extraction_note": "page-level; the 2000 series carries the all-programs general rules",
+                },
+            )
+        )
+    listing = "; ".join(f"{n} {t}" for n, _, t in numbered)
+    others = [t for h, t in rule_pdfs if not re.search(r"/Rules/\d{4}-", h)]
+    return {
+        "docs": docs,
+        "index_url": index,
+        "index_document_count": len(rule_pdfs),
+        "inventory": (
+            f"{len(rule_pdfs)} rule PDFs linked from the Current ESD Rules page: {len(numbered)} numbered rule files "
+            f"({listing}) plus {', '.join(others)}; the page also links the 3SquaresVT manual (already in the corpus). "
+            f"Taken the six TANF-family files 2000-2500; not taken 2600-3100 (GA, AABD, EA, fuel, refugee cash) and the "
+            f"other two documents. {RETRY_NOTE} (outside.vermont.gov served every file, HTTP 200 application/pdf; no F5 "
+            f"rejection)"
+        ),
+        "source_kind": "official_pdf_regulation",
+        "document_class": "regulation",
+        "primary_source_url": index,
+    }
+
+
+# --------------------------------------------------------------------------- NM
+NM_HEADING_PATTERN = (
+    r"^(?P<label>8\.\s*102\.\s*{part}\.\s*\d+(?:\s*-\s*\d+)?)\s+(?P<heading>[A-Z][^:]{{0,180}}:|\[RESERVED\]|"
+    r"[A-Z][A-Z0-9 /()\[\]\-–—,'&]{{0,180}})(?:\s+(?P<body>.*))?$"
+)
+
+
+def build_nm() -> dict[str, Any]:
+    """NMAC 8.102 Cash Assistance Programs: parts listed on the HCA Income Support Division page, files from SRCA."""
+    index = "https://www.hca.nm.gov/lookingforinformation/income-support-division-1/"
+    page = plain_fetch(index).text
+    parts = [(h, t) for h, t in links(page) if "srca.nm.gov/parts/title08/" in h]
+    family = []
+    for href, text in parts:
+        match = re.search(r"/08\.102\.(\d{4})\.html$", href)
+        if match:
+            family.append((int(match.group(1)), href, text))
+    family.sort()
+    if not family:
+        raise RuntimeError("no 8.102 part links on the HCA ISD page")
+    docs = []
+    for part, href, text in family:
+        response = plain_fetch(href)
+        body = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html.unescape(response.text)))
+        match = re.search(r"CHAPTER 102 CASH ASSISTANCE PROGRAMS PART (\d+) (.+?) (?:&nbsp; )?8\.102\.\d+\.1 ", body)
+        if not match or int(match.group(1)) != part:
+            raise RuntimeError(f"part heading not found in {href}: {body[:300]}")
+        part_title = heading_case(match.group(2).strip())
+        modified = http_date(response.headers.get("Last-Modified"))
+        docs.append(
+            base_doc(
+                source_id=f"us-nm-srca-nmac-8-102-{part}",
+                jurisdiction="us-nm",
+                document_class="regulation",
+                title=f"8.102.{part} NMAC {part_title}",
+                source_url=href,
+                source_format="html",
+                citation_path=f"us-nm/regulation/nmac/8/102/{part}",
+                expression_date=modified or SOURCE_AS_OF,
+                authority="New Mexico Health Care Authority",
+                subtype="administrative_code_part",
+                state_program="New Mexico Works (NMW) cash assistance",
+                index_url=index,
+                extra={
+                    "official_publisher": "New Mexico State Records Center and Archives",
+                    "nmac_citation": f"8.102.{part}",
+                    "nmac_title": "8",
+                    "nmac_chapter": "102",
+                    "nmac_part": str(part),
+                    "official_listing_title": text,
+                    "nmac_title_index_url": "https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/",
+                    "nmac_chapter_index_url": "https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/chapter-102-cash-assistance-programs/",
+                    "source_last_modified": modified,
+                    "extraction_note": "labeled sections like the us-nm SNAP regulations scope (8.100 and 8.139 parts)",
+                },
+                extraction={
+                    "html_content_selector": ".WordSection1, .Section1",
+                    "segmentation": "labeled_sections",
+                    "section_heading_pattern": NM_HEADING_PATTERN.format(part=part),
+                    "normalize_label_internal_whitespace": True,
+                },
+            )
+        )
+    chapters: dict[str, int] = {}
+    for href, _ in parts:
+        chapter = re.search(r"/08\.(\d{3})\.", href)
+        if chapter:
+            chapters[chapter.group(1)] = chapters.get(chapter.group(1), 0) + 1
+    chapter_text = ", ".join(f"8.{c} x{n}" for c, n in sorted(chapters.items()))
+    return {
+        "docs": docs,
+        "index_url": index,
+        "index_document_count": len(parts),
+        "inventory": (
+            f"HCA Income Support Division page lists {len(parts)} SRCA NMAC part files ({chapter_text}); the 8.102 Cash "
+            f"Assistance Programs family has {len(family)} parts ({', '.join(str(p) for p, _, _ in family)}), taken all. "
+            f"Not taken: 8.100 general provisions and 8.139 SNAP (already in the corpus as us-nm SNAP regulations), 8.106 "
+            f"(GA), 8.119 (LIHEAP), 8.150 (child care). The SRCA chapter page itself lists only reserved ranges (its "
+            f"listing is a vendor RealFile widget); the agency-published parts index resolves the batch-2 review question"
+        ),
+        "source_kind": "official_html_regulation_parts",
+        "document_class": "regulation",
+        "primary_source_url": "https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/chapter-102-cash-assistance-programs/",
+    }
+
+
+# --------------------------------------------------------------------------- NE
+NE_SECTION_PATTERN = (
+    r"^(?P<label>0\d{2}(?:\.\d{1,2})?(?:\([A-Za-z0-9]+\))*)\.?\s+"
+    r"(?P<heading>[A-Z][A-Z0-9 ’'&,/()\-–‑§]+?(?:\.(?=\s|$)|$))(?:\s+(?P<body>.*))?$"
+)
+NE_CONTINUATION_PATTERN = (
+    r"^(?P<heading>[A-Z][A-Z0-9 ’'&,/()\-–‑§$]+?(?:\.(?=\s|$)|$))(?:\s+(?P<body>.*))?$"
+)
+
+
+def build_ne() -> dict[str, Any]:
+    """468 NAC (ADC) chapters from the Secretary of State's rules.nebraska.gov API (the app is client-rendered)."""
+    import os
+    from urllib.parse import quote
+
+    if not os.environ.get("REQUESTS_CA_BUNDLE"):
+        raise RuntimeError(
+            "rules.nebraska.gov serves only its leaf certificate: set REQUESTS_CA_BUNDLE to certifi's cacert.pem "
+            "concatenated with data/certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem"
+        )
+    api = "https://rules.nebraska.gov/api"
+    titles = plain_fetch(f"{api}/title/GetByAgencyId/37").json()["output"]
+    adc = [t for t in titles if t["titleNumber"] == 468]
+    if len(adc) != 1:
+        raise RuntimeError(f"title 468 not listed once for agency 37: {adc}")
+    title_id = adc[0]["id"]
+    landing = f"https://rules.nebraska.gov/rules?agencyId=37&titleId={title_id}"
+    chapters_api = f"{api}/chapter/GetByTitleId/{title_id}"
+    chapters = plain_fetch(chapters_api).json()["output"]
+    docs = []
+    for chapter in sorted(chapters, key=lambda c: int(c["chapterNumber"])):
+        number = int(chapter["chapterNumber"])
+        blob = chapter.get("officialPdfBlobName") or chapter["pdfBlobName"]
+        url = f"{api}/fileStorage/GetAsByteArray/{chapter['pdfContainerName']}/{quote(blob)}"
+        effective = chapter["effectiveDate"][:10]
+        docs.append(
+            base_doc(
+                source_id=f"us-ne-dhhs-468-nac-chapter-{number}",
+                jurisdiction="us-ne",
+                document_class="regulation",
+                title=f"Nebraska Title 468 NAC Chapter {number}: {heading_case(chapter['chapterName'])}",
+                source_url=url,
+                source_format="pdf",
+                citation_path=f"us-ne/regulation/title-468/chapter-{number}",
+                expression_date=effective,
+                authority="Nebraska Department of Health and Human Services",
+                subtype="filed_administrative_regulation_chapter",
+                state_program="Aid to Dependent Children (ADC)",
+                index_url=landing,
+                extra={
+                    "official_publisher": "Nebraska Secretary of State (rules.nebraska.gov)",
+                    "rules_landing_page": landing,
+                    "rules_api_url": chapters_api,
+                    "chapter_id": chapter["id"],
+                    "chapter_name": chapter["chapterName"],
+                    "pdf_blob_name": blob,
+                    "official_pdf_blob_available": bool(chapter.get("officialPdfBlobName")),
+                    "chapter_effective_date": effective,
+                    "tls_note": "host serves its leaf certificate only; verified with the DigiCert public intermediate in data/certs (REQUESTS_CA_BUNDLE)",
+                    "extraction_note": "labeled sections with the 475 NAC SNAP scope's heading patterns (no signature-page drop lines: these blobs are the unsigned chapter files)",
+                },
+                extraction={
+                    "segmentation": "labeled_sections",
+                    "normalize_parenthetical_label_components": True,
+                    "section_heading_pattern": NE_SECTION_PATTERN,
+                    "heading_continuation_pattern": NE_CONTINUATION_PATTERN,
+                },
+            )
+        )
+    listing = "; ".join(f"{int(c['chapterNumber'])} {c['chapterName']} (eff. {c['effectiveDate'][:10]})" for c in sorted(chapters, key=lambda c: int(c["chapterNumber"])))
+    return {
+        "docs": docs,
+        "index_url": landing,
+        "index_document_count": len(chapters),
+        "inventory": (
+            f"DHHS (agency 37) has {len(titles)} titles on rules.nebraska.gov; title 468 Aid to Dependent Children (ADC) "
+            f"has {len(chapters)} chapters ({listing}); taken all {len(docs)} as the publisher's chapter PDF blobs (the API "
+            f"carries no signed official blob for this title). Not taken: 469 AABD, 470 refugee programs, 475 SNAP "
+            f"(already in the corpus). {RETRY_NOTE} (HTTP 200 JSON and PDF with the repaired chain; no Azure gateway 403)"
+        ),
+        "source_kind": "official_pdf_regulation",
+        "document_class": "regulation",
+        "primary_source_url": landing,
+    }
+
+
+# --------------------------------------------------------------------------- OR (descriptor; extracted by the OAR adapter)
+def build_or() -> dict[str, Any]:
+    """OAR chapter 461 descriptor: the existing extract-oregon-administrative-rules adapter does the extraction."""
+    chapter_url = "https://secure.sos.state.or.us/oard/displayChapterRules.action?selectedChapter=90"
+    page = plain_fetch(chapter_url, user_agent="axiom-corpus/0.1 (max@axiom-foundation.org)").text
+    divisions = sorted(set(re.findall(r"Division (\d+)(?:&nbsp;|\s)*-(?:&nbsp;|\s)*([^<]+?)\s*<", page)), key=lambda d: int(d[0]))
+    rules = set(re.findall(r"ruleVrsnRsn=(\d+)", page))
+    if not divisions or not rules:
+        raise RuntimeError("OARD chapter 461 listing did not parse")
+    run_id = f"{VERSION}-chapter-461"
+    doc = base_doc(
+        source_id="us-or-odhs-oar-chapter-461",
+        jurisdiction="us-or",
+        document_class="regulation",
+        title="Oregon Administrative Rules Chapter 461: Department of Human Services, Self-Sufficiency Programs",
+        source_url=chapter_url,
+        source_format="html",
+        citation_path="us-or/regulation/chapter-461",
+        expression_date=SOURCE_AS_OF,
+        authority="Oregon Department of Human Services, Self-Sufficiency Programs",
+        subtype="administrative_rules_chapter",
+        state_program="Oregon TANF (chapter 461 is the combined self-sufficiency rulebook: TANF, SNAP, ERDC, REF, TA-DVS and related programs)",
+        index_url=chapter_url,
+        extra={
+            "official_publisher": "Oregon Secretary of State, Oregon Administrative Rules Database (OARD)",
+            "extraction_adapter": "extract-oregon-administrative-rules --only-chapter 461",
+            "extraction_run_id": run_id,
+            "division_count": len(divisions),
+            "rule_count": len(rules),
+            "agency_rule_site": "https://ch461rules.odhs.oregon.gov/ (ODHS: displays unofficial rules and refers to the Secretary of State for the official text)",
+            "extraction_note": "descriptor manifest, like manifests/us-oh-snap-rules.yaml for the OAC adapter: division and rule rows come from the OAR adapter, not from extract-official-documents",
+        },
+    )
+    listing = "; ".join(f"{n} {html.unescape(t).strip()}" for n, t in divisions)
+    return {
+        "docs": [doc],
+        "version": run_id,
+        "index_url": chapter_url,
+        "index_document_count": len(rules),
+        "inventory": (
+            f"OARD chapter 461 listing: {len(divisions)} divisions ({listing}), {len(rules)} current rules; taken the whole "
+            f"chapter (combined rulebook, as combined manuals were taken whole in batches 1-3) through the existing OAR "
+            f"adapter, run id {run_id}. The lead list's ODHS rule site (ch461rules.odhs.oregon.gov) answers too but "
+            f"labels itself unofficial. {RETRY_NOTE} (both oregon.gov hosts resolve; no DNS failure)"
+        ),
+        "source_kind": "official_html_regulation_chapter",
+        "document_class": "regulation",
+        "primary_source_url": chapter_url,
+    }
+
+
+# --------------------------------------------------------------------------- OH (descriptor; extracted by the OAC adapter)
+OH_EMANUALS_FAILURE = (
+    f"emanuals.jfs.ohio.gov retried {RETRY_STAMP} from a US network: TCP connects but the TLS handshake is dropped "
+    "(plain requests SSLError after 12 s; curl-cffi chrome 'curl: (35) TLS connect error'; curl 'SSL_ERROR_SYSCALL' on the "
+    "ClientHello; http:// 'Empty reply from server'), so the Cash Assistance Manual stays unreachable"
+)
+
+
+def build_oh() -> dict[str, Any]:
+    """OAC 5101:1 descriptor: the existing extract-ohio-administrative-code adapter does the extraction."""
+    host = "https://codes.ohio.gov"
+    agency_url = host + "/ohio-administrative-code/5101:1"
+    page = plain_fetch(agency_url, user_agent="axiom-corpus/0.1 (max@axiom-foundation.org)").text
+    chapters = []
+    for href, text in links(page):
+        if re.match(r"^/ohio-administrative-code/chapter-5101:1-\d+$", href):
+            chapters.append((href.rsplit("-", 1)[1], re.sub(r"\s*\|\s*", " | ", text), host + href))
+    if not chapters:
+        raise RuntimeError("no 5101:1 chapter links on codes.ohio.gov")
+    rule_count = 0
+    for _, _, url in chapters:
+        rule_count += len(set(re.findall(r'href="/ohio-administrative-code/rule-5101:1-[\d.\-]+"', plain_fetch(url, user_agent="axiom-corpus/0.1 (max@axiom-foundation.org)").text)))
+    run_id = f"{VERSION}-agency-5101-1"
+    doc = base_doc(
+        source_id="us-oh-odjfs-oac-5101-1",
+        jurisdiction="us-oh",
+        document_class="regulation",
+        title="Ohio Administrative Code 5101:1 Division of Public Assistance",
+        source_url=agency_url,
+        source_format="html",
+        citation_path="us-oh/regulation/agency-5101-1",
+        expression_date=SOURCE_AS_OF,
+        authority="Ohio Department of Job and Family Services",
+        subtype="administrative_code_agency",
+        state_program="Ohio Works First (OWF)",
+        index_url=agency_url,
+        extra={
+            "official_publisher": "Ohio Laws and Administrative Rules (Legislative Service Commission)",
+            "code_agency": "5101:1",
+            "extraction_adapter": "extract-ohio-administrative-code --only-agency 5101:1",
+            "extraction_run_id": run_id,
+            "chapter_count": len(chapters),
+            "rule_count": rule_count,
+            "agency_manual": "https://emanuals.jfs.ohio.gov/CashFoodAssist/CAM/ (ODJFS Cash Assistance Manual; " + OH_EMANUALS_FAILURE + ")",
+            "extraction_note": "descriptor manifest like manifests/us-oh-snap-rules.yaml (OAC 5101:4): chapter and rule rows come from the OAC adapter",
+        },
+    )
+    listing = "; ".join(f"5101:1-{n} {t.split(' | ')[-1].strip()}" for n, t, _ in chapters)
+    return {
+        "docs": [doc],
+        "version": run_id,
+        "index_url": agency_url,
+        "index_document_count": rule_count,
+        "inventory": (
+            f"codes.ohio.gov agency 5101:1 Division of Public Assistance: {len(chapters)} chapters ({listing}), "
+            f"{rule_count} rule links on the chapter pages; taken the whole agency division through the existing OAC "
+            f"adapter, run id {run_id} (as the us-oh SNAP scope took 5101:4). {OH_EMANUALS_FAILURE}; the OAC rules are "
+            f"the adopted text the CAM reproduces"
+        ),
+        "source_kind": "official_html_regulation_agency",
+        "document_class": "regulation",
+        "primary_source_url": agency_url,
+    }
+
+
 BUILDERS = {
     "us-ca": build_ca,
     "us-co": build_co,
@@ -1676,6 +2153,14 @@ BUILDERS = {
     "us-id": build_id,
     "us-ri": build_ri,
     "us-wi": build_wi,
+    "us-sc": build_sc,
+    "us-ky": build_ky,
+    "us-tn": build_tn,
+    "us-vt": build_vt,
+    "us-nm": build_nm,
+    "us-ne": build_ne,
+    "us-or": build_or,
+    "us-oh": build_oh,
 }
 
 
@@ -1722,7 +2207,8 @@ def main() -> int:
                 "target_scope": {
                     "jurisdiction": jur,
                     "document_class": result["document_class"],
-                    "version": VERSION,
+                    # adapter-driven scopes (OR, OH) carry the adapter's scoped run id
+                    "version": result.get("version", VERSION),
                 },
                 "index_url": result["index_url"],
                 "index_document_count": result["index_document_count"],
