@@ -27,6 +27,10 @@ policy:
   - 'Batch 2 (2026-09-10): the next ten states by population (WA, AZ, TN, MA, IN, MD, MO, WI, CO, MN); none was already covered
     by a combined manual, so no replacement was pulled. CA and OH retried once each. Generator: scripts/build_medicaid_state_eligibility_manual_manifests.py
     --batch 2.'
+  - 'Batch 3 (2026-09-10): the next ten states by population (SC, AL, LA, KY, OR, OK, CT, UT, IA, NV) with MS, KS, NM, NE,
+    ID, WV as replacements; each publisher probed once (plain request plus browser impersonation). SC, AL, LA, KY, OR, UT,
+    KS, NM, NE blocked; ID and WV already covered by existing corpus scopes; OK, CT, IA, NV, MS attempted. Generator: scripts/build_medicaid_state_eligibility_manual_manifests.py
+    --batch 3.'
 lead_list:
   source: policyengine-us
   commit: 84253b6afafbb1875c65f12e654c6535744728b7
@@ -35,9 +39,9 @@ lead_list:
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
   needs_review: 1
-  agent_ready: 14
-  blocked_primary_source: 4
-  done: 3
+  blocked_primary_source: 13
+  agent_ready: 19
+  done: 5
 states:
 - jurisdiction: us
   name: Federal
@@ -1228,6 +1232,24 @@ states:
   index_url: https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-C
   index_document_count: null
   taken_count: 0
+- jurisdiction: us-al
+  name: Alabama
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_manual_chapters
+  primary_source_url: https://medicaid.alabama.gov/content/9.0_Resources/9.4_Forms_Library/9.4.11_Eligibility_Manual.aspx
+  index_url: https://medicaid.alabama.gov/content/9.0_Resources/9.4_Forms_Library/9.4.11_Eligibility_Manual.aspx
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked 2026-09-10: Probed 2026-09-10 (plain request plus curl-cffi chrome120 browser impersonation, 20 s timeouts):
+    medicaid.alabama.gov does not answer TCP from this network (requests ConnectTimeout and curl 28 ''Connection timed out
+    after 20002 milliseconds'' for both requests). No workaround attempted. Index inventory not possible.'
+  target_manifest: manifests/us-al-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-al
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
 - jurisdiction: us-ar
   name: Arkansas
   queue_status: agent_ready
@@ -1373,6 +1395,33 @@ states:
       taken: 0
   notes: 'Batch 2 (2026-09-10): 1 manual documents taken from the publisher''s own index (21 documents inventoried across
     2 families; 1 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-2.md.'
+- jurisdiction: us-ct
+  name: Connecticut
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_word_manual_sections
+  primary_source_url: https://portal.ct.gov/dss/-/media/departments-and-agencies/dss/upms/upm0---table-of-contents/0100.doc?rev=604b1d16087e4279a4a2ec52983229f7
+  target_manifest: manifests/us-ct-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-ct
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
+  index_url: https://portal.ct.gov/dss/lists/uniform-policy-manual
+  index_document_count: 1898
+  taken_count: 1632
+  index_families:
+    upm_section_doc:
+      found: 1632
+      taken: 1632
+    upm_chapter_pdf:
+      found: 0
+      taken: 0
+    policy_transmittal_doc:
+      found: 266
+      taken: 0
+  notes: 'Batch 3 (2026-09-10): 1632 manual documents taken from the publisher''s own index (1898 documents inventoried across
+    3 families; 1632 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-3.md.'
 - jurisdiction: us-fl
   name: Florida
   lead_counts: {}
@@ -1429,6 +1478,66 @@ states:
       taken: 0
   notes: 'Batch 1 (2026-09-10): 251 manual documents taken from the publisher''s own index (428 documents inventoried across
     6 families; 251 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-1.md.'
+- jurisdiction: us-ia
+  name: Iowa
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_pdf_manual_chapters
+  primary_source_url: https://hhs.iowa.gov/media/4007/download?inline
+  target_manifest: manifests/us-ia-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-ia
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
+  index_url: https://hhs.iowa.gov/about/policy-manuals/income-maintenance
+  index_document_count: 88
+  taken_count: 14
+  index_families:
+    title_8_medicaid_chapter_pdf:
+      found: 14
+      taken: 14
+    title_8_omnibus_pdf:
+      found: 1
+      taken: 0
+    other_title_chapter_or_appendix_pdf:
+      found: 71
+      taken: 0
+    other_title_omnibus_pdf:
+      found: 2
+      taken: 0
+  notes: 'Batch 3 (2026-09-10): 14 manual documents taken from the publisher''s own index (88 documents inventoried across
+    4 families; 14 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-3.md.'
+- jurisdiction: us-id
+  name: Idaho
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: official_pdf_idapa_rules
+  primary_source_url: https://adminrules.idaho.gov/current-rules/
+  target_manifest: manifests/us-id-aabd-rules.yaml
+  target_scope:
+    jurisdiction: us-id
+    document_class: regulation
+    version: 2026-07-04-id-aabd-rules
+  index_url: https://adminrules.idaho.gov/current-rules/
+  index_document_count: 21
+  taken_count: 0
+  index_families:
+    medicaid_eligibility_rule_pdf:
+      found: 2
+      taken: 0
+    other_title_16_rule_pdf:
+      found: 19
+      taken: 0
+  notes: 'Already in corpus: Idaho publishes no separate Medicaid eligibility manual; eligibility is IDAPA 16.03.01 (Medicaid
+    for families and children) and 16.03.05 (AABD), published by the Office of the Administrative Rules Coordinator (adminrules.idaho.gov
+    current-rules listing probed 2026-09-10: 21 Title 16 rule PDFs, 2 of them the eligibility chapters). Both chapters are
+    already in the corpus at section granularity as document_class regulation: us-id/regulation/idapa/16/03/05 (manifests/us-id-aabd-rules.yaml,
+    version 2026-07-04-id-aabd-rules, 286 provisions, coverage complete) and us-id/regulation/idapa/16/03/01 (today''s CHIP
+    batch, version 2026-09-10-chip-state-eligibility-manual, 75 provisions, coverage complete, unsigned). Pulled as the fifteenth
+    state of batch 3, found covered; not re-ingested as manual at page granularity (reviewer judgment, the IL/WV precedent).
+    Does not count toward the batch.'
 - jurisdiction: us-il
   name: Illinois
   lead_counts: {}
@@ -1447,6 +1556,62 @@ states:
   notes: 'Already in corpus: Illinois DHS Cash, SNAP and Medical Manual (manifests/us-il-snap-manual.yaml, 4,750 documents)
     includes PM/WAG 15 Eligibility for Medical Only Programs, PM/WAG 20 Medical Program and the medical-program sub-sections.
     Not duplicated in batch 1; does not count toward the batch, North Carolina pulled instead.'
+- jurisdiction: us-ks
+  name: Kansas
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_manual_sections
+  primary_source_url: https://www.kancare.ks.gov/policies-and-reports/eligibility-policy
+  index_url: https://www.kancare.ks.gov/policies-and-reports/eligibility-policy
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked 2026-09-10: Probed 2026-09-10 (plain request plus curl-cffi chrome120 browser impersonation, 20 s timeouts):
+    kancare.ks.gov (KDHE KanCare eligibility policy: KFMAM and Elderly and Disabled medical manuals) answers HTTP 403 (467-byte
+    body, AkamaiGHost) within 1 s to both requests. The KEESM scope already in the corpus (us-ks/manual/dcf/keesm) is the
+    DCF cash and food assistance manual and carries only a few medical cross-references. No workaround attempted. Index inventory
+    not possible.'
+  target_manifest: manifests/us-ks-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-ks
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
+- jurisdiction: us-ky
+  name: Kentucky
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_manual_volumes
+  primary_source_url: https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/opm.aspx
+  index_url: https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/opm.aspx
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked 2026-09-10: Probed 2026-09-10 (plain request plus curl-cffi chrome120 browser impersonation, 20 s timeouts):
+    chfs.ky.gov (DCBS Operation Manual page) answers HTTP 403 (1,484-byte body, no server header) within 1 s to both requests.
+    No workaround attempted. Index inventory not possible.'
+  target_manifest: manifests/us-ky-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-ky
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
+- jurisdiction: us-la
+  name: Louisiana
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_manual_sections
+  primary_source_url: https://ldh.la.gov/page/medicaid-eligibility-manual
+  index_url: https://ldh.la.gov/page/medicaid-eligibility-manual
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked 2026-09-10: Probed 2026-09-10 (plain request plus curl-cffi chrome120 browser impersonation, 20 s timeouts):
+    ldh.la.gov (LDH Medicaid Eligibility Manual page) answers HTTP 403 (4,542 and 4,903-byte bodies, server cloudflare) within
+    1 s to both requests. No workaround attempted. Index inventory not possible.'
+  target_manifest: manifests/us-la-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-la
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
 - jurisdiction: us-md
   name: Maryland
   lead_counts: {}
@@ -1552,6 +1717,33 @@ states:
       taken: 0
   notes: 'Batch 2 (2026-09-10): 565 manual documents taken from the publisher''s own index (568 documents inventoried across
     6 families; 565 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-2.md.'
+- jurisdiction: us-ms
+  name: Mississippi
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_pdf_manual_chapters
+  primary_source_url: https://medicaid.ms.gov/wp-content/uploads/2025/07/Chapter-100-General-Provisions-revised-July-2025v2.pdf
+  target_manifest: manifests/us-ms-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-ms
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
+  index_url: https://medicaid.ms.gov/eligibility-policy-and-procedures-manual/
+  index_document_count: 29
+  taken_count: 29
+  index_families:
+    chapter_pdf:
+      found: 7
+      taken: 7
+    appendix_pdf:
+      found: 22
+      taken: 22
+    other_upload:
+      found: 0
+      taken: 0
+  notes: 'Batch 3 (2026-09-10): 29 manual documents taken from the publisher''s own index (29 documents inventoried across
+    3 families; 29 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-3.md.'
 - jurisdiction: us-nc
   name: North Carolina
   lead_counts: {}
@@ -1597,6 +1789,24 @@ states:
       taken: 0
   notes: 'Batch 1 (2026-09-10): 149 manual documents taken from the publisher''s own index (996 documents inventoried across
     9 families; 149 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-1.md.'
+- jurisdiction: us-ne
+  name: Nebraska
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_pdf_nac_chapters
+  primary_source_url: https://dhhs.ne.gov/Pages/Medicaid-Eligibility-Regulations.aspx
+  index_url: https://dhhs.ne.gov/Pages/Medicaid-Eligibility-Regulations.aspx
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked 2026-09-10: Probed 2026-09-10 (plain request plus curl-cffi chrome120 browser impersonation, 20 s timeouts):
+    dhhs.ne.gov does not answer TCP from this network (requests ConnectTimeout and curl 28 ''Connection timed out after 20002
+    milliseconds'' for both requests). No workaround attempted. Index inventory not possible.'
+  target_manifest: manifests/us-ne-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-ne
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
 - jurisdiction: us-nj
   name: New Jersey
   lead_counts: {}
@@ -1621,6 +1831,57 @@ states:
       taken: 0
   notes: 'Batch 1 (2026-09-10): 6 manual documents taken from the publisher''s own index (115 documents inventoried across
     2 families; 6 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-1.md.'
+- jurisdiction: us-nm
+  name: New Mexico
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_html_nmac_parts
+  primary_source_url: https://www.hca.nm.gov/lookingforinformation/medical-assistance-program-manual/
+  index_url: https://www.hca.nm.gov/lookingforinformation/medical-assistance-program-manual/
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked 2026-09-10: Probed 2026-09-10 (plain request plus curl-cffi chrome120 browser impersonation, 20 s timeouts):
+    hca.nm.gov (Health Care Authority Medical Assistance Program Manual page) answers HTTP 403 (986-byte body, CloudFront)
+    within 1 s to both requests. The NMAC compilation publisher (srca.nm.gov, HTTP 200) lists Title 8 chapters 200-299 but
+    its chapter pages enumerate only reserved part ranges without links to the active parts, so no publisher index of the
+    parts is available there either (reviewer judgment: not ingested by guessing part URLs). No workaround attempted. Index
+    inventory not possible.'
+  target_manifest: manifests/us-nm-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-nm
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
+- jurisdiction: us-nv
+  name: Nevada
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_pdf_manual_chapters
+  primary_source_url: https://www.dss.nv.gov/uploadedFiles/dwssnvgov/content/Medical/Table%20of%20Contents.pdf
+  target_manifest: manifests/us-nv-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-nv
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
+  index_url: https://www.dss.nv.gov/programs/medical/medical-assistance-manual/
+  index_document_count: 105
+  taken_count: 33
+  index_families:
+    manual_chapter_pdf:
+      found: 23
+      taken: 23
+    table_of_contents_pdf:
+      found: 1
+      taken: 1
+    appendix_pdf:
+      found: 9
+      taken: 9
+    manual_transmittal_letter_pdf:
+      found: 72
+      taken: 0
+  notes: 'Batch 3 (2026-09-10): 33 manual documents taken from the publisher''s own index (105 documents inventoried across
+    4 families; 33 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-3.md.'
 - jurisdiction: us-ny
   name: New York
   lead_counts: {}
@@ -1674,6 +1935,53 @@ states:
     bytes) to chrome120 impersonation, so the procedure-letter family is reachable with the existing browser_impersonation
     option while the OAC 5160:1 rules on codes.ohio.gov remain unreachable; not ingested in batch 2 (the rules are the eligibility
     manual; the letters alone are a separate family).'
+- jurisdiction: us-ok
+  name: Oklahoma
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_html_rule_sections
+  primary_source_url: https://oklahoma.gov/ohca/policies-and-rules/xpolicy/medical-assistance-for-adults-and-children-eligibility/general-provisions/purpose.html
+  target_manifest: manifests/us-ok-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-ok
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
+  index_url: https://oklahoma.gov/ohca/policies-and-rules/xpolicy/medical-assistance-for-adults-and-children-eligibility.html
+  index_document_count: 396
+  taken_count: 350
+  index_families:
+    section_html:
+      found: 350
+      taken: 350
+    subchapter_landing_page:
+      found: 17
+      taken: 0
+    part_landing_page:
+      found: 29
+      taken: 0
+  notes: 'Batch 3 (2026-09-10): 350 manual documents taken from the publisher''s own index (396 documents inventoried across
+    3 families; 350 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-3.md.'
+- jurisdiction: us-or
+  name: Oregon
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_html_and_pdf_rules
+  primary_source_url: https://www.oregon.gov/odhs/eligibility/pages/default.aspx
+  index_url: https://www.oregon.gov/odhs/eligibility/pages/default.aspx
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked 2026-09-10: Probed 2026-09-10 (plain request plus curl-cffi chrome120 browser impersonation, 20 s timeouts):
+    the oregon.gov zone does not resolve from this network: requests NameResolutionError and curl 6 ''Could not resolve host:
+    www.oregon.gov''; dig for www.oregon.gov, oregon.gov and secure.sos.state.or.us (OAR chapter 410 division 200) all time
+    out (''no servers could be reached''). The OPEN notebook already in the corpus (us-or/manual/odhs/open) is the ODHS integrated
+    eligibility notebook, not the OHA OHP eligibility rules. No workaround attempted. Index inventory not possible.'
+  target_manifest: manifests/us-or-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-or
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
 - jurisdiction: us-pa
   name: Pennsylvania
   lead_counts: {}
@@ -1698,6 +2006,24 @@ states:
       taken: 0
   notes: 'Batch 1 (2026-09-10): 380 manual documents taken from the publisher''s own index (384 documents inventoried across
     2 families; 380 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-1.md.'
+- jurisdiction: us-sc
+  name: South Carolina
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_html_manual_pages
+  primary_source_url: https://www.scdhhs.gov/resources/policy-and-procedures/medicaid-policy-procedures-manual
+  index_url: https://www.scdhhs.gov/resources/policy-and-procedures/medicaid-policy-procedures-manual
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked 2026-09-10: Probed 2026-09-10 (plain request plus curl-cffi chrome120 browser impersonation, 20 s timeouts):
+    scdhhs.gov (SCDHHS Medicaid Policy and Procedures Manual index) answers HTTP 403 (919-byte body, server CloudFront) within
+    1 s to both requests. No workaround attempted. Index inventory not possible.'
+  target_manifest: manifests/us-sc-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-sc
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
 - jurisdiction: us-tn
   name: Tennessee
   lead_counts: {}
@@ -1791,6 +2117,28 @@ states:
       taken: 0
   notes: 'Batch 1 (2026-09-10): 712 manual documents taken from the publisher''s own index (1015 documents inventoried across
     19 families; 712 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-1.md.'
+- jurisdiction: us-ut
+  name: Utah
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_html_manual_topics
+  primary_source_url: https://oepmanuals.dhhs.utah.gov/
+  index_url: https://oepmanuals.dhhs.utah.gov/
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked 2026-09-10: Probed 2026-09-10 (plain request plus curl-cffi chrome120 browser impersonation, 20 s timeouts):
+    medicaid.utah.gov/policy-manuals/ links the ''Medicaid Eligibility Policy Manual'' to oepmanuals.dhhs.utah.gov, whose
+    root and every common entry point (index.htm, index.html, Default.htm, home.htm, Content/Home.htm) answer HTTP 403 with
+    an S3 AccessDenied XML body (111 bytes) to both requests; jobs.utah.gov (DWS InfoSource, the host of the existing us-ut
+    DWS eligibility manual scope) answers HTTP 403 (118 and 520-byte bodies, awselb/2.0) to both requests. medicaid.utah.gov
+    itself is reachable (HTTP 200) but carries only provider manuals and training PDFs. No workaround attempted. Index inventory
+    not possible.'
+  target_manifest: manifests/us-ut-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-ut
+    document_class: manual
+    version: 2026-09-10-medicaid-state-eligibility-manual
 - jurisdiction: us-va
   name: Virginia
   queue_status: agent_ready
@@ -1896,3 +2244,22 @@ states:
       taken: 0
   notes: 'Batch 2 (2026-09-10): 2 manual documents taken from the publisher''s own index (50 documents inventoried across
     4 families; 2 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-2.md.'
+- jurisdiction: us-wv
+  name: West Virginia
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: official_pdf_combined_manual
+  primary_source_url: https://bfa.wv.gov/income-maintenance-manual
+  target_manifest: manifests/us-wv-manuals.yaml
+  target_scope:
+    jurisdiction: us-wv
+    document_class: manual
+    version: 2026-07-21-wv-income-maintenance-manual
+  index_url: null
+  index_document_count: null
+  taken_count: 0
+  notes: 'Already in corpus: West Virginia BFA Income Maintenance Manual (manifests/us-wv-manuals.yaml, one integrated PDF
+    effective 2026-07-01, 2,276 page provisions, 923 of them mentioning Medicaid) carries the Medicaid eligibility chapters
+    alongside SNAP and WV WORKS. Pulled as the sixteenth state of batch 3, found covered; no further replacement was available
+    within the sixteen-state probe cap. Does not count toward the batch.'

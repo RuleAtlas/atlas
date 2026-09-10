@@ -19,6 +19,14 @@ Batch 2 = the next ten states by population (WA, AZ, TN, MA, IN, MD, MO, WI, CO,
 was already covered by a combined manual in the corpus, so no replacement state was pulled.
 AZ and TN block retrieval and are recorded as `blocked_primary_source` with the exact
 failure; CA and OH were retried once each and their row notes record the outcome.
+
+    uv run python scripts/build_medicaid_state_eligibility_manual_manifests.py --batch 3  # batch 3 only
+
+Batch 3 = the next ten states by population (SC, AL, LA, KY, OR, OK, CT, UT, IA, NV) with MS, KS, NM,
+NE, ID, WV as replacements, each publisher probed once. SC, AL, LA, KY, OR, UT, KS, NM and NE block
+retrieval from this network and are recorded as `blocked_primary_source` with the exact failure; ID (IDAPA
+16.03.01 and 16.03.05 already in the corpus as `us-id/regulation` at section granularity) and WV (Income
+Maintenance Manual scope) are already covered (`done`, pointers); OK, CT, IA, NV and MS are built here.
 """
 from __future__ import annotations
 
@@ -864,6 +872,362 @@ STATIC_ROWS_BATCH2: dict[str, dict[str, Any]] = {
 }
 
 
+# --------------------------------------------------------------------------- batch 3
+
+DISCOVERED_VIA_B3 = "manual-review:medicaid-agent-queue batch 3; publisher index {index}"
+
+
+def document3(jur: str, **kwargs: Any) -> dict[str, Any]:
+    """Batch-3 wrapper around ``document``: same shape, batch-3 discovery provenance."""
+    doc = document(jur, **kwargs)
+    doc["metadata"]["discovered_via"] = DISCOVERED_VIA_B3.format(index=kwargs["index_url"])
+    return doc
+
+
+def _encode_spaces(url: str) -> str:
+    return url.replace(" ", "%20")
+
+
+_OK_RULE_RE = re.compile(r"317:35-(\d+(?:\.\d+)?)-(\d+(?:\.\d+)*)")
+
+
+def _ok_rule_from_page(href: str, labels: list[str], subchapter: str | None) -> tuple[str | None, str | None]:
+    """Read a section's OAC number from the section page (first ``317:35-<sub>-<n>`` inside ``main#main``)."""
+    time.sleep(0.2)
+    body = fetch(href)
+    main = body.split('id="main"', 1)[-1]
+    found = _OK_RULE_RE.search(html.unescape(re.sub(r"<[^>]+>", " ", main)))
+    sec = next((re.match(r"SECTION\s+(\d+(?:\.\d+)*)\.?\s*(.*)$", t, re.I) for t in labels if re.match(r"SECTION\s+\d", t, re.I)), None)
+    num = next((re.match(r"(?:317:)?35-(\d+(?:\.\d+)?)-(\d+(?:\.\d+)*)\.?\s*(.*)$", t) for t in labels if re.match(r"(?:317:)?35-\d", t)), None)
+    if sec:
+        title = sec.group(2).strip()
+    elif num:
+        title = num.group(3).strip()
+    else:
+        title = (labels[0] if labels else "").strip()
+    if found:
+        rule = f"317:35-{found.group(1)}-{found.group(2)}"
+        if sec and subchapter and f"317:35-{subchapter}-{sec.group(1)}" != rule:
+            print(f"us-ok: chapter-page label SECTION {sec.group(1)} under subchapter {subchapter} but page says {rule} ({href})", file=sys.stderr)
+        return rule, title
+    if num:
+        return f"317:35-{num.group(1)}-{num.group(2)}", title
+    if sec and subchapter:
+        return f"317:35-{subchapter}-{sec.group(1)}", title
+    return None, None
+
+
+def build_ok() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """OHCA publishes its rules chapter by chapter on oklahoma.gov; Medicaid eligibility is OAC 317:35
+    (Chapter 35, Medical Assistance for Adults and Children - Eligibility). The chapter page carries the
+    whole tree (subchapters, parts, sections); subchapter and part pages are link lists and are not taken."""
+    index = "https://oklahoma.gov/ohca/policies-and-rules/xpolicy/medical-assistance-for-adults-and-children-eligibility.html"
+    base = index[:-5] + "/"
+    page = fetch(index)
+    texts: dict[str, list[str]] = {}
+    order: list[str] = []
+    for href, text in links(page, index):
+        if not href.startswith(base):
+            continue
+        if href not in texts:
+            texts[href] = []
+            order.append(href)
+        if text and text not in texts[href]:
+            texts[href].append(text)
+    families = {"section_html": {"found": 0, "taken": 0}, "subchapter_landing_page": {"found": 0, "taken": 0},
+                "part_landing_page": {"found": 0, "taken": 0}}
+    subchapter_no: dict[str, str] = {}
+    for href in order:
+        for t in texts[href]:
+            m = re.match(r"SUBCHAPTER\s+(\d+(?:\.\d+)?)", t, re.I)
+            if m and href[len(base):].count("/") == 0:
+                subchapter_no[href[len(base):].rsplit(".", 1)[0]] = m.group(1)
+    manual = "Oklahoma Health Care Authority Rules, OAC 317:35 Medical Assistance for Adults and Children - Eligibility"
+    sections: list[tuple[str, str, str, str]] = []  # href, rule number, title, label
+    for href in order:
+        labels = texts[href]
+        if any(t.upper().startswith("SUBCHAPTER") for t in labels):
+            families["subchapter_landing_page"]["found"] += 1
+            continue
+        if any(t.upper().startswith("PART") for t in labels):
+            families["part_landing_page"]["found"] += 1
+            continue
+        families["section_html"]["found"] += 1
+        rel = href[len(base):]
+        rule_text = next((t for t in labels if re.match(r"317:35-\d+(\.\d+)?-[\d.]+", t)), None)
+        if rule_text:
+            m = re.match(r"(317:35-\d+(?:\.\d+)?-\d+(?:\.\d+)*)\.?\s*(.*)$", rule_text)
+            rule, title = m.group(1), m.group(2).strip()
+        else:
+            # The chapter page labels the other sections "SECTION n. Title", "35-10-10. Title" or by title alone
+            # ("Services in a Nursing Facility (NF)", "[RESERVED]", "Income disregards [REVOKED]"). Each section page
+            # opens with its own OAC number ("317:35-9-45. ..."), so the number is read from the page; the chapter-page
+            # label is only the fallback, and a "SECTION n" label that disagrees with the page is reported.
+            rule, title = _ok_rule_from_page(href, labels, subchapter_no.get(rel.split("/", 1)[0]))
+            if rule is None:
+                print(f"us-ok: cannot number {rel} from {labels}", file=sys.stderr)
+                continue
+        sections.append((href, rule, title, rule.replace("317:35-", "317-35-").replace(".", "-")))
+    counts: dict[str, int] = {}
+    for _, _, _, label in sections:
+        counts[label] = counts.get(label, 0) + 1
+    docs = []
+    for href, rule, title, label in sections:
+        publisher_duplicate = counts[label] > 1
+        if publisher_duplicate:  # OHCA labels two different sections 317:35-16-3 and two 317:35-16-4; keep both, suffixed by page slug
+            label = f"{label}-{slug(href[len(base):].rsplit('/', 1)[-1].rsplit('.', 1)[0], 60)}"
+        families["section_html"]["taken"] += 1
+        extra = {"agency": "ohca", "code_rule": rule,
+                 "publisher_note": "OHCA's own web publication of its rules; the page footer says the official codified text is the Secretary of State's OAC"}
+        if publisher_duplicate:
+            extra["publisher_numbering_duplicate"] = True
+        docs.append(document3("us-ok", label=label, title=f"OAC {rule}. {title}".strip(), url=href, fmt="html",
+                              authority="Oklahoma Health Care Authority", manual=manual, index_url=index, subtype="rule_section_html",
+                              extraction={"html_content_selector": "main#main",
+                                          "html_drop_selectors": ["div.title", "div.list", 'div.text:has(p > a[href$="/xpolicy.html"])']},
+                              extra=extra))
+    return docs, {"index_url": index, "families": families}
+
+
+def build_ct() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """DSS Uniform Policy Manual: the lists page has one sub-list per chapter (UPM0-UPM9) plus policy
+    transmittals; each sub-list is paginated (?page=N, 16 items a page) and each item is one section as a
+    Word file. The UPM is the integrated eligibility manual for Medicaid (HUSKY A/C/D) and the cash programs."""
+    index = "https://portal.ct.gov/dss/lists/uniform-policy-manual"
+    page = fetch(index)
+    chapters = []
+    for href, text in links(page, index):
+        if href.startswith(index + "/") and href not in [c for c, _ in chapters]:
+            chapters.append((href, text))
+    families: dict[str, dict[str, int]] = {"upm_section_doc": {"found": 0, "taken": 0}, "upm_chapter_pdf": {"found": 0, "taken": 0},
+                                           "policy_transmittal_doc": {"found": 0, "taken": 0}}
+    docs = []
+    seen: set[str] = set()
+    manual = "Connecticut Department of Social Services Uniform Policy Manual"
+    item_re = re.compile(r'<li class="cg-c-list__item cg-c-list__item--results">\s*<p class="cg-c-list__title\s*">\s*<a href="([^"]+)"[^>]*title="([^"]*)"[^>]*>\s*(.*?)\s*</a>\s*</p>\s*(?:<p class="cg-c-list__intro">(.*?)</p>)?', re.S)
+    for chapter_url, chapter_text in chapters:
+        transmittals = "policy-transmittals" in chapter_url
+        n = 1
+        while True:
+            body = fetch(f"{chapter_url}?page={n}")
+            m = re.search(r"Page\s+(\d+)\s+of\s+(\d+)", body)
+            for href, title_attr, number, intro in item_re.findall(body):
+                href = html.unescape(href)
+                clean = href.split("?", 1)[0]
+                if clean in seen:
+                    continue
+                seen.add(clean)
+                ext = clean.rsplit(".", 1)[-1].lower()
+                number = re.sub(r"\s+", " ", html.unescape(number)).strip()
+                intro = re.sub(r"\s+", " ", html.unescape(intro or title_attr)).strip()
+                if transmittals:
+                    families["policy_transmittal_doc"]["found"] += 1
+                    continue
+                if ext == "pdf":
+                    families["upm_chapter_pdf"]["found"] += 1
+                    continue
+                families["upm_section_doc"]["found"] += 1
+                families["upm_section_doc"]["taken"] += 1
+                label = slug(number.replace("_", "-"))
+                docs.append(document3("us-ct", label=label, title=f"{manual}: {number.replace('_', '.')} {intro}".strip(), url=href, fmt=ext,
+                                      authority="Connecticut Department of Social Services", manual=manual, index_url=index,
+                                      subtype="upm_section_word", extra={"agency": "dss", "upm_chapter": chapter_text, "upm_chapter_url": chapter_url,
+                                                                        "upm_section": number.replace("_", "."), "section_title": intro}))
+            if not m or n >= int(m.group(2)):
+                break
+            n += 1
+            time.sleep(0.3)
+    return docs, {"index_url": index, "families": families}
+
+
+def build_ia() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Iowa HHS Employees' Manual, Income Maintenance manuals page: Title 8 Medicaid chapters 8-A to 8-N."""
+    index = "https://hhs.iowa.gov/about/policy-manuals/income-maintenance"
+    page = fetch(index)
+    families: dict[str, dict[str, int]] = {"title_8_medicaid_chapter_pdf": {"found": 0, "taken": 0}, "title_8_omnibus_pdf": {"found": 0, "taken": 0},
+                                           "other_title_chapter_or_appendix_pdf": {"found": 0, "taken": 0}, "other_title_omnibus_pdf": {"found": 0, "taken": 0}}
+    docs = []
+    manual = "Iowa HHS Employees' Manual, Title 8 Medicaid"
+    seen: set[str] = set()
+    for href, text in links(page, index):
+        if "/media/" not in href or href in seen:
+            continue
+        seen.add(href)
+        text = re.sub(r"\s*\([\d.]+ [KM]B\)\s*\.pdf\s*$", "", text).strip()
+        m = re.match(r"8-([A-N])\s+(.+)$", text)
+        if m:
+            families["title_8_medicaid_chapter_pdf"]["found"] += 1
+            families["title_8_medicaid_chapter_pdf"]["taken"] += 1
+            docs.append(document3("us-ia", label=f"employees-manual-8-{m.group(1).lower()}", title=f"{manual}: Chapter 8-{m.group(1)} {m.group(2)}", url=href, fmt="pdf",
+                                  authority="Iowa Department of Health and Human Services", manual=manual, index_url=index, subtype="manual_chapter_pdf",
+                                  extraction={"ocr": True}, extra={"agency": "hhs", "extraction_granularity": "pdf_page", "chapter": f"8-{m.group(1)}"}))
+        elif re.match(r"8 Omnibus", text):
+            families["title_8_omnibus_pdf"]["found"] += 1
+        elif "Omnibus" in text:
+            families["other_title_omnibus_pdf"]["found"] += 1
+        else:
+            families["other_title_chapter_or_appendix_pdf"]["found"] += 1
+    return docs, {"index_url": index, "families": families}
+
+
+def build_nv() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Nevada Division of Social Services (formerly DWSS) Medical Assistance Manual: contents page (TOC and
+    chapters A-100 to H-200), appendix page, and the manual transmittal letters page."""
+    index = "https://www.dss.nv.gov/programs/medical/medical-assistance-manual/"
+    contents = index + "medical-manual-3-cont/"
+    appendix = index + "medical-manual-4-app/"
+    mtl = index + "medical-manual-2-mtl/"
+    families: dict[str, dict[str, int]] = {"manual_chapter_pdf": {"found": 0, "taken": 0}, "table_of_contents_pdf": {"found": 0, "taken": 0},
+                                           "appendix_pdf": {"found": 0, "taken": 0}, "manual_transmittal_letter_pdf": {"found": 0, "taken": 0}}
+    docs = []
+    manual = "Nevada Medical Assistance Manual (MAM)"
+    taken_urls: set[str] = set()
+
+    def pdfs(url: str) -> list[tuple[str, str]]:
+        return [(h, t) for h, t in links(fetch(url), url) if h.lower().endswith(".pdf") and "dss.nv.gov" in h]
+
+    for href, text in pdfs(contents):
+        if href in taken_urls:
+            continue
+        m = re.match(r"([A-H])-(\d{3})\s*-\s*(.+)$", text)
+        if m:
+            fam, label, title = "manual_chapter_pdf", f"{m.group(1).lower()}-{m.group(2)}", f"{manual}: {m.group(1)}-{m.group(2)} {m.group(3)}"
+        elif text.lower().startswith("table of contents"):
+            fam, label, title = "table_of_contents_pdf", "table-of-contents", f"{manual}: Table of Contents"
+        else:
+            continue
+        families[fam]["found"] += 1
+        families[fam]["taken"] += 1
+        taken_urls.add(href)
+        docs.append(document3("us-nv", label=label, title=title, url=_encode_spaces(href), fmt="pdf", authority="Nevada Division of Social Services",
+                              manual=manual, index_url=index, subtype="manual_chapter_pdf", extraction={"ocr": True},
+                              extra={"agency": "dss", "extraction_granularity": "pdf_page", "contents_page_url": contents}))
+    for href, text in pdfs(appendix):
+        m = re.match(r"Appendix\s+([A-Z])\b\s*-?\s*(.*)$", text)
+        if not m or href in taken_urls:
+            continue
+        families["appendix_pdf"]["found"] += 1
+        families["appendix_pdf"]["taken"] += 1
+        taken_urls.add(href)
+        docs.append(document3("us-nv", label=f"appendix-{m.group(1).lower()}", title=f"{manual}: Appendix {m.group(1)} {m.group(2)}".strip(), url=_encode_spaces(href), fmt="pdf",
+                              authority="Nevada Division of Social Services", manual=manual, index_url=index, subtype="manual_appendix_pdf",
+                              extraction={"ocr": True}, extra={"agency": "dss", "extraction_granularity": "pdf_page", "appendix_page_url": appendix}))
+    letters = {h for h, _ in pdfs(mtl)} | {h for h, _ in pdfs(index)}
+    families["manual_transmittal_letter_pdf"]["found"] = len(letters - taken_urls)
+    return docs, {"index_url": index, "contents_url": contents, "appendix_url": appendix, "transmittals_url": mtl, "families": families}
+
+
+def build_ms() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Mississippi Division of Medicaid Eligibility Policy and Procedures Manual: chapter PDFs and Appendix A
+    items listed on the manual page (accordion sections)."""
+    index = "https://medicaid.ms.gov/eligibility-policy-and-procedures-manual/"
+    page = fetch(index)
+    families: dict[str, dict[str, int]] = {"chapter_pdf": {"found": 0, "taken": 0}, "appendix_pdf": {"found": 0, "taken": 0}, "other_upload": {"found": 0, "taken": 0}}
+    docs = []
+    manual = "Mississippi Division of Medicaid Eligibility Policy and Procedures Manual"
+    seen: set[str] = set()
+    for href, text in links(page, index):
+        if "/wp-content/uploads/" not in href or href in seen:
+            continue
+        seen.add(href)
+        name = href.rsplit("/", 1)[-1]
+        ch = re.match(r"Chapter-(\d{3})", name, re.I)
+        ap = re.match(r"Appendix-A-(\d+)(?:-(\d+))?", name, re.I)
+        if ch:
+            families["chapter_pdf"]["found"] += 1
+            families["chapter_pdf"]["taken"] += 1
+            label, title = f"chapter-{ch.group(1)}", f"{manual}: {text}"
+            subtype = "manual_chapter_pdf"
+        elif ap:
+            families["appendix_pdf"]["found"] += 1
+            families["appendix_pdf"]["taken"] += 1
+            label = f"appendix-a-{ap.group(1)}" + (f"-{ap.group(2)}" if ap.group(2) else "")
+            title, subtype = f"{manual}: Appendix A-{ap.group(1)}{'-' + ap.group(2) if ap.group(2) else ''} {text}", "manual_appendix_pdf"
+        else:
+            families["other_upload"]["found"] += 1
+            continue
+        docs.append(document3("us-ms", label=label, title=title, url=href, fmt="pdf", authority="Mississippi Division of Medicaid", manual=manual,
+                              index_url=index, subtype=subtype, extraction={"ocr": True}, extra={"agency": "dom", "extraction_granularity": "pdf_page"}))
+    return docs, {"index_url": index, "families": families}
+
+
+BUILDERS_BATCH3 = {"us-ok": build_ok, "us-ct": build_ct, "us-ia": build_ia, "us-nv": build_nv, "us-ms": build_ms}
+NAMES_BATCH3 = {"us-sc": "South Carolina", "us-al": "Alabama", "us-la": "Louisiana", "us-ky": "Kentucky", "us-or": "Oregon", "us-ok": "Oklahoma",
+                "us-ct": "Connecticut", "us-ut": "Utah", "us-ia": "Iowa", "us-nv": "Nevada", "us-ms": "Mississippi", "us-ks": "Kansas",
+                "us-nm": "New Mexico", "us-ne": "Nebraska", "us-id": "Idaho", "us-wv": "West Virginia"}
+SOURCE_KIND_BATCH3 = {"us-ok": "official_html_rule_sections", "us-ct": "official_word_manual_sections", "us-ia": "official_pdf_manual_chapters",
+                      "us-nv": "official_pdf_manual_chapters", "us-ms": "official_pdf_manual_chapters"}
+_B3_PROBE = "Probed 2026-09-10 (plain request plus curl-cffi chrome120 browser impersonation, 20 s timeouts): "
+_B3_TAIL = " No workaround attempted. Index inventory not possible."
+
+
+def _blocked3(url: str, kind: str, detail: str) -> dict[str, Any]:
+    jur = url  # placeholder replaced below
+    return {"queue_status": "blocked_primary_source", "source_kind": kind, "primary_source_url": url, "index_url": url,
+            "index_document_count": None, "taken_count": 0, "notes": "Blocked 2026-09-10: " + _B3_PROBE + detail + _B3_TAIL, "_jur": jur}
+
+
+STATIC_ROWS_BATCH3: dict[str, dict[str, Any]] = {
+    "us-sc": _blocked3("https://www.scdhhs.gov/resources/policy-and-procedures/medicaid-policy-procedures-manual", "official_html_manual_pages",
+                       "scdhhs.gov (SCDHHS Medicaid Policy and Procedures Manual index) answers HTTP 403 (919-byte body, server CloudFront) within 1 s to both requests."),
+    "us-al": _blocked3("https://medicaid.alabama.gov/content/9.0_Resources/9.4_Forms_Library/9.4.11_Eligibility_Manual.aspx", "official_pdf_manual_chapters",
+                       "medicaid.alabama.gov does not answer TCP from this network (requests ConnectTimeout and curl 28 'Connection timed out after 20002 milliseconds' for both requests)."),
+    "us-la": _blocked3("https://ldh.la.gov/page/medicaid-eligibility-manual", "official_pdf_manual_sections",
+                       "ldh.la.gov (LDH Medicaid Eligibility Manual page) answers HTTP 403 (4,542 and 4,903-byte bodies, server cloudflare) within 1 s to both requests."),
+    "us-ky": _blocked3("https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/opm.aspx", "official_pdf_manual_volumes",
+                       "chfs.ky.gov (DCBS Operation Manual page) answers HTTP 403 (1,484-byte body, no server header) within 1 s to both requests."),
+    "us-or": _blocked3("https://www.oregon.gov/odhs/eligibility/pages/default.aspx", "official_html_and_pdf_rules",
+                       "the oregon.gov zone does not resolve from this network: requests NameResolutionError and curl 6 'Could not resolve host: www.oregon.gov'; "
+                       "dig for www.oregon.gov, oregon.gov and secure.sos.state.or.us (OAR chapter 410 division 200) all time out ('no servers could be reached'). "
+                       "The OPEN notebook already in the corpus (us-or/manual/odhs/open) is the ODHS integrated eligibility notebook, not the OHA OHP eligibility rules."),
+    "us-ut": _blocked3("https://oepmanuals.dhhs.utah.gov/", "official_html_manual_topics",
+                       "medicaid.utah.gov/policy-manuals/ links the 'Medicaid Eligibility Policy Manual' to oepmanuals.dhhs.utah.gov, whose root and every common entry "
+                       "point (index.htm, index.html, Default.htm, home.htm, Content/Home.htm) answer HTTP 403 with an S3 AccessDenied XML body (111 bytes) to both requests; "
+                       "jobs.utah.gov (DWS InfoSource, the host of the existing us-ut DWS eligibility manual scope) answers HTTP 403 (118 and 520-byte bodies, awselb/2.0) to both requests. "
+                       "medicaid.utah.gov itself is reachable (HTTP 200) but carries only provider manuals and training PDFs."),
+    "us-ks": _blocked3("https://www.kancare.ks.gov/policies-and-reports/eligibility-policy", "official_pdf_manual_sections",
+                       "kancare.ks.gov (KDHE KanCare eligibility policy: KFMAM and Elderly and Disabled medical manuals) answers HTTP 403 (467-byte body, AkamaiGHost) within 1 s to both requests. "
+                       "The KEESM scope already in the corpus (us-ks/manual/dcf/keesm) is the DCF cash and food assistance manual and carries only a few medical cross-references."),
+    "us-nm": _blocked3("https://www.hca.nm.gov/lookingforinformation/medical-assistance-program-manual/", "official_html_nmac_parts",
+                       "hca.nm.gov (Health Care Authority Medical Assistance Program Manual page) answers HTTP 403 (986-byte body, CloudFront) within 1 s to both requests. "
+                       "The NMAC compilation publisher (srca.nm.gov, HTTP 200) lists Title 8 chapters 200-299 but its chapter pages enumerate only reserved part ranges "
+                       "without links to the active parts, so no publisher index of the parts is available there either (reviewer judgment: not ingested by guessing part URLs)."),
+    "us-ne": _blocked3("https://dhhs.ne.gov/Pages/Medicaid-Eligibility-Regulations.aspx", "official_pdf_nac_chapters",
+                       "dhhs.ne.gov does not answer TCP from this network (requests ConnectTimeout and curl 28 'Connection timed out after 20002 milliseconds' for both requests)."),
+    "us-id": {
+        "queue_status": "done",
+        "source_kind": "official_pdf_idapa_rules",
+        "primary_source_url": "https://adminrules.idaho.gov/current-rules/",
+        "target_manifest": "manifests/us-id-aabd-rules.yaml",
+        "target_scope": {"jurisdiction": "us-id", "document_class": "regulation", "version": "2026-07-04-id-aabd-rules"},
+        "index_url": "https://adminrules.idaho.gov/current-rules/", "index_document_count": 21, "taken_count": 0,
+        "index_families": {"medicaid_eligibility_rule_pdf": {"found": 2, "taken": 0}, "other_title_16_rule_pdf": {"found": 19, "taken": 0}},
+        "notes": ("Already in corpus: Idaho publishes no separate Medicaid eligibility manual; eligibility is IDAPA 16.03.01 (Medicaid for families and "
+                  "children) and 16.03.05 (AABD), published by the Office of the Administrative Rules Coordinator (adminrules.idaho.gov current-rules "
+                  "listing probed 2026-09-10: 21 Title 16 rule PDFs, 2 of them the eligibility chapters). Both chapters are already in the corpus at "
+                  "section granularity as document_class regulation: us-id/regulation/idapa/16/03/05 (manifests/us-id-aabd-rules.yaml, version "
+                  "2026-07-04-id-aabd-rules, 286 provisions, coverage complete) and us-id/regulation/idapa/16/03/01 (today's CHIP batch, version "
+                  "2026-09-10-chip-state-eligibility-manual, 75 provisions, coverage complete, unsigned). Pulled as the fifteenth state of batch 3, "
+                  "found covered; not re-ingested as manual at page granularity (reviewer judgment, the IL/WV precedent). Does not count toward the batch."),
+    },
+    "us-wv": {
+        "queue_status": "done",
+        "source_kind": "official_pdf_combined_manual",
+        "primary_source_url": "https://bfa.wv.gov/income-maintenance-manual",
+        "target_manifest": "manifests/us-wv-manuals.yaml",
+        "target_scope": {"jurisdiction": "us-wv", "document_class": "manual", "version": "2026-07-21-wv-income-maintenance-manual"},
+        "index_url": None, "index_document_count": None, "taken_count": 0,
+        "notes": ("Already in corpus: West Virginia BFA Income Maintenance Manual (manifests/us-wv-manuals.yaml, one integrated PDF effective 2026-07-01, 2,276 page "
+                  "provisions, 923 of them mentioning Medicaid) carries the Medicaid eligibility chapters alongside SNAP and WV WORKS. Pulled as the sixteenth state "
+                  "of batch 3, found covered; no further replacement was available within the sixteen-state probe cap. Does not count toward the batch."),
+    },
+}
+for _jur, _row in STATIC_ROWS_BATCH3.items():
+    if _row.pop("_jur", None) is not None:
+        _row["target_manifest"] = f"manifests/{_jur}-medicaid-eligibility-manual.yaml"
+        _row["target_scope"] = {"jurisdiction": _jur, "document_class": "manual", "version": VERSION}
+
+
 BUILDERS = {"us-va": build_va, "us-ny": build_ny, "us-nc": build_nc, "us-ga": build_ga,
             "us-tx": build_tx, "us-pa": build_pa, "us-ar": build_ar, "us-nj": build_nj}
 NAMES = {"us-ar": "Arkansas", "us-va": "Virginia", "us-ca": "California", "us-tx": "Texas", "us-fl": "Florida",
@@ -961,6 +1325,11 @@ BATCHES = {
           "Batch 2 (2026-09-10): the next ten states by population (WA, AZ, TN, MA, IN, MD, MO, WI, CO, MN); none was already covered "
           "by a combined manual, so no replacement was pulled. CA and OH retried once each. Generator: "
           "scripts/build_medicaid_state_eligibility_manual_manifests.py --batch 2."),
+    "3": (BUILDERS_BATCH3, STATIC_ROWS_BATCH3, NAMES_BATCH3, SOURCE_KIND_BATCH3,
+          "Batch 3 (2026-09-10): the next ten states by population (SC, AL, LA, KY, OR, OK, CT, UT, IA, NV) with MS, KS, NM, NE, ID, WV as "
+          "replacements; each publisher probed once (plain request plus browser impersonation). SC, AL, LA, KY, OR, UT, KS, NM, NE blocked; "
+          "ID and WV already covered by existing corpus scopes; OK, CT, IA, NV, MS attempted. Generator: "
+          "scripts/build_medicaid_state_eligibility_manual_manifests.py --batch 3."),
 }
 BATCH1_RETRY_DETAILS = {
     "us-ca": "HTTP 403 Incapsula interstitial (incident id 648000110658208525-192905496909841125) for both requests.",
@@ -973,12 +1342,12 @@ BATCH1_RETRY_DETAILS = {
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--batch", choices=["1", "2", "all"], default="all",
+    parser.add_argument("--batch", choices=["1", "2", "3", "all"], default="all",
                         help="which batch's builders and static rows to (re)build; rows of the other batch are left untouched")
     parser.add_argument("--only", action="append", default=[], metavar="JURISDICTION",
                         help="restrict live builders to these jurisdictions (static rows of the batch are still applied)")
     args = parser.parse_args()
-    batches = ["1", "2"] if args.batch == "all" else [args.batch]
+    batches = ["1", "2", "3"] if args.batch == "all" else [args.batch]
     queue = yaml.safe_load(QUEUE.read_text())
     rows = {s["jurisdiction"]: s for s in queue["states"]}
     summary: dict[str, Any] = {}
