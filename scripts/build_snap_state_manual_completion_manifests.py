@@ -19,11 +19,19 @@ lists, and a citation path that already exists in any provisions JSONL of the co
         --corpus-base /path/to/axiom-corpus/data/corpus          # both live builders
     uv run python scripts/build_snap_state_manual_completion_manifests.py --only us-tx
 
-Live builders: us-tx (Texas Works Handbook Parts A-C and glossary on fhb.hhs.texas.gov) and
-us-nh (DHHS Food Stamp Manual WebHelp on www.dhhs.nh.gov). The other eight batch-1 states are
+Live builders, batch 1: us-tx (Texas Works Handbook Parts A-C and glossary on fhb.hhs.texas.gov)
+and us-nh (DHHS Food Stamp Manual WebHelp on www.dhhs.nh.gov). The other eight batch-1 states are
 static rows: FL, AL, MD, MA (diagnosed, nothing failed to land), CA and ME (publisher index
-confirmed complete), KY and NY (publisher blocked). See
+confirmed complete), KY and NY (publisher blocked from the batch-1 network). See
 docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-1.md.
+
+Batch 2 (same day, from a US network): KY answered on retry and is a live builder (DFS Operation
+Manual Volume I); NY stays blocked. Live builders us-wy (DFS SNAP and POWER Policy Manual
+subpages) and us-nd (HHS SNAP Policy Manual topics and release updates added since Release 26.5);
+static rows AZ (blocked), NE, AR, IA, HI, NM, VT, NV, ID (publisher index confirmed complete; the
+findings, including revised editions that need a superseding scope, are in the row notes). See
+docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-2.md. Batch-1 manifests are never
+regenerated: run with ``--only us-ky --only us-wy --only us-nd`` for batch 2.
 """
 
 from __future__ import annotations
@@ -51,6 +59,7 @@ EXPRESSION_DATE = SOURCE_AS_OF  # current-effective manual trees as fetched; see
 UA = "Axiom/1.0 (Legal Archive; contact@axiom-foundation.org) https://github.com/TheAxiomFoundation/axiom-corpus"
 ISSUE = "https://github.com/TheAxiomFoundation/axiom-corpus/issues/680"
 RUN_NOTE = "docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-1.md"
+RUN_NOTE_BATCH2 = "docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-2.md"
 
 _LINK_RE = re.compile(r'<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', re.S | re.I)
 
@@ -97,6 +106,11 @@ def links(page: str, base: str) -> list[tuple[str, str]]:
 def slug(value: str, limit: int = 100) -> str:
     value = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
     return value[:limit].strip("-")
+
+
+def slug_full(value: str) -> str:
+    """Untruncated slug (the released ND topic convention keeps the whole Content path)."""
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
 
 
 def registered_citation_paths(*manifests: str) -> set[str]:
@@ -332,18 +346,343 @@ def build_nh() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     return docs, {"index_url": landing, "families": families}
 
 
+# --------------------------------------------------------------------------- Kentucky (batch 2)
+
+
+def _pdf_revision_facts(content: bytes) -> dict[str, Any]:
+    """Latest "R. m/d/yy" section revision, latest OMTL number and page count of a KY DFS
+    Operation Manual volume (the released KY scope records the same facts)."""
+    import fitz
+
+    doc = fitz.open(stream=content, filetype="pdf")
+    text = "\n".join(page.get_text() for page in doc)
+    dates: set[dt.date] = set()
+    for month, day, year in re.findall(r"R\.\s*(\d{1,2})/(\d{1,2})/(\d{2,4})", text):
+        y = int(year) if len(year) == 4 else 2000 + int(year)
+        try:
+            dates.add(dt.date(y, int(month), int(day)))
+        except ValueError:
+            continue
+    omtls = [int(n) for n in re.findall(r"OMTL[- ]?(\d{3})", text)]
+    toc = re.search(r"Table of Contents\s*[-\u2013]\s*R\.\s*(\d{1,2})/(\d{1,2})/(\d{2,4})", text)
+    toc_date = None
+    if toc:
+        m, d, y = toc.groups()
+        toc_date = dt.date(int(y) if len(y) == 4 else 2000 + int(y), int(m), int(d)).isoformat()
+    return {
+        "latest_section_revision": max(dates).isoformat() if dates else None,
+        "latest_omtl": str(max(omtls)) if omtls else None,
+        "toc_revision_date": toc_date,
+        "page_count": doc.page_count,
+    }
+
+
+def build_ky() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Kentucky DCBS Division of Family Support Operation Manual volumes, listed on the DFS page
+    https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/default.aspx (the released KY SNAP scope's
+    ``manual_landing_page``). The page answered HTTP 403 from the batch-1 network and HTTP 200 to
+    the plain Axiom request from the batch-2 network, so no request option is needed.
+
+    Volumes II (SNAP) and IIA (SNAP work requirements) are in the released scope; both have newer
+    editions today (Volume II OMTL-704, R. 8/1/26), but their citation paths exist, so they are
+    inventoried, not re-taken. Volume I (General Administration) governs case processing,
+    confidentiality, civil rights and hearings for every DFS program including SNAP and is not in
+    the corpus; it is taken under the released KY convention ``us-ky/manual/dcbs/dfs/<volume>``.
+    Program-specific volumes for KTAP, KWP, Medicaid, State Supplementation and CCAP, the OMTL
+    cover-letter and policy-update volumes (IX, X; transmittal history, no SNAP policy text per
+    the released queue row), the SNAP application forms and the SNAP E&T State Plan are separate
+    families, not taken.
+    """
+    index = "https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/default.aspx"
+    session = requests.Session()
+    page = fetch(index, session=session)
+    families: dict[str, dict[str, int]] = {}
+    volumes = [(h, t) for h, t in links(page, index) if re.search(r"/Documents/OMVOL", h, re.I)]
+    apps = [(h, t) for h, t in links(page, index) if re.search(r"SNAPApp\.pdf$", h, re.I)]
+    snap_existing = {"OMVOLII.pdf", "OMVOLIIA.pdf"}
+    taken_file = "OMVOL1.pdf"
+    fam_snap = families.setdefault("snap_volume_already_in_released_scope_revised_edition", {"found": 0, "taken": 0})
+    fam_vol1 = families.setdefault("general_administration_volume_pdf", {"found": 0, "taken": 0})
+    fam_other = families.setdefault("other_program_volume_pdf", {"found": 0, "taken": 0})
+    fam_hist = families.setdefault("omtl_cover_letter_and_policy_update_volume_pdf", {"found": 0, "taken": 0})
+    docs: list[dict[str, Any]] = []
+    for href, _text in volumes:
+        name = href.rsplit("/", 1)[-1]
+        if name in snap_existing:
+            fam_snap["found"] += 1
+        elif name.upper() in {"OMVOL9.PDF", "OMVOLX.PDF"}:
+            fam_hist["found"] += 1
+        elif name == taken_file:
+            fam_vol1["found"] += 1
+            resp = session.get(href, headers={"User-Agent": UA}, timeout=120)
+            resp.raise_for_status()
+            facts = _pdf_revision_facts(resp.content)
+            expression = facts["latest_section_revision"] or SOURCE_AS_OF
+            fam_vol1["taken"] += 1
+            docs.append(
+                {
+                    "source_id": "ky-dcbs-dfs-om-vol-i",
+                    "jurisdiction": "us-ky",
+                    "document_class": "manual",
+                    "citation_path": "us-ky/manual/dcbs/dfs/volume-i-general-administration",
+                    "title": "Kentucky DFS Manual Volume I - General Administration",
+                    "source_url": href,
+                    "source_format": "pdf",
+                    "source_as_of": SOURCE_AS_OF,
+                    "expression_date": expression,
+                    "metadata": {
+                        "primary_source": True,
+                        "source_authority": "Kentucky Department for Community Based Services Division of Family Support",
+                        "document_subtype": "policy_manual",
+                        "program": "SNAP",
+                        "state_program": "DFS Operation Manual general administration (all Family Support programs incl. SNAP)",
+                        "federal_program": "SNAP",
+                        "manual_landing_page": index,
+                        "manual_revision_date": expression,
+                        "manual_toc_revision_date": facts["toc_revision_date"],
+                        "latest_omtl": facts["latest_omtl"],
+                        "pdf_page_count": facts["page_count"],
+                        "source_last_modified": resp.headers.get("Last-Modified"),
+                        "source_discovery_group": "us-ky/manual/snap",
+                        "discovered_via": f"manual-review:snap-completion-agent-queue batch 2 ({ISSUE}); publisher index {index}",
+                    },
+                }
+            )
+        else:
+            fam_other["found"] += 1
+    families["snap_application_form_pdf"] = {"found": len(apps), "taken": 0}
+    return docs, {"index_url": index, "families": families}
+
+
+# --------------------------------------------------------------------------- Wyoming (batch 2)
+
+
+def build_wy() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Wyoming DFS SNAP and POWER Policy Manual on dfs.wyo.gov. The manual is one long page
+    (sections 100-1400, in the released scope with its two accordion "extended menu" pages and
+    Table II) plus a sub-navigation of subpages: EDI (case-file imaging guidance), Glossary, Codes,
+    Notices, CM Updates, Policy Clarifications, Resources, Tables (landing for Table I SNAP income
+    limits and Table II POWER income limits), a Medical Handbook, and a policy page on purchasing
+    and preparing food separately linked from the manual text.
+
+    Taken (SNAP-governing text absent from the corpus): Glossary, Policy Clarifications, Table I
+    SNAP Income Limits and the purchasing-and-preparing-food-separately page. Not taken: CM Updates
+    (change log), EDI/Codes/Notices/Resources (system and form catalogues, no eligibility policy),
+    the Tables landing page, the Medical Handbook (Medicaid) and the pages already in the released
+    scope. Citation paths follow the released convention
+    ``us-wy/manual/dfs/snap-power-policy-manual/<slug>``; text is the WordPress ``.entry-content``.
+    """
+    from bs4 import BeautifulSoup
+
+    index = "https://dfs.wyo.gov/about/policy-manuals/snap-and-power-policy-manual/"
+    existing = registered_citation_paths("us-wy-manuals.yaml")
+    session = requests.Session()
+    page = fetch(index, session=session)
+    families: dict[str, dict[str, int]] = {"manual_main_page_html_already_in_released_scope": {"found": 1, "taken": 0}}
+    subpages = {h for h, _ in links(page, index) if h.startswith(index) and h != index}
+    extended = {h for h, _ in links(page, index) if "/accordions/snap-and-power-policy-manual-" in h}
+    clarifier = {h for h, _ in links(page, index) if "purchasing-and-preparing-food-separately" in h and "/about/policy-manuals/" in h and "snap-power-policy-manual/" not in h}
+    families["extended_menu_accordion_html_already_in_released_scope"] = {
+        "found": len(extended) or sum(1 for c in existing if c.endswith("-extended-menu")), "taken": 0}
+    take = {
+        "glossary": ("manual_glossary_html", "manual_glossary"),
+        "policy-clarifications": ("policy_clarifications_html", "policy_clarifications"),
+        "table-i-snap-income-limits": ("table_i_snap_income_limits_html", "manual_table"),
+    }
+    skip = {
+        "case-file": "edi_case_file_guidance_html", "codes": "system_codes_html", "notices": "notice_catalogue_html",
+        "cm-updates": "cm_updates_change_log_html", "forms": "resources_and_forms_html", "tables": "tables_landing_html",
+        "medical-handbook": "medical_handbook_html", "table-ii-power-income-limits": "table_ii_already_in_released_scope_revised",
+    }
+    docs: list[dict[str, Any]] = []
+
+    def document_for(url: str, label: str, subtype: str, fam: str) -> None:
+        soup = BeautifulSoup(fetch(url, session=session), "html.parser")
+        h1 = soup.select_one("h1")
+        title = re.sub(r"\s+", " ", h1.get_text(" ", strip=True)) if h1 else label
+        path = f"us-wy/manual/dfs/snap-power-policy-manual/{label}"
+        f = families.setdefault(fam, {"found": 0, "taken": 0})
+        f["found"] += 1
+        if path in existing:
+            return
+        f["taken"] += 1
+        docs.append(
+            {
+                "source_id": f"wy-dfs-snap-power-{label}"[:80],
+                "jurisdiction": "us-wy",
+                "document_class": "manual",
+                "citation_path": path,
+                "title": f"Wyoming SNAP and POWER Policy Manual: {title}",
+                "source_url": url,
+                "source_format": "html",
+                "source_as_of": SOURCE_AS_OF,
+                "expression_date": EXPRESSION_DATE,
+                "extraction": {"html_content_selector": ".entry-content"},
+                "metadata": {
+                    "primary_source": True,
+                    "source_authority": "Wyoming Department of Family Services",
+                    "document_subtype": subtype,
+                    "program": "SNAP",
+                    "federal_program": "SNAP",
+                    "manual": "SNAP and POWER Policy Manual",
+                    "manual_landing_page": index,
+                    "source_discovery_group": "us-wy/manual/snap",
+                    "discovered_via": f"manual-review:snap-completion-agent-queue batch 2 ({ISSUE}); publisher index {index}",
+                },
+            }
+        )
+
+    for url in sorted(subpages):
+        label = url.rstrip("/").rsplit("/", 1)[-1]
+        if label in take:
+            fam, subtype = take[label]
+            document_for(url, label, subtype, fam)
+        elif label in skip:
+            families.setdefault(skip[label], {"found": 0, "taken": 0})["found"] += 1
+        else:
+            families.setdefault("other_subpage_html", {"found": 0, "taken": 0})["found"] += 1
+            print(f"us-wy: unclassified subpage {url}; inventoried, not taken", file=sys.stderr)
+    for url in sorted(clarifier):
+        document_for(url, url.rstrip("/").rsplit("/", 1)[-1], "policy_clarification", "policy_clarification_page_linked_from_manual_html")
+    return docs, {"index_url": index, "families": families, "existing_citation_paths_skipped": sorted(existing)}
+
+
+# --------------------------------------------------------------------------- North Dakota (batch 2)
+
+
+def build_nd() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """North Dakota HHS SNAP Policy Manual (MadCap Flare) at
+    https://www.nd.gov/dhs/policymanuals/SNAP/. The TOC (``Data/Tocs/Online_Chunk0.js``) lists
+    every topic; the Release Log lists every release-update PDF. The released scope
+    (Release 26.5) holds the landing page, the TOC, the 26.5 update PDF and 64 topics. Releases 26.6
+    (effective 2026-08-13) and 26.7 (effective 2026-10-01) landed since: two new topics and two
+    release PDFs are taken under the released conventions
+    ``us-nd/manual/hhs/snap/<slug of the Content path>`` and ``us-nd/manual/hhs/snap/updates/release-NN-N``.
+    Older release PDFs (25.2-26.4) predate the released baseline and are the change-history
+    family, not taken; topics already in the corpus keep their paths (their text was revised by
+    26.6/26.7, which a superseding scope must carry).
+    """
+    from urllib.parse import quote, unquote
+
+    root = "https://www.nd.gov/dhs/policymanuals/SNAP"
+    landing = root + "/Content/Home%202.htm"
+    existing = registered_citation_paths("us-nd-snap-manual.yaml")
+    session = requests.Session()
+    toc = fetch(root + "/Data/Tocs/Online_Chunk0.js", session=session)
+    entries = re.findall(r"'(/Content/[^']+)':\{i:\[(\d+)\],t:\['([^']*)'\]", toc)
+    families: dict[str, dict[str, int]] = {"toc_topic_html": {"found": len(entries), "taken": 0},
+                                           "toc_topic_already_in_released_scope": {"found": 0, "taken": 0}}
+    docs: list[dict[str, Any]] = []
+    authority = "North Dakota Health and Human Services"
+    families["landing_and_toc_already_in_released_scope"] = {"found": 0, "taken": 0}
+    for path, _order, title in sorted(entries, key=lambda e: int(e[1])):
+        if path == "/Content/Home 2.htm":  # released as us-nd/manual/hhs/snap/navigation/landing
+            families["landing_and_toc_already_in_released_scope"]["found"] += 1
+            families["toc_topic_html"]["found"] -= 1
+            continue
+        label = slug_full(unquote(f"/dhs/policymanuals/SNAP{path}"))
+        citation = f"us-nd/manual/hhs/snap/{label}"
+        if citation in existing:
+            families["toc_topic_already_in_released_scope"]["found"] += 1
+            continue
+        url = root + quote(path)
+        families["toc_topic_html"]["taken"] += 1
+        docs.append(
+            {
+                "source_id": f"nd-hhs-snap-{label}",
+                "jurisdiction": "us-nd",
+                "document_class": "manual",
+                "citation_path": citation,
+                "title": f"North Dakota SNAP Policy Manual: {title.strip()}",
+                "source_url": url,
+                "source_format": "html",
+                "source_as_of": SOURCE_AS_OF,
+                "expression_date": EXPRESSION_DATE,
+                "extraction": {"html_content_selector": "#mc-main-content"},
+                "metadata": {
+                    "primary_source": True, "source_authority": authority, "document_subtype": "policy_manual_section",
+                    "program": "SNAP", "federal_program": "SNAP", "manual_landing_page": landing,
+                    "manual_toc_url": root + "/Data/Tocs/Online_Chunk0.js",
+                    "source_discovery_group": "us-nd/manual/snap",
+                    "discovered_via": f"manual-review:snap-completion-agent-queue batch 2 ({ISSUE}); publisher TOC {root}/Data/Tocs/Online_Chunk0.js",
+                },
+            }
+        )
+    log = fetch(root + "/Content/Release%20Log.htm", session=session)
+    releases = [(urljoin(root + "/Content/", html.unescape(h)), t) for h, t in _LINK_RE.findall(log) if ".pdf" in h.lower()]
+    fam_rel = families.setdefault("release_update_pdf", {"found": len(releases), "taken": 0})
+    already = families.setdefault("release_update_pdf_already_in_released_scope", {"found": 0, "taken": 0})
+    older = families.setdefault("release_update_pdf_before_released_baseline", {"found": 0, "taken": 0})
+    baseline_versions = [tuple(int(x) for x in m.groups()) for m in re.finditer(r"updates/release-(\d+)-(\d+)$", "\n".join(existing), re.M)]
+    baseline_version = max(baseline_versions) if baseline_versions else (0, 0)
+    for url, text in releases:
+        m = re.search(r"(?:Release|Relase|ML \d+)\s*(\d+)\.(\d+)\s*Effective\s*([A-Za-z]+|\d{1,2})\.(\d{1,2})\.(\d{4})", unquote(url))
+        m2 = re.search(r"(\d+)\.(\d+)", text)
+        if not m2:
+            continue
+        version = (int(m2.group(1)), int(m2.group(2)))
+        citation = f"us-nd/manual/hhs/snap/updates/release-{version[0]}-{version[1]}"
+        if citation in existing:
+            already["found"] += 1
+            continue
+        if version < baseline_version:
+            older["found"] += 1
+            continue
+        effective = None
+        if m:
+            mon, day, year = m.group(3), int(m.group(4)), int(m.group(5))
+            month = int(mon) if mon.isdigit() else dt.datetime.strptime(mon[:3], "%b").month
+            effective = dt.date(year, month, day).isoformat()
+        fam_rel["taken"] += 1
+        docs.append(
+            {
+                "source_id": f"nd-hhs-snap-release-{version[0]}-{version[1]}",
+                "jurisdiction": "us-nd",
+                "document_class": "manual",
+                "citation_path": citation,
+                "title": f"North Dakota SNAP Policy Manual Release {version[0]}.{version[1]} update",
+                "source_url": unquote(url),
+                "source_format": "pdf",
+                "source_as_of": SOURCE_AS_OF,
+                "expression_date": effective or EXPRESSION_DATE,
+                "metadata": {
+                    "primary_source": True, "source_authority": authority, "document_subtype": "policy_manual_release",
+                    "program": "SNAP", "federal_program": "SNAP", "manual_landing_page": landing,
+                    "release_effective_date": effective,
+                    "source_discovery_group": "us-nd/manual/snap",
+                    "discovered_via": f"manual-review:snap-completion-agent-queue batch 2 ({ISSUE}); publisher Release Log {root}/Content/Release%20Log.htm",
+                },
+            }
+        )
+    families["landing_and_toc_already_in_released_scope"]["found"] += 1  # Data/Tocs/Online_Chunk0.js, released as navigation/toc
+    return docs, {"index_url": landing, "families": families, "existing_citation_paths_skipped": sorted(existing)}
+
+
 # --------------------------------------------------------------------------- queue rows
 
-BUILDERS = {"us-tx": build_tx, "us-nh": build_nh}
+BUILDERS = {"us-tx": build_tx, "us-nh": build_nh, "us-ky": build_ky, "us-wy": build_wy, "us-nd": build_nd}
+BATCH = {"us-tx": 1, "us-nh": 1, "us-ky": 2, "us-wy": 2, "us-nd": 2}
 NAMES = {
     "us-fl": "Florida", "us-al": "Alabama", "us-md": "Maryland", "us-ma": "Massachusetts", "us-tx": "Texas",
     "us-ca": "California", "us-ny": "New York", "us-nh": "New Hampshire", "us-ky": "Kentucky", "us-me": "Maine",
+    "us-ne": "Nebraska", "us-wy": "Wyoming", "us-az": "Arizona", "us-ar": "Arkansas", "us-ia": "Iowa", "us-hi": "Hawaii",
+    "us-nm": "New Mexico", "us-vt": "Vermont", "us-nv": "Nevada", "us-nd": "North Dakota", "us-id": "Idaho",
 }
-SOURCE_KIND = {"us-tx": "official_html_handbook_sections", "us-nh": "official_html_webhelp_manual_topics"}
+SOURCE_KIND = {
+    "us-tx": "official_html_handbook_sections", "us-nh": "official_html_webhelp_manual_topics",
+    "us-ky": "official_pdf_manual_volume", "us-wy": "official_html_manual_subpages", "us-nd": "official_html_manual_topics_and_release_pdfs",
+}
 BATCH_NOTE = (
     "Batch 1 (2026-09-10, axiom-corpus#680): ingestion-gap states FL, AL, MD, MA diagnosed against the released "
     "scopes, then discovery-gap states TX, CA, NY, NH, KY, ME checked on the publisher's own index. Generator: "
     "scripts/build_snap_state_manual_completion_manifests.py."
+)
+BATCH2_NOTE = (
+    "Batch 2 (2026-09-10, axiom-corpus#680, US network): KY and NY retried (KY answers, NY still bot-challenged); "
+    "discovery-gap states NE, WY, AZ, AR, IA, HI, NM, VT, NV, ND attempted in the issue's order, ID taken as the "
+    "replacement for AZ (blocked on the first probe). Every publisher index was fetched live; revised editions of "
+    "documents already in a released scope are recorded, not re-taken (their citation paths exist). Generator: "
+    "scripts/build_snap_state_manual_completion_manifests.py --only us-ky --only us-wy --only us-nd."
 )
 
 STATIC_ROWS: dict[str, dict[str, Any]] = {
@@ -508,6 +847,239 @@ STATIC_ROWS: dict[str, dict[str, Any]] = {
 }
 
 
+# Batch-2 static rows. KY moved to a live builder (build_ky); the batch-1 NY row is superseded by the retry below.
+STATIC_ROWS_BATCH2: dict[str, dict[str, Any]] = {
+    "us-ny": {
+        "queue_status": "blocked_primary_source",
+        "source_kind": "official_pdf_manuals",
+        "primary_source_url": "https://otda.ny.gov/programs/snap/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-ny", "document_class": "manual", "version": "2026-07-17-ny-snap-manuals"},
+        "index_url": "https://otda.ny.gov/programs/snap/",
+        "index_document_count": None, "taken_count": 0,
+        "index_families": {},
+        "notes": (
+            "Blocked 2026-09-10 (batch 1, first network): otda.ny.gov reset the plain Axiom request (curl 56) and answered curl-cffi "
+            "chrome120 impersonation with a 5,609-byte F5/TSPD JavaScript bot-challenge page. Retried 2026-09-10 (batch 2, US network, "
+            "20 s timeouts, one plain request and one browser-impersonation request): the plain request is closed without a response "
+            "(requests ConnectionError: RemoteDisconnected('Remote end closed connection without response') after 0.7 s); "
+            "curl-cffi chrome120 gets HTTP 200 carrying a 7,562-byte TSPD bot-challenge page instead of the SNAP program page. No "
+            "index inventory is possible; no workaround attempted. The released scopes already hold the 576-page SNAP Source Book, "
+            "the 16-part Employment Policy Manual (340 provisions) and 18 NYCRR Parts 385 and 387 (1,678 provisions); #680's 18 "
+            "'captured' is a document count. OTDA policy directives (ADM/INF/GIS) remain a separate family to inventory when the host answers."
+        ),
+    },
+    "us-az": {
+        "queue_status": "blocked_primary_source",
+        "source_kind": "official_html_manual",
+        "primary_source_url": "https://dbmefaapolicy.azdes.gov/FAA5.html",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-az", "document_class": "manual", "version": "2025-10-30-az-des-faa5-manual-r2026-07-15-self-contained"},
+        "index_url": "https://dbmefaapolicy.azdes.gov/FAA5.html",
+        "index_document_count": None, "taken_count": 0,
+        "index_families": {},
+        "notes": (
+            "Blocked 2026-09-10 (batch 2, first probe): the DES FAA policy manual host dbmefaapolicy.azdes.gov answers HTTP 403 with a "
+            "5,675-byte page to the plain Axiom request and HTTP 403 with a 5,995-byte F5/TSPD JavaScript bot-challenge page to curl-cffi "
+            "chrome120 browser impersonation (20 s timeouts). No workaround attempted; the released scope's archived-snapshot captures "
+            "(web.archive.org download_url) are not an option for new documents under this run's rules. The released scopes hold 80 FAA5 "
+            "manual pages (2025-10-30, 7 provisions) and the FAA5 recovery scope (143 provisions); #680's 7 'captured' reflects that thin "
+            "release. ID was taken as the replacement state."
+        ),
+    },
+    "us-ne": {
+        "queue_status": "done",
+        "source_kind": "official_administrative_rules",
+        "primary_source_url": "https://rules.nebraska.gov/rules?agencyId=37&titleId=230",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-ne", "document_class": "regulation", "version": "2026-07-17-ne-snap-rules"},
+        "index_url": "https://rules.nebraska.gov/rules?agencyId=37&titleId=230",
+        "index_document_count": 5, "taken_count": 0,
+        "index_families": {"title_475_nac_chapter_pdf": {"found": 5, "taken": 0, "already_in_corpus": 5, "revised_edition_since_release": 2}},
+        "notes": (
+            "Index confirmed 2026-09-10: the Nebraska Rules site (a React app whose data is the same-origin API "
+            "/api/title/GetByAgencyId/37 and /api/chapter/GetByTitleId/230) lists Title 475 NAC 'Supplemental Nutrition Assistance "
+            "Program' with five chapters (1 General Provisions, 2 Household Processing, 3 Eligibility, 4 Benefits, 5 EBT Card Issuance "
+            "and Accountability); all five are in manifests/us-ne-snap-rules.yaml and the released scope us-ne/regulation/2026-07-17-ne-snap-rules "
+            "(742 provisions, coverage complete). Nothing new to take. Reviewer: chapters 2 and 3 now carry an effective date of "
+            "2026-07-28 (new editions; the released files are the 09-17-2024 editions), chapters 1, 4 and 5 are unchanged; the two "
+            "revised chapters' citation paths exist, so a superseding NE rules scope is needed, not a completion scope. TLS: "
+            "rules.nebraska.gov serves *.nebraska.gov without its DigiCert Global G2 TLS RSA SHA256 2020 CA1 intermediate (openssl "
+            "verify code 21); the released manifest worked around this with request.verify_tls: false. This run fetched with "
+            "verification on by adding the publisher's public intermediate as data/certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem "
+            "(from cacerts.digicert.com) and REQUESTS_CA_BUNDLE = certifi + that file; the superseding scope should use the same bundle "
+            "instead of verify_tls: false. #680's 5 'captured' is the document count."
+        ),
+    },
+    "us-ar": {
+        "queue_status": "done",
+        "source_kind": "official_pdf_and_html_policy_set",
+        "primary_source_url": "https://humanservices.arkansas.gov/divisions-shared-services/county-operations/supplemental-nutrition-assistance-snap/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-ar", "document_class": "manual", "version": "2026-07-16-ar-snap-manual"},
+        "index_url": "https://humanservices.arkansas.gov/divisions-shared-services/county-operations/supplemental-nutrition-assistance-snap/",
+        "index_document_count": 13, "taken_count": 0,
+        "index_families": {
+            "snap_program_page_policy_html": {"found": 3, "taken": 0, "already_in_corpus": 3},
+            "snap_quick_reference_chart_pdf": {"found": 1, "taken": 0, "already_in_corpus": 1},
+            "snap_policy_manual_pdf_media_library": {"found": 4, "taken": 0, "already_in_corpus": 1, "revised_edition_since_release": 1},
+            "snap_appendices_pdf_media_library": {"found": 2, "taken": 0, "already_in_corpus": 0, "revised_edition_since_release": 1},
+            "snap_et_provider_contact_list_pdf": {"found": 1, "taken": 0},
+            "snap_et_state_plan_pdf": {"found": 2, "taken": 0},
+        },
+        "notes": (
+            "Index confirmed 2026-09-10: the DHS DCO SNAP page and its sub-pages (nutrition waiver, waiver FAQ, work requirement and "
+            "time-limit rules, SNAP Overview and How to Apply, SNAP E&T) link the three policy HTML pages and the FY2026 Quick Reference "
+            "chart that are already in manifests/us-ar-snap-manual.yaml (us-ar/manual/2026-07-16-ar-snap-manual, 810 provisions). No DHS "
+            "web page links the SNAP Certification Manual PDF itself; the publisher's own media library (humanservices.arkansas.gov "
+            "/wp-json/wp/v2/media, search 'SNAP') lists SNAP-Policy-Manual-11.21.2025, -03.01.2026, -04.02.2026 (the released edition) "
+            "and -07.01.2026 (uploaded 2026-07-22), and SNAP-Appendices-04.02.2026 and -07.30.2026; the released appendices URL "
+            "SNAP-Appendices-05.15.2026.pdf now answers HTTP 404. Reviewer: the July 2026 manual and appendices are new editions of "
+            "documents whose citation paths (us-ar/manual/dhs/snap-policy-manual, snap-manual-appendices) exist, so a superseding AR "
+            "scope is needed, not a completion scope; nothing new to take here. SNAP-Employment-and-Training-7.24.26.pdf is the E&T "
+            "provider contact list (a directory, not policy) and the two state-plan PDFs are the FFY25/FY26 SNAP E&T State Plans "
+            "(state-plan family, not the manual). #680's 8 'captured' is the document count."
+        ),
+    },
+    "us-ia": {
+        "queue_status": "done",
+        "source_kind": "official_manual_index_pdf",
+        "primary_source_url": "https://hhs.iowa.gov/media/4035/download?inline",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-ia", "document_class": "manual", "version": "2026-07-17-ia-snap-manual"},
+        "index_url": "https://hhs.iowa.gov/media/4035/download?inline",
+        "index_document_count": 13, "taken_count": 0,
+        "index_families": {"employees_manual_title_7_chapter_pdf": {"found": 11, "taken": 0, "already_in_corpus": 11},
+                           "employees_manual_toc_pdf": {"found": 1, "taken": 0, "already_in_corpus": 1},
+                           "title_7_omnibus_duplicate_pdf": {"found": 1, "taken": 0}},
+        "notes": (
+            "Index confirmed 2026-09-10: the HHS Employees' Manual table of contents (revised March 3, 2023) lists Title 7 SNAP as "
+            "chapters A-J and M plus an 'All SNAP Chapters' omnibus; all eleven chapters and the TOC are in manifests/us-ia-snap-manual.yaml "
+            "and the released scope us-ia/manual/2026-07-17-ia-snap-manual (443 provisions, coverage complete); the omnibus is the same "
+            "text in one file (excluded by the released row). All 12 released files are byte-identical to the publisher's files today "
+            "(SHA-256 match against the released inventory), so nothing is revised and nothing is new. #680's 12 'captured' is the document count."
+        ),
+    },
+    "us-hi": {
+        "queue_status": "done",
+        "source_kind": "official_administrative_rules",
+        "primary_source_url": "https://humanservices.hawaii.gov/admin-rules-2/admin-rules-for-programs/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-hi", "document_class": "regulation", "version": "2026-05-27-hi-snap-rules-r2026-07-15-self-contained"},
+        "index_url": "https://humanservices.hawaii.gov/admin-rules-2/admin-rules-for-programs/",
+        "index_document_count": 140, "taken_count": 0,
+        "index_families": {
+            "har_title_17_subtitle_6_snap_chapter_pdf": {"found": 20, "taken": 0, "already_in_corpus": 20},
+            "har_title_17_subtitle_6_other_program_chapter_pdf": {"found": 11, "taken": 0},
+            "har_title_17_other_subtitle_chapter_pdf": {"found": 108, "taken": 0},
+            "har_dead_link_files_hawaii_gov": {"found": 1, "taken": 0},
+        },
+        "notes": (
+            "Index confirmed 2026-09-10: the DHS 'Administrative Rules for Programs' page lists 140 HAR Title 17 chapter PDFs. The 20 "
+            "Subtitle 6 (Benefit, Employment and Support Services Division) chapters that govern SNAP (600-606 general, 610 Food Stamp "
+            "Program Administration, 647-650, 655, 663, 675, 676, 680, 681, 683, 684.1) are all in manifests/us-hi-snap-rules.yaml and the "
+            "released scope (594 provisions, coverage complete), and every one of the 20 files carries a Last-Modified of 2018-2022, so none "
+            "is revised. The other Subtitle 6 chapters are not SNAP: 653 child support/third-party liability, 654 no-fault insurance, 656.1 "
+            "TANF, 658 AABD financial assistance, 659 General Assistance, 661 refugee/repatriate/SLIAG, 678 financial assistance standards, "
+            "685.4 replacement of stolen financial-assistance/child-care benefits, 686.1 Summer EBT (outside SNAP, as ME SUN Bucks), 687 "
+            "Hawaii Emergency Food Assistance Program (HEFAP), and 17-602.1 at files.hawaii.gov is a dead link (404). Nothing new to take. "
+            "#680's 20 'captured' is the document count."
+        ),
+    },
+    "us-nm": {
+        "queue_status": "done",
+        "source_kind": "official_administrative_code",
+        "primary_source_url": "https://www.hca.nm.gov/lookingforinformation/income-support-division-1/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-nm", "document_class": "regulation", "version": "2026-07-17-nm-snap-regulations"},
+        "index_url": "https://www.hca.nm.gov/lookingforinformation/income-support-division-1/",
+        "index_document_count": 102, "taken_count": 0,
+        "index_families": {
+            "nmac_8_139_food_stamp_program_part_html": {"found": 18, "taken": 0, "already_in_corpus": 18},
+            "nmac_8_100_general_provisions_part_html": {"found": 10, "taken": 0, "already_in_corpus": 10},
+            "nmac_other_isd_program_part_html": {"found": 73, "taken": 0},
+            "isd_state_verification_plan_pdf": {"found": 1, "taken": 0},
+        },
+        "notes": (
+            "Index confirmed 2026-09-10: the HCA Income Support Division page links the NMAC parts on the State Records Center (srca.nm.gov) "
+            "for 8.100 (10 parts), 8.102 TANF/NMW (17), 8.106 GA (18), 8.119 refugee (7), 8.139 Food Stamp Program (17) and 8.150 LIHEAP (17); "
+            "the SRCA Title 8 chapter page marks every other 8.139 part number RESERVED, which leaves 18 active 8.139 parts (the 17 on the HCA "
+            "page plus 8.139.640). All 18 8.139 parts and all 10 8.100 parts are in manifests/us-nm-snap-regulations.yaml and the released "
+            "scope us-nm/regulation/2026-07-17-nm-snap-regulations (388 provisions, coverage complete), and all 28 SRCA part files are "
+            "byte-identical to the released inventory (SHA-256). Nothing new to take; nothing revised. #680's 28 'captured' is the document count."
+        ),
+    },
+    "us-vt": {
+        "queue_status": "done",
+        "source_kind": "official_html_manual",
+        "primary_source_url": "https://www.ahsnet.ahs.state.vt.us/Public/3sVT/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-vt", "document_class": "manual", "version": "2026-07-21-vt-3squaresvt-manual"},
+        "index_url": "https://www.ahsnet.ahs.state.vt.us/Public/3sVT/whxdata/toc.new.js",
+        "index_document_count": 32, "taken_count": 0,
+        "index_families": {"robohelp_toc_books": {"found": 32, "taken": 0}, "robohelp_toc_entries": {"found": 252, "taken": 0},
+                           "brm_chapter_topic_html": {"found": 32, "taken": 0, "already_in_corpus": 32}},
+        "notes": (
+            "Index confirmed 2026-09-10: the 3SquaresVT manual (RoboHelp) TOC (whxdata/toc.new.js plus one toc<N>.new.js per book) has 32 "
+            "books and 252 entries that resolve to 32 distinct topic files (the entries are in-page anchors); all 32 are in "
+            "manifests/us-vt-3squaresvt-manual.yaml and the released scope us-vt/manual/2026-07-21-vt-3squaresvt-manual (911 provisions, "
+            "coverage complete), and all 32 files are byte-identical to the released inventory (SHA-256). Nothing new to take; nothing "
+            "revised. #680's 32 'captured' is the document count."
+        ),
+    },
+    "us-id": {
+        "queue_status": "done",
+        "source_kind": "official_administrative_rules_pdf",
+        "primary_source_url": "https://adminrules.idaho.gov/current-rules/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-id", "document_class": "regulation", "version": "2026-05-27-id-food-stamp-rules-r2026-07-15-self-contained"},
+        "index_url": "https://adminrules.idaho.gov/current-rules/",
+        "index_document_count": 369, "taken_count": 0,
+        "index_families": {
+            "idapa_16_03_04_food_stamp_program_pdf": {"found": 1, "taken": 0, "already_in_corpus": 1},
+            "idapa_title_16_other_chapter_pdf": {"found": 20, "taken": 0},
+            "idapa_other_agency_rule_chapter_pdf": {"found": 348, "taken": 0},
+        },
+        "notes": (
+            "Replacement for AZ (blocked on its first probe). Index confirmed 2026-09-10: the Office of the Administrative Rules "
+            "Coordinator's Current Rules page renders its list from the site's own REST endpoint "
+            "(/wp-json/dfm-document-display/fetch-documents, documentType currentRules, called with the page's nonce exactly as the "
+            "page does; the legacy directory URL /rules/current/16/ answers HTTP 404). It lists 369 current rule chapters, 21 of them "
+            "IDAPA Title 16 (Department of Health and Welfare); 16.03.04 'Idaho Food Stamp Program' is the only SNAP chapter and is in "
+            "manifests/us-id-snap-rules.yaml and the released scope us-id/regulation/2026-05-27-id-food-stamp-rules-r2026-07-15-self-contained; "
+            "the live /rules/current/16/160304.pdf (70 pages, Last-Modified 2026-07-01) is byte-identical to the released inventory (SHA-256 "
+            "1d542968...), so nothing is revised. The other Title 16 chapters (16.03.01 health-care eligibility, 16.03.05 AABD, 16.03.08 "
+            "Federal Welfare Programs (cash assistance), 16.03.19-26 provider and Medicaid rules, 16.02, 16.04-16.06) are not SNAP. DHW "
+            "publishes no separate public SNAP manual. Nothing new to take. #680's 70 'captured' is a section count of the one chapter."
+        ),
+    },
+    "us-nv": {
+        "queue_status": "done",
+        "source_kind": "official_manual_page",
+        "primary_source_url": "https://dwss.nv.gov/Home/Features/eligibility/eligibility-n-payment-info-manual/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-nv", "document_class": "manual", "version": "2026-05-27-nv-eligibility-payments-manual-r2026-07-15-self-contained"},
+        "index_url": "https://dwss.nv.gov/Home/Features/eligibility/eligibility-n-payment-info-manual/",
+        "index_document_count": 139, "taken_count": 0,
+        "index_families": {
+            "ep_manual_chapter_and_reference_pdf": {"found": 51, "taken": 0, "already_in_corpus": 45, "revised_edition_since_release": 6},
+            "ep_manual_transmittal_letter_pdf": {"found": 86, "taken": 0},
+            "state_web_standards_pdf_offsite": {"found": 2, "taken": 0},
+        },
+        "notes": (
+            "Index confirmed 2026-09-10: the DWSS Eligibility & Payments Manual page lists 51 chapter and reference PDFs (sections A-D, F, R, "
+            "TOC, glossary, index) and 86 manual transmittal letters (2010-July 2026). All 51 chapter citation paths are in "
+            "manifests/us-nv-eligibility-payments-manual.yaml and the released scope (821 provisions, coverage complete). Reviewer: six "
+            "chapters are now served as new files (A-100 Application Processing, A-200 Verification and Documentation, A-700 Income, "
+            "A-1800 Case Disposition, B-400 Special Households, B-900 Program Violations/Sanctions; the released URLs for them are no longer "
+            "on the index), i.e. editions revised by the April-July 2026 transmittals; their citation paths exist, so a superseding NV scope "
+            "is needed, not a completion scope. The transmittal letters are the change-summary family (as FL Summary of Changes and NH Service "
+            "Releases), not taken. Nothing new to take. #680's 51 'captured' is the document count."
+        ),
+    },
+}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--only", action="append", default=[], metavar="JURISDICTION",
@@ -545,6 +1117,7 @@ def main() -> int:
     }
     rows = {s["jurisdiction"]: s for s in queue.get("states", [])}
     summary: dict[str, Any] = {}
+    built: set[str] = set()
     for jur, build in BUILDERS.items():
         if args.only and jur not in args.only:
             continue
@@ -577,20 +1150,24 @@ def main() -> int:
             "target_scope": {"jurisdiction": jur, "document_class": docs[0]["document_class"], "version": VERSION},
             "index_url": info["index_url"], "index_document_count": found, "taken_count": taken,
             "index_families": info["families"],
-            "notes": (f"Batch 1 (2026-09-10, #680): {len(docs)} documents taken from the publisher's own index ({found} documents "
+            "notes": (f"Batch {BATCH[jur]} (2026-09-10, #680): {len(docs)} documents taken from the publisher's own index ({found} documents "
                       f"inventoried across {len(info['families'])} families; {taken} taken; citation paths checked against every "
                       f"{jur} provisions file{' in ' + str(corpus_base) if corpus_base else ''}). Extraction proven with the "
-                      f"official-documents extractor; see {RUN_NOTE}."),
+                      f"official-documents extractor; see {RUN_NOTE if BATCH[jur] == 1 else RUN_NOTE_BATCH2}."),
         })
         rows[jur] = row
+        built.add(jur)
         print(f"{jur}: {len(docs)} documents; index families {info['families']}")
-    for jur, static in STATIC_ROWS.items():
+    for jur, static in {**STATIC_ROWS, **STATIC_ROWS_BATCH2}.items():
+        if jur in BUILDERS:
+            continue  # a live-built state (KY in batch 2) keeps its generated row; the batch-1 KY/NY static rows are superseded
         row = rows.get(jur) or {"jurisdiction": jur, "name": NAMES[jur]}
         row.update({"name": NAMES[jur], **static})
         rows[jur] = row
     notes = queue.setdefault("policy", {}).setdefault("notes", [])
-    if BATCH_NOTE not in notes:
-        notes.append(BATCH_NOTE)
+    for note in (BATCH_NOTE, BATCH2_NOTE):
+        if note not in notes:
+            notes.append(note)
     queue["states"] = [rows[j] for j in sorted(rows)]
     queue["status_counts"] = {}
     for s in queue["states"]:

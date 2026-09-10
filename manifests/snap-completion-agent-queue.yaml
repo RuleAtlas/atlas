@@ -26,6 +26,11 @@ policy:
     provisions JSONL of its jurisdiction before it is taken.'
   - 'Batch 1 (2026-09-10, axiom-corpus#680): ingestion-gap states FL, AL, MD, MA diagnosed against the released scopes, then
     discovery-gap states TX, CA, NY, NH, KY, ME checked on the publisher''s own index. Generator: scripts/build_snap_state_manual_completion_manifests.py.'
+  - 'Batch 2 (2026-09-10, axiom-corpus#680, US network): KY and NY retried (KY answers, NY still bot-challenged); discovery-gap
+    states NE, WY, AZ, AR, IA, HI, NM, VT, NV, ND attempted in the issue''s order, ID taken as the replacement for AZ (blocked
+    on the first probe). Every publisher index was fetched live; revised editions of documents already in a released scope
+    are recorded, not re-taken (their citation paths exist). Generator: scripts/build_snap_state_manual_completion_manifests.py
+    --only us-ky --only us-wy --only us-nd.'
 states:
 - jurisdiction: us-al
   name: Alabama
@@ -53,6 +58,75 @@ states:
     ingested but in no queue (dashboard stalled_registered 20 after de-duplication against artifacts). Publisher index re-check
     blocked today: apps.dhr.alabama.gov TCP connect timeout (curl 28 after 30 s plain request; curl-cffi chrome120 the same
     after 20 s); the 17-chapter inventory stands from the queue row of 2026-05-27. No completion scope needed.'
+- jurisdiction: us-ar
+  name: Arkansas
+  queue_status: done
+  source_kind: official_pdf_and_html_policy_set
+  primary_source_url: https://humanservices.arkansas.gov/divisions-shared-services/county-operations/supplemental-nutrition-assistance-snap/
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-ar
+    document_class: manual
+    version: 2026-07-16-ar-snap-manual
+  index_url: https://humanservices.arkansas.gov/divisions-shared-services/county-operations/supplemental-nutrition-assistance-snap/
+  index_document_count: 13
+  taken_count: 0
+  index_families:
+    snap_program_page_policy_html:
+      found: 3
+      taken: 0
+      already_in_corpus: 3
+    snap_quick_reference_chart_pdf:
+      found: 1
+      taken: 0
+      already_in_corpus: 1
+    snap_policy_manual_pdf_media_library:
+      found: 4
+      taken: 0
+      already_in_corpus: 1
+      revised_edition_since_release: 1
+    snap_appendices_pdf_media_library:
+      found: 2
+      taken: 0
+      already_in_corpus: 0
+      revised_edition_since_release: 1
+    snap_et_provider_contact_list_pdf:
+      found: 1
+      taken: 0
+    snap_et_state_plan_pdf:
+      found: 2
+      taken: 0
+  notes: 'Index confirmed 2026-09-10: the DHS DCO SNAP page and its sub-pages (nutrition waiver, waiver FAQ, work requirement
+    and time-limit rules, SNAP Overview and How to Apply, SNAP E&T) link the three policy HTML pages and the FY2026 Quick
+    Reference chart that are already in manifests/us-ar-snap-manual.yaml (us-ar/manual/2026-07-16-ar-snap-manual, 810 provisions).
+    No DHS web page links the SNAP Certification Manual PDF itself; the publisher''s own media library (humanservices.arkansas.gov
+    /wp-json/wp/v2/media, search ''SNAP'') lists SNAP-Policy-Manual-11.21.2025, -03.01.2026, -04.02.2026 (the released edition)
+    and -07.01.2026 (uploaded 2026-07-22), and SNAP-Appendices-04.02.2026 and -07.30.2026; the released appendices URL SNAP-Appendices-05.15.2026.pdf
+    now answers HTTP 404. Reviewer: the July 2026 manual and appendices are new editions of documents whose citation paths
+    (us-ar/manual/dhs/snap-policy-manual, snap-manual-appendices) exist, so a superseding AR scope is needed, not a completion
+    scope; nothing new to take here. SNAP-Employment-and-Training-7.24.26.pdf is the E&T provider contact list (a directory,
+    not policy) and the two state-plan PDFs are the FFY25/FY26 SNAP E&T State Plans (state-plan family, not the manual). #680''s
+    8 ''captured'' is the document count.'
+- jurisdiction: us-az
+  name: Arizona
+  queue_status: blocked_primary_source
+  source_kind: official_html_manual
+  primary_source_url: https://dbmefaapolicy.azdes.gov/FAA5.html
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-az
+    document_class: manual
+    version: 2025-10-30-az-des-faa5-manual-r2026-07-15-self-contained
+  index_url: https://dbmefaapolicy.azdes.gov/FAA5.html
+  index_document_count: null
+  taken_count: 0
+  index_families: {}
+  notes: 'Blocked 2026-09-10 (batch 2, first probe): the DES FAA policy manual host dbmefaapolicy.azdes.gov answers HTTP 403
+    with a 5,675-byte page to the plain Axiom request and HTTP 403 with a 5,995-byte F5/TSPD JavaScript bot-challenge page
+    to curl-cffi chrome120 browser impersonation (20 s timeouts). No workaround attempted; the released scope''s archived-snapshot
+    captures (web.archive.org download_url) are not an option for new documents under this run''s rules. The released scopes
+    hold 80 FAA5 manual pages (2025-10-30, 7 provisions) and the FAA5 recovery scope (143 provisions); #680''s 7 ''captured''
+    reflects that thin release. ID was taken as the replacement state.'
 - jurisdiction: us-ca
   name: California
   queue_status: done
@@ -109,25 +183,139 @@ states:
     48 manual sections plus 28 quarterly Summary of Changes PDFs (separate change-summary family, not taken). No completion
     scope needed. Reviewer: the Cornell LII regulation manifest is a non-primary republication under this queue''s forbidden-sources
     policy; replacing it with the official flrules.org FAC 65A-1 text is a separate work order.'
+- jurisdiction: us-hi
+  name: Hawaii
+  queue_status: done
+  source_kind: official_administrative_rules
+  primary_source_url: https://humanservices.hawaii.gov/admin-rules-2/admin-rules-for-programs/
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-hi
+    document_class: regulation
+    version: 2026-05-27-hi-snap-rules-r2026-07-15-self-contained
+  index_url: https://humanservices.hawaii.gov/admin-rules-2/admin-rules-for-programs/
+  index_document_count: 140
+  taken_count: 0
+  index_families:
+    har_title_17_subtitle_6_snap_chapter_pdf:
+      found: 20
+      taken: 0
+      already_in_corpus: 20
+    har_title_17_subtitle_6_other_program_chapter_pdf:
+      found: 11
+      taken: 0
+    har_title_17_other_subtitle_chapter_pdf:
+      found: 108
+      taken: 0
+    har_dead_link_files_hawaii_gov:
+      found: 1
+      taken: 0
+  notes: 'Index confirmed 2026-09-10: the DHS ''Administrative Rules for Programs'' page lists 140 HAR Title 17 chapter PDFs.
+    The 20 Subtitle 6 (Benefit, Employment and Support Services Division) chapters that govern SNAP (600-606 general, 610
+    Food Stamp Program Administration, 647-650, 655, 663, 675, 676, 680, 681, 683, 684.1) are all in manifests/us-hi-snap-rules.yaml
+    and the released scope (594 provisions, coverage complete), and every one of the 20 files carries a Last-Modified of 2018-2022,
+    so none is revised. The other Subtitle 6 chapters are not SNAP: 653 child support/third-party liability, 654 no-fault
+    insurance, 656.1 TANF, 658 AABD financial assistance, 659 General Assistance, 661 refugee/repatriate/SLIAG, 678 financial
+    assistance standards, 685.4 replacement of stolen financial-assistance/child-care benefits, 686.1 Summer EBT (outside
+    SNAP, as ME SUN Bucks), 687 Hawaii Emergency Food Assistance Program (HEFAP), and 17-602.1 at files.hawaii.gov is a dead
+    link (404). Nothing new to take. #680''s 20 ''captured'' is the document count.'
+- jurisdiction: us-ia
+  name: Iowa
+  queue_status: done
+  source_kind: official_manual_index_pdf
+  primary_source_url: https://hhs.iowa.gov/media/4035/download?inline
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-ia
+    document_class: manual
+    version: 2026-07-17-ia-snap-manual
+  index_url: https://hhs.iowa.gov/media/4035/download?inline
+  index_document_count: 13
+  taken_count: 0
+  index_families:
+    employees_manual_title_7_chapter_pdf:
+      found: 11
+      taken: 0
+      already_in_corpus: 11
+    employees_manual_toc_pdf:
+      found: 1
+      taken: 0
+      already_in_corpus: 1
+    title_7_omnibus_duplicate_pdf:
+      found: 1
+      taken: 0
+  notes: 'Index confirmed 2026-09-10: the HHS Employees'' Manual table of contents (revised March 3, 2023) lists Title 7 SNAP
+    as chapters A-J and M plus an ''All SNAP Chapters'' omnibus; all eleven chapters and the TOC are in manifests/us-ia-snap-manual.yaml
+    and the released scope us-ia/manual/2026-07-17-ia-snap-manual (443 provisions, coverage complete); the omnibus is the
+    same text in one file (excluded by the released row). All 12 released files are byte-identical to the publisher''s files
+    today (SHA-256 match against the released inventory), so nothing is revised and nothing is new. #680''s 12 ''captured''
+    is the document count.'
+- jurisdiction: us-id
+  name: Idaho
+  queue_status: done
+  source_kind: official_administrative_rules_pdf
+  primary_source_url: https://adminrules.idaho.gov/current-rules/
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-id
+    document_class: regulation
+    version: 2026-05-27-id-food-stamp-rules-r2026-07-15-self-contained
+  index_url: https://adminrules.idaho.gov/current-rules/
+  index_document_count: 369
+  taken_count: 0
+  index_families:
+    idapa_16_03_04_food_stamp_program_pdf:
+      found: 1
+      taken: 0
+      already_in_corpus: 1
+    idapa_title_16_other_chapter_pdf:
+      found: 20
+      taken: 0
+    idapa_other_agency_rule_chapter_pdf:
+      found: 348
+      taken: 0
+  notes: 'Replacement for AZ (blocked on its first probe). Index confirmed 2026-09-10: the Office of the Administrative Rules
+    Coordinator''s Current Rules page renders its list from the site''s own REST endpoint (/wp-json/dfm-document-display/fetch-documents,
+    documentType currentRules, called with the page''s nonce exactly as the page does; the legacy directory URL /rules/current/16/
+    answers HTTP 404). It lists 369 current rule chapters, 21 of them IDAPA Title 16 (Department of Health and Welfare); 16.03.04
+    ''Idaho Food Stamp Program'' is the only SNAP chapter and is in manifests/us-id-snap-rules.yaml and the released scope
+    us-id/regulation/2026-05-27-id-food-stamp-rules-r2026-07-15-self-contained; the live /rules/current/16/160304.pdf (70
+    pages, Last-Modified 2026-07-01) is byte-identical to the released inventory (SHA-256 1d542968...), so nothing is revised.
+    The other Title 16 chapters (16.03.01 health-care eligibility, 16.03.05 AABD, 16.03.08 Federal Welfare Programs (cash
+    assistance), 16.03.19-26 provider and Medicaid rules, 16.02, 16.04-16.06) are not SNAP. DHW publishes no separate public
+    SNAP manual. Nothing new to take. #680''s 70 ''captured'' is a section count of the one chapter.'
 - jurisdiction: us-ky
   name: Kentucky
-  queue_status: blocked_primary_source
-  source_kind: official_agency_page
+  queue_status: agent_ready
+  source_kind: official_pdf_manual_volume
   primary_source_url: https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/default.aspx
-  target_manifest: null
+  target_manifest: manifests/us-ky-snap-manual-completion.yaml
   target_scope:
     jurisdiction: us-ky
     document_class: manual
-    version: 2026-07-17-ky-snap-manual
+    version: 2026-09-10-snap-state-manual-completion
   index_url: https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/default.aspx
-  index_document_count: null
-  taken_count: 0
-  index_families: {}
-  notes: 'Blocked 2026-09-10: the DCBS Division of Family Support page (the publisher index that lists the Operation Manual
-    volumes) returns HTTP 403 (1,484-byte error page) to the plain Axiom request and the same HTTP 403 to curl-cffi chrome120
-    browser impersonation (20 s timeout). No workaround attempted. The released scope us-ky/manual/2026-07-17-ky-snap-manual
-    already holds Volume II (SNAP) and Volume IIA (SNAP work requirements) in full (400 page provisions), so #680''s 2 ''captured''
-    is a document count; the index re-check for newer OMTL editions or further SNAP volumes is what is blocked.'
+  index_document_count: 23
+  taken_count: 1
+  index_families:
+    snap_volume_already_in_released_scope_revised_edition:
+      found: 2
+      taken: 0
+    general_administration_volume_pdf:
+      found: 1
+      taken: 1
+    other_program_volume_pdf:
+      found: 7
+      taken: 0
+    omtl_cover_letter_and_policy_update_volume_pdf:
+      found: 2
+      taken: 0
+    snap_application_form_pdf:
+      found: 11
+      taken: 0
+  notes: 'Batch 2 (2026-09-10, #680): 1 documents taken from the publisher''s own index (23 documents inventoried across 5
+    families; 1 taken; citation paths checked against every us-ky provisions file in /Users/pavelmakarchuk/axiom-corpus/data/corpus).
+    Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-2.md.'
 - jurisdiction: us-ma
   name: Massachusetts
   queue_status: done
@@ -212,6 +400,72 @@ states:
     released 144c609_0.docx; its citation path us-me/regulation/dhhs/ofi/chapter-609 already exists, so a completion scope
     cannot carry it and a superseding ME rules scope is needed instead. #680''s 2 ''captured'' is a document count (two rulebooks),
     not a section count. Nothing new to take here.'
+- jurisdiction: us-nd
+  name: North Dakota
+  queue_status: agent_ready
+  source_kind: official_html_manual_topics_and_release_pdfs
+  primary_source_url: https://www.nd.gov/dhs/policymanuals/SNAP/Content/Home%202.htm
+  target_manifest: manifests/us-nd-snap-manual-completion.yaml
+  target_scope:
+    jurisdiction: us-nd
+    document_class: manual
+    version: 2026-09-10-snap-state-manual-completion
+  index_url: https://www.nd.gov/dhs/policymanuals/SNAP/Content/Home%202.htm
+  index_document_count: 160
+  taken_count: 4
+  index_families:
+    toc_topic_html:
+      found: 66
+      taken: 2
+    toc_topic_already_in_released_scope:
+      found: 64
+      taken: 0
+    landing_and_toc_already_in_released_scope:
+      found: 2
+      taken: 0
+    release_update_pdf:
+      found: 15
+      taken: 2
+    release_update_pdf_already_in_released_scope:
+      found: 1
+      taken: 0
+    release_update_pdf_before_released_baseline:
+      found: 12
+      taken: 0
+  notes: 'Batch 2 (2026-09-10, #680): 4 documents taken from the publisher''s own index (160 documents inventoried across
+    6 families; 4 taken; citation paths checked against every us-nd provisions file in /Users/pavelmakarchuk/axiom-corpus/data/corpus).
+    Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-2.md.'
+- jurisdiction: us-ne
+  name: Nebraska
+  queue_status: done
+  source_kind: official_administrative_rules
+  primary_source_url: https://rules.nebraska.gov/rules?agencyId=37&titleId=230
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-ne
+    document_class: regulation
+    version: 2026-07-17-ne-snap-rules
+  index_url: https://rules.nebraska.gov/rules?agencyId=37&titleId=230
+  index_document_count: 5
+  taken_count: 0
+  index_families:
+    title_475_nac_chapter_pdf:
+      found: 5
+      taken: 0
+      already_in_corpus: 5
+      revised_edition_since_release: 2
+  notes: 'Index confirmed 2026-09-10: the Nebraska Rules site (a React app whose data is the same-origin API /api/title/GetByAgencyId/37
+    and /api/chapter/GetByTitleId/230) lists Title 475 NAC ''Supplemental Nutrition Assistance Program'' with five chapters
+    (1 General Provisions, 2 Household Processing, 3 Eligibility, 4 Benefits, 5 EBT Card Issuance and Accountability); all
+    five are in manifests/us-ne-snap-rules.yaml and the released scope us-ne/regulation/2026-07-17-ne-snap-rules (742 provisions,
+    coverage complete). Nothing new to take. Reviewer: chapters 2 and 3 now carry an effective date of 2026-07-28 (new editions;
+    the released files are the 09-17-2024 editions), chapters 1, 4 and 5 are unchanged; the two revised chapters'' citation
+    paths exist, so a superseding NE rules scope is needed, not a completion scope. TLS: rules.nebraska.gov serves *.nebraska.gov
+    without its DigiCert Global G2 TLS RSA SHA256 2020 CA1 intermediate (openssl verify code 21); the released manifest worked
+    around this with request.verify_tls: false. This run fetched with verification on by adding the publisher''s public intermediate
+    as data/certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem (from cacerts.digicert.com) and REQUESTS_CA_BUNDLE = certifi
+    + that file; the superseding scope should use the same bundle instead of verify_tls: false. #680''s 5 ''captured'' is
+    the document count.'
 - jurisdiction: us-nh
   name: New Hampshire
   queue_status: agent_ready
@@ -244,6 +498,74 @@ states:
   notes: 'Batch 1 (2026-09-10, #680): 502 documents taken from the publisher''s own index (1542 documents inventoried across
     5 families; 502 taken; citation paths checked against every us-nh provisions file in /Users/pavelmakarchuk/axiom-corpus/data/corpus).
     Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-1.md.'
+- jurisdiction: us-nm
+  name: New Mexico
+  queue_status: done
+  source_kind: official_administrative_code
+  primary_source_url: https://www.hca.nm.gov/lookingforinformation/income-support-division-1/
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-nm
+    document_class: regulation
+    version: 2026-07-17-nm-snap-regulations
+  index_url: https://www.hca.nm.gov/lookingforinformation/income-support-division-1/
+  index_document_count: 102
+  taken_count: 0
+  index_families:
+    nmac_8_139_food_stamp_program_part_html:
+      found: 18
+      taken: 0
+      already_in_corpus: 18
+    nmac_8_100_general_provisions_part_html:
+      found: 10
+      taken: 0
+      already_in_corpus: 10
+    nmac_other_isd_program_part_html:
+      found: 73
+      taken: 0
+    isd_state_verification_plan_pdf:
+      found: 1
+      taken: 0
+  notes: 'Index confirmed 2026-09-10: the HCA Income Support Division page links the NMAC parts on the State Records Center
+    (srca.nm.gov) for 8.100 (10 parts), 8.102 TANF/NMW (17), 8.106 GA (18), 8.119 refugee (7), 8.139 Food Stamp Program (17)
+    and 8.150 LIHEAP (17); the SRCA Title 8 chapter page marks every other 8.139 part number RESERVED, which leaves 18 active
+    8.139 parts (the 17 on the HCA page plus 8.139.640). All 18 8.139 parts and all 10 8.100 parts are in manifests/us-nm-snap-regulations.yaml
+    and the released scope us-nm/regulation/2026-07-17-nm-snap-regulations (388 provisions, coverage complete), and all 28
+    SRCA part files are byte-identical to the released inventory (SHA-256). Nothing new to take; nothing revised. #680''s
+    28 ''captured'' is the document count.'
+- jurisdiction: us-nv
+  name: Nevada
+  queue_status: done
+  source_kind: official_manual_page
+  primary_source_url: https://dwss.nv.gov/Home/Features/eligibility/eligibility-n-payment-info-manual/
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-nv
+    document_class: manual
+    version: 2026-05-27-nv-eligibility-payments-manual-r2026-07-15-self-contained
+  index_url: https://dwss.nv.gov/Home/Features/eligibility/eligibility-n-payment-info-manual/
+  index_document_count: 139
+  taken_count: 0
+  index_families:
+    ep_manual_chapter_and_reference_pdf:
+      found: 51
+      taken: 0
+      already_in_corpus: 45
+      revised_edition_since_release: 6
+    ep_manual_transmittal_letter_pdf:
+      found: 86
+      taken: 0
+    state_web_standards_pdf_offsite:
+      found: 2
+      taken: 0
+  notes: 'Index confirmed 2026-09-10: the DWSS Eligibility & Payments Manual page lists 51 chapter and reference PDFs (sections
+    A-D, F, R, TOC, glossary, index) and 86 manual transmittal letters (2010-July 2026). All 51 chapter citation paths are
+    in manifests/us-nv-eligibility-payments-manual.yaml and the released scope (821 provisions, coverage complete). Reviewer:
+    six chapters are now served as new files (A-100 Application Processing, A-200 Verification and Documentation, A-700 Income,
+    A-1800 Case Disposition, B-400 Special Households, B-900 Program Violations/Sanctions; the released URLs for them are
+    no longer on the index), i.e. editions revised by the April-July 2026 transmittals; their citation paths exist, so a superseding
+    NV scope is needed, not a completion scope. The transmittal letters are the change-summary family (as FL Summary of Changes
+    and NH Service Releases), not taken. Nothing new to take. #680''s 51 ''captured'' is the document count.'
 - jurisdiction: us-ny
   name: New York
   queue_status: blocked_primary_source
@@ -258,13 +580,14 @@ states:
   index_document_count: null
   taken_count: 0
   index_families: {}
-  notes: 'Blocked 2026-09-10: otda.ny.gov resets the plain Axiom request (curl 56, connection reset by peer, 30 s timeout)
-    and answers curl-cffi chrome120 browser impersonation with HTTP 200 carrying a 5,609-byte F5/TSPD JavaScript bot-challenge
-    page instead of the SNAP program page, so no index inventory is possible. No workaround attempted (the released scope''s
-    pinned official-URL archive captures are not an option for new documents under this run''s rules). The released scopes
-    already hold the 576-page SNAP Source Book, the 16-part Employment Policy Manual (340 provisions) and 18 NYCRR Parts 385
-    and 387 (1,678 provisions); #680''s 18 ''captured'' is a document count. OTDA policy directives (ADM/INF/GIS) remain a
-    separate family to inventory when the host answers.'
+  notes: 'Blocked 2026-09-10 (batch 1, first network): otda.ny.gov reset the plain Axiom request (curl 56) and answered curl-cffi
+    chrome120 impersonation with a 5,609-byte F5/TSPD JavaScript bot-challenge page. Retried 2026-09-10 (batch 2, US network,
+    20 s timeouts, one plain request and one browser-impersonation request): the plain request is closed without a response
+    (requests ConnectionError: RemoteDisconnected(''Remote end closed connection without response'') after 0.7 s); curl-cffi
+    chrome120 gets HTTP 200 carrying a 7,562-byte TSPD bot-challenge page instead of the SNAP program page. No index inventory
+    is possible; no workaround attempted. The released scopes already hold the 576-page SNAP Source Book, the 16-part Employment
+    Policy Manual (340 provisions) and 18 NYCRR Parts 385 and 387 (1,678 provisions); #680''s 18 ''captured'' is a document
+    count. OTDA policy directives (ADM/INF/GIS) remain a separate family to inventory when the host answers.'
 - jurisdiction: us-tx
   name: Texas
   queue_status: agent_ready
@@ -333,7 +656,95 @@ states:
   notes: 'Batch 1 (2026-09-10, #680): 283 documents taken from the publisher''s own index (507 documents inventoried across
     17 families; 283 taken; citation paths checked against every us-tx provisions file in /Users/pavelmakarchuk/axiom-corpus/data/corpus).
     Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-1.md.'
+- jurisdiction: us-vt
+  name: Vermont
+  queue_status: done
+  source_kind: official_html_manual
+  primary_source_url: https://www.ahsnet.ahs.state.vt.us/Public/3sVT/
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-vt
+    document_class: manual
+    version: 2026-07-21-vt-3squaresvt-manual
+  index_url: https://www.ahsnet.ahs.state.vt.us/Public/3sVT/whxdata/toc.new.js
+  index_document_count: 32
+  taken_count: 0
+  index_families:
+    robohelp_toc_books:
+      found: 32
+      taken: 0
+    robohelp_toc_entries:
+      found: 252
+      taken: 0
+    brm_chapter_topic_html:
+      found: 32
+      taken: 0
+      already_in_corpus: 32
+  notes: 'Index confirmed 2026-09-10: the 3SquaresVT manual (RoboHelp) TOC (whxdata/toc.new.js plus one toc<N>.new.js per
+    book) has 32 books and 252 entries that resolve to 32 distinct topic files (the entries are in-page anchors); all 32 are
+    in manifests/us-vt-3squaresvt-manual.yaml and the released scope us-vt/manual/2026-07-21-vt-3squaresvt-manual (911 provisions,
+    coverage complete), and all 32 files are byte-identical to the released inventory (SHA-256). Nothing new to take; nothing
+    revised. #680''s 32 ''captured'' is the document count.'
+- jurisdiction: us-wy
+  name: Wyoming
+  queue_status: agent_ready
+  source_kind: official_html_manual_subpages
+  primary_source_url: https://dfs.wyo.gov/about/policy-manuals/snap-and-power-policy-manual/
+  target_manifest: manifests/us-wy-snap-manual-completion.yaml
+  target_scope:
+    jurisdiction: us-wy
+    document_class: manual
+    version: 2026-09-10-snap-state-manual-completion
+  index_url: https://dfs.wyo.gov/about/policy-manuals/snap-and-power-policy-manual/
+  index_document_count: 15
+  taken_count: 4
+  index_families:
+    manual_main_page_html_already_in_released_scope:
+      found: 1
+      taken: 0
+    extended_menu_accordion_html_already_in_released_scope:
+      found: 2
+      taken: 0
+    edi_case_file_guidance_html:
+      found: 1
+      taken: 0
+    cm_updates_change_log_html:
+      found: 1
+      taken: 0
+    system_codes_html:
+      found: 1
+      taken: 0
+    resources_and_forms_html:
+      found: 1
+      taken: 0
+    manual_glossary_html:
+      found: 1
+      taken: 1
+    medical_handbook_html:
+      found: 1
+      taken: 0
+    notice_catalogue_html:
+      found: 1
+      taken: 0
+    policy_clarifications_html:
+      found: 1
+      taken: 1
+    table_i_snap_income_limits_html:
+      found: 1
+      taken: 1
+    table_ii_already_in_released_scope_revised:
+      found: 1
+      taken: 0
+    tables_landing_html:
+      found: 1
+      taken: 0
+    policy_clarification_page_linked_from_manual_html:
+      found: 1
+      taken: 1
+  notes: 'Batch 2 (2026-09-10, #680): 4 documents taken from the publisher''s own index (15 documents inventoried across 14
+    families; 4 taken; citation paths checked against every us-wy provisions file in /Users/pavelmakarchuk/axiom-corpus/data/corpus).
+    Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-2.md.'
 status_counts:
-  done: 6
+  done: 14
   blocked_primary_source: 2
-  agent_ready: 2
+  agent_ready: 5
