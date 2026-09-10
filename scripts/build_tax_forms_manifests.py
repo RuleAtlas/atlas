@@ -1,6 +1,7 @@
 """Build the tax-year-2025 individual income tax form/instruction manifests (federal
-IRS core plus the batch-1 states) and the 2026 IRS inflation-adjustment guidance
-manifest, then update ``manifests/tax-agent-queue.yaml``.
+IRS core plus the batch-1 and batch-2 states), the state guidance manifests for
+jurisdictions that publish no TY2025 resident return (NH, WA), and the 2026 IRS
+inflation-adjustment guidance manifest, then update ``manifests/tax-agent-queue.yaml``.
 
 Every URL below was confirmed by the agent on 2026-09-10 from the publisher's own
 forms index (recorded per jurisdiction as ``index_url``); the PolicyEngine lead
@@ -37,6 +38,7 @@ USER_AGENT = (
 FEDERAL_FORMS_VERSION = "2026-09-10-tax-irs-forms-ty2025"
 FEDERAL_GUIDANCE_VERSION = "2026-09-10-tax-irs-guidance"
 STATE_FORMS_VERSION = "2026-09-10-tax-state-forms-ty2025"
+STATE_GUIDANCE_VERSION = "2026-09-10-tax-state-guidance-ty2025"
 
 IRS_FORMS_INDEX = "https://www.irs.gov/forms-instructions"
 IRS_1040_INDEX = "https://www.irs.gov/forms-pubs/about-form-1040"
@@ -44,6 +46,18 @@ IRS_SCHEDULES_INDEX = "https://www.irs.gov/forms-pubs/schedules-for-form-1040"
 IRS_IRB_INDEX = "https://www.irs.gov/internal-revenue-bulletins"
 
 SINGLE_BLOCK = {"segmentation": "single_block"}
+# Publisher edges that reject non-browser TLS fingerprints (plain requests and a
+# browser user agent both get HTTP 403). The extractor's curl_cffi path in
+# documents.py honours these keys and still verifies TLS.
+BROWSER_IMPERSONATION = {
+    "browser_user_agent": True,
+    "browser_impersonation": True,
+    "browser_impersonation_direct": True,
+}
+# dor.wa.gov Drupal pages: the page body is the one `.field--name-body` under <main>.
+WA_DOR_HTML = {"html_content_selector": "main .field--name-body"}
+NM_PIT_FORMS_INDEX = "https://www.tax.newmexico.gov/individuals/online-services-overview/personal-income-tax-forms/"
+NM_REALFILE = "https://klvg4oyd4j.execute-api.us-west-2.amazonaws.com/prod/PublicFiles/34821a9573ca43e7b06dfad20f5183fd"
 # irs.gov instruction/publication HTML: the `.book` container holds the headed
 # body; the default HTML extractor emits one block per heading.
 IRS_HTML = {"html_content_selector": ".book"}
@@ -234,6 +248,7 @@ STATES: dict[str, dict[str, Any]] = {
             "agent, a browser user agent, and curl_cffi chrome120 impersonation (2026-09-10). No "
             "workaround attempted; retry from a US network or request the publisher's bulk export."
         ),
+        "retries": ("2026-09-10T18:35:21Z",),
     },
     "us-dc": {
         "name": "District of Columbia",
@@ -331,6 +346,7 @@ STATES: dict[str, dict[str, Any]] = {
             "booklet was found. The existing us-in guidance scope (2026-07-24-in-2026-individual-income-tax-"
             "source-hold) already records the portal listing; retry the file host from a US network."
         ),
+        "retries": ("2026-09-10T18:35:21Z",),
     },
     "us-ms": {
         "name": "Mississippi",
@@ -370,9 +386,201 @@ STATES: dict[str, dict[str, Any]] = {
             ("form-2-instructions", "Montana Individual Income Tax Return, Form 2 Instructions (2025)", "https://revenuefiles.mt.gov/files/Forms/Montana-Individual-Income-Tax-Return-Form-2-Instructions/2025_Montana_Individual_Income_Tax_Return_Form_2_Instructions.pdf", "instructions", "https://revenue.mt.gov/publications/montana-form-2-individual-income-tax-return-forms-and-instructions-includes-form-2ec"),
         ],
     },
+    # -----------------------------------------------------------------------
+    # States, batch 2 (the seven states left in the queue, NH onward). Rows may
+    # carry ``batch``, ``document_class`` (guidance scopes for publishers with no
+    # TY2025 resident return), ``request`` (applied to every document),
+    # ``index_families`` (queue row field), and dict rows for HTML documents.
+    # -----------------------------------------------------------------------
+    "us-nh": {
+        "name": "New Hampshire",
+        "agency": "dra",
+        "authority": "New Hampshire Department of Revenue Administration",
+        "batch": 2,
+        "document_class": "guidance",
+        "request": BROWSER_IMPERSONATION,
+        "index_url": "https://www.revenue.nh.gov/resource-center/current-year-forms-and-instructions",
+        "index_document_count": 232,
+        "index_families": [
+            "business profits tax / business enterprise tax: NH-1040, NH-1041, NH-1065, NH-1120, NH-1120-WE, BET, BET-80, BET-80-WE, BT-EXT, BT-SUMMARY, Schedules II-IV, DP-80, DP-120/120-P, DP-121, DP-131-A, DP-132/132-WE, DP-160, DP-2210/2220, ADDL INFO, AFFL SCHD (forms + instructions)",
+            "meals and rentals, communications services, tobacco, real estate transfer, utility property, medicaid enhancement, nursing facility, education tax credit, low and moderate income homeowners property tax relief (DP-8), DP-9, DP-100, CD-*, PA-*, AU-*, ED-*, MS-*, CU-*, GPA-01",
+            "TY2025 substitute forms letter of intent and general instructions",
+            "interest and dividends tax: none for TY2025 (only a Search Prior Year Forms link; DP-10 2024 was the final return)",
+        ],
+        "inventory": (
+            "Current Year Forms and Instructions index (Drupal; served only to a browser TLS fingerprint, HTTP 403 "
+            "to plain requests with the corpus or a Chrome user agent): 238 PDF links, 232 unique, grouped by tax "
+            "type (business profits/business enterprise NH-1040/1041/1065/1120/1120-WE, BET, BT-*, DP-80..DP-2210, "
+            "schedules; meals and rentals, communications, tobacco, real estate transfer, utility, medicaid "
+            "enhancement, nursing facility, education tax credit, DP-8 property tax relief; TY2025 substitute forms). "
+            "No Interest and Dividends Tax (DP-10) family is listed for TY2025: RSA 77 was repealed for taxable "
+            "periods beginning on or after 2025-01-01, so New Hampshire publishes no TY2025 resident individual "
+            "income tax return or instructions. Taken instead, document_class guidance: TIR 2025-001 (2025-01-21), "
+            "the DRA release stating the repeal and that 2025 I&D forms will not be issued."
+        ),
+        "documents": [
+            ("tir-2025-001", "TIR 2025-001, Interest and Dividends Tax Repealed Effective January 1, 2025", "https://www.revenue.nh.gov/sites/g/files/ehbemt736/files/documents/2025-001-technical-information-release-repeal.pdf", "technical_information_release"),
+        ],
+    },
+    "us-nj": {
+        "name": "New Jersey",
+        "agency": "taxation",
+        "authority": "New Jersey Division of Taxation",
+        "batch": 2,
+        "index_url": "https://www.nj.gov/treasury/taxation/prntgit.shtml",
+        "index_document_count": 63,
+        "index_families": [
+            "resident: NJ-1040 + instructions, Schedule NJ-HCC, NJ-EZ Enroll, NJ-1040X + instructions, NJ-630, NJ-1040-ES 2025/2026 + instructions, NJ-1040-V, NJ-2210, GIT-311/317/327/330/337, GIT-DEP, NJ-1040-O, NJ-2440, NJ-2450, Schedule COJ, Schedule DOP/NJ-WCC, Schedule NJ-BUS-1/2, Worksheet G, NJ-1040-HW + instructions, PA REV-419",
+            "nonresident: NJ-1040NR + instructions, NJ-1040NR-V, NJ-2210NR, NJ-NR-A, NJ-165, business schedules, GIT credit forms",
+            "fiduciary: NJ-1041 + instructions, NJ-1041SB, NJ-1041-V, business schedules",
+            "composite: NJ-1080C + instructions, NJ-1080E, eligibility, record layouts",
+            "other: C-4267, DCC-1, NJ-W4, NJ-W-4P, change of address, A-3128, GIT/REP-1 to 4A",
+        ],
+        "inventory": (
+            "2025 Income Tax Forms page (Printable Gross Income Tax forms): 89 table rows, 63 unique PDF links "
+            "(62 on nj.gov, one PA REV-419 on revenue.pa.gov) across resident, nonresident, fiduciary, composite "
+            "and other families. Taken: NJ-1040 resident return (4 pages, 2025) and the NJ-1040 Resident Return "
+            "instruction booklet (70 pages, 2025). New Jersey publishes no separate TY2025 rate schedule or tax "
+            "table; both are inside the instruction booklet."
+        ),
+        "documents": [
+            ("nj-1040", "Form NJ-1040, New Jersey Resident Income Tax Return (2025)", "https://www.nj.gov/treasury/taxation/pdf/current/1040.pdf", "form"),
+            ("nj-1040-instructions", "Form NJ-1040, New Jersey Resident Return Instructions (2025)", "https://www.nj.gov/treasury/taxation/pdf/current/1040i.pdf", "instructions"),
+        ],
+    },
+    "us-nm": {
+        "name": "New Mexico",
+        "agency": "trd",
+        "authority": "New Mexico Taxation and Revenue Department",
+        "batch": 2,
+        "index_url": NM_PIT_FORMS_INDEX,
+        "index_document_count": 32,
+        "index_families": [
+            "return and instructions: Personal Income Tax Packet 2025, PIT-1 return, PIT-1 instructions, PIT-1 quick reference instructions, 2025 Tax Look Up Table",
+            "schedules with instructions: PIT-S, PIT-ADJ, PIT-B, PIT-110, PIT-RC, PIT-CG, PIT-Childcare, PIT-CR, PIT-D",
+            "amended, payment and filing: PIT-X + instructions, PIT-EXT, PIT-PV, PIT-8453, RPD-41338",
+            "estimated: PIT-ES voucher + instructions (subfolder RPD-41272 underpayment penalty)",
+            "other RPD forms: RPD-41369 NOL carryforward, RPD-41348 military spouse (2), RPD-41359 pass-through withholding statement, RPD-41260 change of address; subfolder Prior Years",
+        ],
+        "inventory": (
+            "Personal Income Tax Forms page hosts a RealFile widget (rf-tables.js, account 34821a9573ca43e7b06dfad20f5183fd, "
+            "folder 288c2306-33d5-4471-b79b-73d07aaea840 'Personal Income Tax (PIT)'); its GetWidgetFiles listing "
+            "returns 32 files and 2 subfolders (Prior Years; RPD-41272). Downloads are the department's RealFile "
+            "file host (execute-api.us-west-2.amazonaws.com/prod/PublicFiles/<account>/<fileId>/<name>), the only "
+            "URLs the publisher's index emits. Taken: 2025 PIT-1 return, 2025 PIT-1 instructions, 2025 Tax Look Up "
+            "Table (the separately listed computation document). The combined 2025 PIT Packet duplicates them and "
+            "was not taken."
+        ),
+        "documents": [
+            ("pit-1", "Form PIT-1, New Mexico Personal Income Tax Return (2025)", f"{NM_REALFILE}/1acb11d0-7e9e-4ff9-8c45-a28d9bfc9150/2025pit-1.pdf", "form", NM_PIT_FORMS_INDEX),
+            ("pit-1-instructions", "Form PIT-1, New Mexico Personal Income Tax Return Instructions (2025)", f"{NM_REALFILE}/2d774fd0-be97-4b57-8dae-68aed999da0f/2025pit-1-ins.pdf", "instructions", NM_PIT_FORMS_INDEX),
+            ("tax-look-up-table", "New Mexico Personal Income Tax Look Up Table (2025)", f"{NM_REALFILE}/3138d8e6-3d90-4fc8-a0af-ee15d3b395f5/2025trt.pdf", "tax_table", NM_PIT_FORMS_INDEX),
+        ],
+    },
+    "us-ok": {
+        "name": "Oklahoma",
+        "agency": "otc",
+        "authority": "Oklahoma Tax Commission",
+        "batch": 2,
+        "index_url": "https://oklahoma.gov/tax/forms.html",
+        "index_document_count": 26,
+        "index_families": [
+            "Income Tax / Individuals / Current (26): 511 resident packet, 511-NR packet, 504-I, 505, 507, 511-EF, 511-EIC, 511-NOL, 511-NR-NOL, 511-TX, 511-V, 528, 538-H, 538-S, 542, 561, 561-P, 561-NR, 561-S, 573, 574, 582-I, 588, OW-8-ES, OW-8-ES-SUP, OW-8-P-SUP-I",
+            "other current income tax subcategories on the same index: Corporate (3), Corporate/Fiduciary/Pass-Through (2), Corporate/Pass-Through (1), Credits (22), Fiduciary (5), Information (4), Miscellaneous (4), Pass-Through (9), Withholding (1); past-year income tax 1997-2024; non-income tax types",
+        ],
+        "inventory": (
+            "Forms page is driven by the commission's own metadata CSV "
+            "(/content/dam/ok/en/tax/documents/forms/New-MetaData-CSV-8-1-26.csv, 1,649 rows). Category Income Tax, "
+            "subcategory Individuals, year Current: 26 rows. Taken: the 2025 Form 511 Oklahoma Resident Individual "
+            "Income Tax Forms Packet and Instructions (52 pages; Form 511, instructions, Form 538-S and the tax "
+            "table are one publication). Oklahoma lists no separate TY2025 resident form or rate schedule."
+        ),
+        "documents": [
+            ("form-511-packet", "2025 Form 511, Oklahoma Resident Individual Income Tax Forms Packet and Instructions", "https://oklahoma.gov/content/dam/ok/en/tax/documents/forms/individuals/current/511-Pkt.pdf", "forms_and_instructions_packet"),
+        ],
+    },
+    "us-ut": {
+        "name": "Utah",
+        "agency": "ustc",
+        "authority": "Utah State Tax Commission",
+        "batch": 2,
+        "index_url": "https://tax.utah.gov/forms",
+        "blocked": (
+            "tax.utah.gov answers HTTP 403 with a Cloudflare JavaScript challenge ('Just a moment... Enable JavaScript "
+            "and cookies to continue', header cf-mitigated: challenge) for the forms index and the TC-40 PDF paths "
+            "(/forms/current/tc-40.pdf, tc-40inst.pdf) with the corpus user agent, a Chrome user agent, and curl_cffi "
+            "chrome120 impersonation (2026-09-10). The commission's file host files.tax.utah.gov, which its "
+            "incometax.utah.gov instruction site links for tc-40.pdf, tc-40inst.pdf, tc-40-fullpacket.pdf and "
+            "tc-40a.pdf, answers HTTP 404 (S3 'Page Not Found') for every path and the root in all three modes. "
+            "Not worked around. incometax.utah.gov (the commission's HTML TC-40 instructions) serves to the corpus "
+            "user agent and is left for the reviewer as a possible instructions-only source."
+        ),
+    },
+    "us-vt": {
+        "name": "Vermont",
+        "agency": "vdt",
+        "authority": "Vermont Department of Taxes",
+        "batch": 2,
+        "index_url": "https://tax.vermont.gov/personal-income-tax",
+        "index_document_count": 35,
+        "index_families": [
+            "return and instructions: 2025 Income Tax Return Booklet, IN-111 + instructions, Tax Year 2025 Vermont Tax Rate Schedules, Vermont Tax Tables (file VermontTaxTables-2025.pdf, index label 'Tax Year 2024')",
+            "schedules with instructions: IN-112, IN-113, IN-117, IN-119, IN-153",
+            "payments, estimated, extension, amended: IN-114 2026 + instructions, IN-116, IN-151, IN-152, IN-152A, IN-110",
+            "homestead and credits: HS-122/HI-144 + instructions, HS-122W, HSD-315, HSD-316, RCC-146 + instructions",
+            "other: W-4VT, domicile statement, B-2, PA-1, GB-1098, RP-1231",
+        ],
+        "inventory": (
+            "Personal Income Tax page (the /individuals/personal-income-tax URL redirects here; the /forms-and-"
+            "instructions URL is 404): 35 unique PDF links for tax year 2025. Taken: Form IN-111 (2 pages, rev. "
+            "10/25), Form IN-111 Instructions (20 pages) and the Tax Year 2025 Vermont Tax Rate Schedules (1 page), "
+            "the separately published computation document. Not taken: the 2025 Income Tax Return Booklet (52 pages, "
+            "a compilation of IN-111/112/113/116, HS-122, RCC-146 and instructions) and the tax tables (lookup), "
+            "following the batch-1 AR precedent."
+        ),
+        "documents": [
+            ("in-111", "Form IN-111, Vermont Income Tax Return (2025)", "https://tax.vermont.gov/sites/tax/files/documents/IN-111-2025.pdf", "form"),
+            ("in-111-instructions", "Form IN-111 Instructions, Vermont Income Tax Return (2025)", "https://tax.vermont.gov/sites/tax/files/documents/IN-111-Instr-2025.pdf", "instructions"),
+            ("tax-rate-schedules", "Tax Year 2025 Vermont Tax Rate Schedules", "https://tax.vermont.gov/sites/tax/files/documents/TaxRateSched-2025.pdf", "rate_schedule"),
+        ],
+    },
+    "us-wa": {
+        "name": "Washington",
+        "agency": "dor",
+        "authority": "Washington State Department of Revenue",
+        "batch": 2,
+        "document_class": "guidance",
+        "index_url": "https://dor.wa.gov/taxes-rates/other-taxes/capital-gains-tax",
+        "index_document_count": 8,
+        "index_families": [
+            "income tax: DOR 'Income tax' page (no individual income tax currently; 9.9% tax on AGI over $1 million from 2028 under SB 6346, first returns 2029); no forms",
+            "capital gains tax page documents: 4 interim guidance statements, 2 special notices (tiered rates TY2025, prepayment), Capital Gains Tax Return Instructions PDF (2023-01, electronic-only return), Capital Gains Tax info sheet PDF (2023-02)",
+        ],
+        "inventory": (
+            "Washington has no individual income tax and therefore no resident return in its forms index "
+            "(dor.wa.gov/forms-publications/forms-name). The DOR 'Income tax' page states this and announces the "
+            "2028 high-earner income tax; the capital gains tax page (an excise tax on individuals' long-term capital "
+            "gains, filed only through My DOR) links 8 documents: 4 interim guidance statements, 2 special notices, "
+            "the 2023 return instructions PDF and a 2023 info sheet. Taken, document_class guidance, as irs.gov-style "
+            "HTML (one provision per heading): the Income tax page, the Capital gains tax page, and the special "
+            "notice 'New tiered rates for Washington's capital gains tax' (issued 2025-06-30; 7% to $1,000,000 and "
+            "9.9% above, beginning tax year 2025). The 2023 return instructions predate the tiered rates and were "
+            "not taken."
+        ),
+        "documents": [
+            {"id": "income-tax", "title": "Income tax (Washington Department of Revenue): no individual income tax; 9.9% tax on adjusted gross income over $1 million from 2028", "url": "https://dor.wa.gov/taxes-rates/income-tax", "subtype": "agency_web_page", "format": "html", "extraction": WA_DOR_HTML},
+            {"id": "capital-gains-tax", "title": "Capital gains tax (Washington Department of Revenue)", "url": "https://dor.wa.gov/taxes-rates/other-taxes/capital-gains-tax", "subtype": "agency_web_page", "format": "html", "extraction": WA_DOR_HTML},
+            {"id": "special-notice-capital-gains-tiered-rates", "title": "Special Notice: New tiered rates for Washington's capital gains tax (tax year 2025)", "url": "https://dor.wa.gov/forms-publications/publications-subject/special-notices/new-tiered-rates-washingtons-capital-gains-tax", "subtype": "special_notice", "format": "html", "extraction": WA_DOR_HTML},
+        ],
+    },
 }
 
-BATCH_1 = tuple(STATES)  # AL, AR, CO, DC, DE, IA, ID, IN, MS, MT in queue order
+BATCH_1 = tuple(j for j, s in STATES.items() if s.get("batch", 1) == 1)  # AL .. MT in queue order
+BATCH_2 = tuple(j for j, s in STATES.items() if s.get("batch") == 2)  # NH, NJ, NM, OK, UT, VT, WA
+BATCH_NOTES = {
+    1: "Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: " + ", ".join(BATCH_1) + ".",
+    2: "Batch 2 (2026-09-10) = the remaining queue-order states without a current-year resident return ingest, starting at NH: " + ", ".join(BATCH_2) + " (seven; the queue held no further states).",
+}
 
 # States whose current-year resident individual income tax return material was
 # already ingested (work-order list). target_manifest is the prior manifest; the
@@ -429,34 +637,61 @@ def _coverage_class(jurisdiction: str, version: str | None) -> str | None:
     return None
 
 
-def _state_document(jurisdiction: str, state: dict[str, Any], row: tuple[Any, ...]) -> dict[str, Any]:
-    doc_id, title, url, subtype = row[:4]
-    landing = row[4] if len(row) > 4 else None
+def _state_class(state: dict[str, Any]) -> str:
+    return str(state.get("document_class", "form"))
+
+
+def _state_version(state: dict[str, Any]) -> str:
+    return STATE_FORMS_VERSION if _state_class(state) == "form" else STATE_GUIDANCE_VERSION
+
+
+def _state_document(
+    jurisdiction: str, state: dict[str, Any], row: tuple[Any, ...] | dict[str, Any]
+) -> dict[str, Any]:
+    """Build one manifest document.
+
+    ``row`` is either the batch-1 tuple ``(id, title, url, subtype[, landing])`` for a
+    single-block PDF or a dict with ``id``, ``title``, ``url``, ``subtype`` and optional
+    ``landing``, ``format`` (default ``pdf``) and ``extraction`` (default single block).
+    Form-class citation paths keep the batch-1 shape ``us-xx/form/<agency>/ty2025/<id>``;
+    guidance scopes use ``us-xx/guidance/<agency>/<id>`` like ``us/guidance/irs/<id>``.
+    """
+    spec = dict(row) if isinstance(row, dict) else dict(zip(("id", "title", "url", "subtype", "landing"), row, strict=False))
+    document_class = _state_class(state)
+    landing = spec.get("landing")
+    if document_class == "form":
+        citation_path = f"{jurisdiction}/form/{state['agency']}/ty{TAX_YEAR}/{spec['id']}"
+        source_family = "state-resident-individual-income-tax-forms-ty2025"
+    else:
+        citation_path = f"{jurisdiction}/{document_class}/{state['agency']}/{spec['id']}"
+        source_family = f"state-individual-income-tax-{document_class}-ty2025"
     doc = {
-        "source_id": f"{jurisdiction}-{state['agency']}-{doc_id}-ty{TAX_YEAR}",
+        "source_id": f"{jurisdiction}-{state['agency']}-{spec['id']}-ty{TAX_YEAR}",
         "jurisdiction": jurisdiction,
-        "document_class": "form",
-        "title": title,
-        "source_url": landing or url,
-        "source_format": "pdf",
+        "document_class": document_class,
+        "title": spec["title"],
+        "source_url": landing or spec["url"],
+        "source_format": spec.get("format", "pdf"),
         "source_as_of": SOURCE_AS_OF,
         "expression_date": TY_EXPRESSION_DATE,
-        "citation_path": f"{jurisdiction}/form/{state['agency']}/ty{TAX_YEAR}/{doc_id}",
-        "extraction": SINGLE_BLOCK,
+        "citation_path": citation_path,
+        "extraction": spec.get("extraction", SINGLE_BLOCK),
         "metadata": {
             "primary_source": True,
             "source_authority": state["authority"],
-            "document_subtype": subtype,
+            "document_subtype": spec["subtype"],
             "program": "individual_income_tax",
             "tax_year": TAX_YEAR,
-            "source_discovery_group": f"{jurisdiction}/form/individual-income-tax",
-            "source_family": "state-resident-individual-income-tax-forms-ty2025",
+            "source_discovery_group": f"{jurisdiction}/{document_class}/individual-income-tax",
+            "source_family": source_family,
             "index_url": state["index_url"],
             "discovered_via": f"manual-review:tax-agent-queue; index {state['index_url']}",
         },
     }
     if landing:
-        doc["download_url"] = url
+        doc["download_url"] = spec["url"]
+    if state.get("request"):
+        doc["request"] = dict(state["request"])
     return doc
 
 
@@ -466,24 +701,44 @@ def _write_manifest(path: Path, documents: list[dict[str, Any]]) -> None:
     )
 
 
+def _probe(session: requests.Session, doc: dict[str, Any]) -> tuple[int, str]:
+    """Return (status, content-type) for a document's download URL.
+
+    Documents whose ``request`` asks for direct browser impersonation are probed the
+    way the extractor fetches them (curl_cffi, TLS verified); everything else uses a
+    plain HEAD with a GET fallback.
+    """
+    url = doc.get("download_url") or doc["source_url"]
+    if (doc.get("request") or {}).get("browser_impersonation_direct"):
+        from curl_cffi import requests as curl_requests
+
+        response = curl_requests.get(url, impersonate="chrome120", timeout=60, allow_redirects=True, stream=True)
+        try:
+            return response.status_code, response.headers.get("content-type", "")
+        finally:
+            response.close()
+    response = session.head(url, allow_redirects=True, timeout=60)
+    if response.status_code >= 400 or response.status_code == 405:
+        response = session.get(url, allow_redirects=True, timeout=120, stream=True)
+    try:
+        return response.status_code, response.headers.get("content-type", "")
+    finally:
+        response.close()
+
+
 def _verify(documents: list[dict[str, Any]]) -> int:
     failures = 0
     session = requests.Session()
     session.headers["User-Agent"] = USER_AGENT
     for doc in documents:
-        url = doc.get("download_url") or doc["source_url"]
         try:
-            response = session.head(url, allow_redirects=True, timeout=60)
-            if response.status_code >= 400 or response.status_code == 405:
-                response = session.get(url, allow_redirects=True, timeout=120, stream=True)
-            content_type = response.headers.get("content-type", "")
-            ok = response.status_code == 200 and (
+            status, content_type = _probe(session, doc)
+            ok = status == 200 and (
                 ("pdf" in content_type) if doc["source_format"] == "pdf" else ("html" in content_type)
             )
-            print(f"{'ok ' if ok else 'BAD'} {response.status_code} {content_type[:30]:30} {doc['source_id']}")
-            response.close()
+            print(f"{'ok ' if ok else 'BAD'} {status} {content_type[:30]:30} {doc['source_id']}")
             failures += 0 if ok else 1
-        except requests.RequestException as exc:
+        except Exception as exc:  # noqa: BLE001 - a probe failure is a verification failure
             print(f"BAD --- {exc!r} {doc['source_id']}")
             failures += 1
     return failures
@@ -514,7 +769,9 @@ def main() -> int:
     written = [federal_forms_path.name, federal_guidance_path.name]
     state_manifest_paths: dict[str, Path] = {}
     for jur, docs in state_docs.items():
-        path = manifests_dir / f"{jur}-individual-income-tax-forms-ty2025.yaml"
+        document_class = _state_class(STATES[jur])
+        kind = "forms" if document_class == "form" else document_class
+        path = manifests_dir / f"{jur}-individual-income-tax-{kind}-ty2025.yaml"
         _write_manifest(path, docs)
         state_manifest_paths[jur] = path
         written.append(path.name)
@@ -522,7 +779,6 @@ def main() -> int:
     queue_path = manifests_dir / "tax-agent-queue.yaml"
     queue = yaml.safe_load(queue_path.read_text())
     rows = {row["jurisdiction"]: row for row in queue["states"]}
-    batch_note = "Batch 1 (2026-09-10) = the first ten queue-order states without a current-year resident return ingest: " + ", ".join(BATCH_1) + "."
 
     federal = rows["us"]
     federal.update(
@@ -555,7 +811,9 @@ def main() -> int:
             continue
         if jur in STATES:
             state = STATES[jur]
+            batch_note = BATCH_NOTES[state.get("batch", 1)]
             if "blocked" in state:
+                retries = "".join(f" retried {stamp}, same failure" for stamp in state.get("retries", ()))
                 row.update(
                     {
                         "queue_status": "blocked_primary_source",
@@ -566,27 +824,36 @@ def main() -> int:
                         "index_url": state["index_url"],
                         "index_document_count": state.get("index_document_count"),
                         "taken_count": 0,
-                        "notes": f"{batch_note} Blocked by the publisher: {state['blocked']}",
+                        "notes": f"{batch_note} Blocked by the publisher: {state['blocked']}{retries}",
                     }
                 )
             else:
                 docs = state_docs[jur]
+                document_class = _state_class(state)
+                if document_class == "form":
+                    source_kind = "official_pdf_forms_instructions"
+                    confirmed = "TY2025 resident individual income tax return material confirmed from the"
+                else:
+                    source_kind = f"official_{document_class}_no_ty2025_resident_return"
+                    confirmed = "No TY2025 resident individual income tax return exists; official guidance confirmed from the"
                 row.update(
                     {
                         "queue_status": "agent_ready",
-                        "source_kind": "official_pdf_forms_instructions",
+                        "source_kind": source_kind,
                         "primary_source_url": docs[0]["source_url"],
                         "target_manifest": f"manifests/{state_manifest_paths[jur].name}",
-                        "target_scope": {"jurisdiction": jur, "document_class": "form", "version": STATE_FORMS_VERSION},
+                        "target_scope": {"jurisdiction": jur, "document_class": document_class, "version": _state_version(state)},
                         "index_url": state["index_url"],
                         "index_document_count": state["index_document_count"],
                         "taken_count": len(docs),
                         "notes": (
-                            f"{batch_note} TY2025 resident individual income tax return material confirmed from the "
-                            f"{state['authority']} forms index. {state['inventory']} Extraction proven 2026-09-10."
+                            f"{batch_note} {confirmed} {state['authority']} index. {state['inventory']} "
+                            "Extraction proven 2026-09-10."
                         ),
                     }
                 )
+                if "index_families" in state:
+                    row["index_families"] = list(state["index_families"])
         elif jur in DONE:
             manifest, version = DONE[jur]
             if not (ROOT / manifest).is_file():
@@ -614,7 +881,7 @@ def main() -> int:
             )
         else:
             row["queue_status"] = "needs_review"
-            row["notes"] = f"Not in batch 1; waits for a later batch. {batch_note}"
+            row["notes"] = f"Not in batch 1 or 2; waits for a later batch. {BATCH_NOTES[2]}"
 
     queue["states"] = [rows[j] for j in sorted(rows, key=lambda j: (j != "us", j))]
     counts: dict[str, int] = {}
