@@ -22,7 +22,12 @@ Index pages are cached under ``--cache-dir`` (default ``~/.axiom/ssi-state-suppl
 so the script can be re-run without re-fetching; the corpus extractor re-fetches every
 document itself when it snapshots the source.
 
-    uv run python scripts/build_ssi_state_supplement_manifests.py [--only fl,ma] [--print-index] [--skip-queue]
+    uv run python scripts/build_ssi_state_supplement_manifests.py --batch 1 [--only fl,ma] [--print-index] [--skip-queue]
+
+Batch 2 (default ``--batch 2``; see the "batch 2" section below) adds KY, LA, NE, NM, NH, ME and
+SC manifests, adapter rows for OH and MD, pointers for OR, UT, ID, the OK block and the NY retry::
+
+    uv run python scripts/build_ssi_state_supplement_manifests.py --print-index
 """
 from __future__ import annotations
 
@@ -651,6 +656,866 @@ ROW_NOTES = {
 }
 
 
+# ================================================================ batch 2 (2026-09-10, US-network retry pass)
+#
+# Batch 2 covers the next ten ``needs_review`` states by population (LA, KY, OR, OK, UT, NE,
+# NM, ID, NH, ME) with replacements in the same order (MD, MO, WI, SD, AK, WY) for publishers
+# that block a plain request and one browser-impersonation attempt. It also retries the three
+# batch-1 blocked rows (NY, OH, SC) from a US network. OH and MD are adapter scopes
+# (``extract-ohio-administrative-code``, ``extract-maryland-comar``) recorded in ``ADAPTER_ROWS``.
+
+BATCH2_ORDER = ("LA", "KY", "OR", "OK", "UT", "NE", "NM", "ID", "NH", "ME", "MD", "MO", "WI", "SD", "AK", "WY")
+DISCOVERED_VIA_2 = "manual-review:ssi-agent-queue batch 2 (state-administered supplements); publisher index"
+CERTS_DIR = ROOT / "data" / "certs"
+NE_CA_BUNDLE = CERTS_DIR / "rules-nebraska-gov-ca-bundle.pem"
+SC_CA_BUNDLE = CERTS_DIR / "img1-scdhhs-gov-ca-bundle.pem"
+BUILDERS_2: dict[str, str] = {}
+
+
+def builder2(code: str):
+    def register(func):
+        BUILDERS_2[code] = func.__name__
+        return func
+
+    return register
+
+
+def fetch_impersonated(url: str, cache: Path | None, *, pause: float = 0.5) -> str:
+    """Fetch through curl-cffi (chrome120 TLS fingerprint) for publishers whose WAF answers
+    403 to a plain client but 200 to a browser fingerprint. Verification is never disabled."""
+    if cache is not None and cache.exists():
+        return cache.read_text(encoding="utf-8")
+    from curl_cffi import requests as curl_requests
+
+    if pause:
+        time.sleep(pause)
+    resp = curl_requests.get(url, impersonate="chrome120", timeout=20)
+    if resp.status_code != 200:
+        raise SystemExit(f"{url}: HTTP {resp.status_code} with browser impersonation")
+    text = resp.text
+    if cache is not None:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_text(text, encoding="utf-8")
+    return text
+
+
+def long_date(value: str) -> str:
+    return dt.datetime.strptime(value.strip(), "%B %d, %Y").date().isoformat()
+
+
+# ---------------------------------------------------------------- Kentucky (921 KAR 2:015)
+
+KY_INDEX_URL = "https://apps.legislature.ky.gov/law/kar/titles/921/002/"
+KY_RULE_URL = "https://apps.legislature.ky.gov/law/kar/titles/921/002/015/"
+
+
+@builder2("KY")
+def build_ky(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """Kentucky State Supplementation: 921 KAR 2:015 'Supplemental programs for persons who are
+    aged, blind, or have a disability' (CHFS/DCBS rule) from the Legislative Research
+    Commission's KAR site, the same publisher and citation convention (us-ky/regulation/kar/...)
+    as the 2026-09-10 CHIP scope (907 KAR 4:020)."""
+    index = strip_tags(fetch(session, KY_INDEX_URL, cache_dir / "ky" / "921-kar-2.html"))
+    regs = re.findall(r"Regulation (\d+) — (.*?) (Current|Inactive|Repealed)(?= Regulation| |$)", index)
+    if not any(n == "015" for n, _, _ in regs):
+        raise SystemExit(f"921 KAR 2:015 not listed on {KY_INDEX_URL}")
+    page = fetch(session, KY_RULE_URL, cache_dir / "ky" / "921-kar-2-015.html", pause=1.0)
+    heading = re.search(r'<h1 class="citation"[^>]*>(.*?)</h1>', page, re.S)
+    history = re.search(r'<div class="history-content">(.*?)</div>', page, re.S)
+    if not (heading and history):
+        raise SystemExit("921 KAR 2:015 page lacks the heading or history block")
+    title = strip_tags(re.sub(r"</span>", " ", heading.group(1)))
+    if not title.startswith("921 KAR 2:015"):
+        raise SystemExit(f"unexpected 921 KAR 2:015 heading {title!r}")
+    effective = re.findall(r"eff\.\s*(\d{1,2}-\d{1,2}-\d{4})", strip_tags(history.group(1)))
+    if not effective:
+        raise SystemExit("no effective date in 921 KAR 2:015 history")
+    month, day, year = effective[-1].split("-")
+    last_effective = f"{year}-{int(month):02d}-{int(day):02d}"
+    doc = {
+        "source_id": "ky-lrc-921-kar-2-015",
+        "jurisdiction": "us-ky",
+        "document_class": "regulation",
+        "title": title,
+        "source_url": KY_RULE_URL,
+        "source_format": "html",
+        "source_as_of": SOURCE_AS_OF,
+        "expression_date": last_effective,
+        "citation_path": "us-ky/regulation/kar/921/002/015",
+        "extraction": {
+            # #regular-content carries the engrossed (current) text; #alternate-content is the hidden
+            # "how this document appeared before it was engrossed" copy (17 sections) and is dropped
+            "html_content_selector": "#regular-content div.regulation-content",
+            "html_drop_selectors": ["#alternate-content", "#alternate-card"],
+        },
+        "metadata": {
+            "primary_source": True,
+            "source_authority": "Kentucky Cabinet for Health and Family Services, Department for Community Based Services (921 KAR), published by the Legislative Research Commission",
+            "document_subtype": "administrative_regulation",
+            "legal_identifier": "921 KAR 2:015",
+            "program": "ssi_state_supplement",
+            "state_program": "State Supplementation",
+            "federal_program": "SSI",
+            "state": "KY",
+            "history_last_effective": last_effective,
+            "index_url": KY_INDEX_URL,
+            "source_discovery_group": "us-ky/regulation/kar/921/002",
+            "discovered_via": f"{DISCOVERED_VIA_2} {KY_INDEX_URL}",
+            "extraction_note": "the page carries two div.regulation-content copies: #regular-content (the engrossed, current text, 16 sections; taken as one block, as the CHIP 907 KAR scope) and the hidden #alternate-content pre-engrossment copy (17 sections; dropped); the history block is not part of the body",
+        },
+    }
+    counts = {s: sum(1 for _, _, st in regs if st == s) for s in ("Current", "Inactive", "Repealed")}
+    index_info = {
+        "index_url": KY_INDEX_URL,
+        "index_document_count": len(regs),
+        "taken_count": 1,
+        "families": [
+            {"family": "921 KAR Chapter 2 (DCBS cash assistance) regulations, Current", "found": counts["Current"], "taken": 1},
+            {"family": "921 KAR Chapter 2 regulations, Inactive or Repealed", "found": counts["Inactive"] + counts["Repealed"], "taken": 0},
+        ],
+    }
+    return [doc], index_info
+
+
+# ---------------------------------------------------------------- Louisiana (LDH Medicaid Eligibility Manual J-0000)
+
+LA_INDEX_URL = "https://ldh.la.gov/page/medicaid-eligibility-manual"
+LA_J0000_URL = "https://ldh.la.gov/assets/medicaid/MedicaidEligibilityPolicy/J-0000.pdf"
+LA_J0000_REISSUED = "2025-07-21"  # "Reissued July 21, 2025" printed on every page of J-0000
+
+
+@builder2("LA")
+def build_la(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """Louisiana Optional State Supplement (OSS): LDH Medicaid Eligibility Manual section J-0000
+    'Medicaid Eligibility Cards and Optional State Supplement Payments' (Bureau of Health Services
+    Financing). ldh.la.gov answers HTTP 403 to a plain client and HTTP 200 to a browser TLS
+    fingerprint; the extractor's browser_impersonation request option is used (as today's POMS SI
+    manifest does). PDF page granularity."""
+    page = fetch_impersonated(LA_INDEX_URL, cache_dir / "la" / "medicaid-eligibility-manual.html")
+    links: list[tuple[str, str]] = []
+    for url, label in re.findall(r'<a[^>]*href="(/assets/medicaid/MedicaidEligibilityPolicy/[^"]+)"[^>]*>(.*?)</a>', page, re.S):
+        label = strip_tags(label)
+        if (url, label) not in links:
+            links.append((url, label))
+    if len(links) < 80:
+        raise SystemExit(f"only {len(links)} manual sections parsed from {LA_INDEX_URL}; layout changed?")
+    if not any(u.endswith("/J-0000.pdf") for u, _ in links):
+        raise SystemExit("J-0000 not listed on the LDH manual index")
+    j_label = next(label for u, label in links if u.endswith("/J-0000.pdf"))
+    doc = {
+        "source_id": "la-ldh-medicaid-eligibility-manual-j-0000",
+        "jurisdiction": "us-la",
+        "document_class": "manual",
+        "title": f"Louisiana Medicaid Eligibility Manual {j_label}",
+        "source_url": LA_J0000_URL,
+        "source_format": "pdf",
+        "source_as_of": SOURCE_AS_OF,
+        "expression_date": LA_J0000_REISSUED,
+        "citation_path": "us-la/manual/ldh/medicaid-eligibility/j-0000",
+        "request": {"browser_impersonation": True},
+        "extraction": {"ocr": True},
+        "metadata": {
+            "primary_source": True,
+            "source_authority": "Louisiana Department of Health, Bureau of Health Services Financing (Medicaid)",
+            "document_subtype": "eligibility_manual_section_pdf",
+            "program": "ssi_state_supplement",
+            "state_program": "Optional State Supplement (OSS)",
+            "federal_program": "SSI",
+            "state": "LA",
+            "manual_section": "J-0000",
+            "reissued_printed": "Reissued July 21, 2025 (replacing September 30, 2024)",
+            "index_url": LA_INDEX_URL,
+            "source_discovery_group": "us-la/manual/ldh/medicaid-eligibility",
+            "discovered_via": f"{DISCOVERED_VIA_2} {LA_INDEX_URL}",
+            "extraction_granularity": "pdf_page",
+            "access_note": "ldh.la.gov: HTTP 403 (118-byte body) to a plain client, HTTP 200 to a chrome120 TLS fingerprint on 2026-09-10; fetched with the extractor's browser_impersonation option, TLS verification on",
+        },
+    }
+    def family(url: str, label: str) -> str:
+        if url.endswith("/J-0000.pdf"):
+            return "J medical eligibility cards and OSS payments"
+        if label.startswith("Preface"):
+            return "preface"
+        if re.match(r"\s*Z\b", label):
+            return "Z appendix tables and standards"
+        return "manual sections A-X (eligibility policy)"
+    counts: dict[str, int] = {}
+    for url, label in links:
+        counts[family(url, label)] = counts.get(family(url, label), 0) + 1
+    index_info = {
+        "index_url": LA_INDEX_URL,
+        "index_document_count": len(links),
+        "taken_count": 1,
+        "families": [{"family": k, "found": v, "taken": 1 if k.startswith("J ") else 0} for k, v in sorted(counts.items())],
+    }
+    return [doc], index_info
+
+
+# ---------------------------------------------------------------- Nebraska (469 NAC)
+
+NE_AGENCY_TITLES_URL = "https://rules.nebraska.gov/api/title/GetByAgencyId/37"
+NE_CHAPTERS_URL = "https://rules.nebraska.gov/api/chapter/GetByTitleId/{title_id}"
+NE_LANDING_URL = "https://rules.nebraska.gov/rules?agencyId=37&titleId={title_id}"
+NE_PDF_URL = "https://rules.nebraska.gov/api/fileStorage/GetAsByteArray/{container}/{blob}"
+NE_EXTRACTION = {
+    "segmentation": "labeled_sections",
+    "normalize_parenthetical_label_components": True,
+    "section_heading_pattern": r"^(?P<label>0\d{2}(?:\.\d{1,2})?(?:\([A-Za-z0-9]+\))*)\.?\s+(?P<heading>[A-Z][A-Z0-9 ’'&,/()\-–‑§]+?(?:\.(?=\s|$)|$))(?:\s+(?P<body>.*))?$",
+    "heading_continuation_pattern": r"^(?P<heading>[A-Z][A-Z0-9 ’'&,/()\-–‑§$]+?(?:\.(?=\s|$)|$))(?:\s+(?P<body>.*))?$",
+}
+
+
+@builder2("NE")
+def build_ne(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """Nebraska Assistance to the Aged, Blind, or Disabled (AABD) payment program, the state's
+    supplement to SSI: Title 469 NAC (DHHS) from the Secretary of State's rules.nebraska.gov, the
+    same publisher, API and labeled_sections convention as the 475 NAC SNAP scope
+    (us-ne/regulation/title-475/chapter-N). rules.nebraska.gov serves a chain without the DigiCert
+    Global G2 TLS RSA SHA256 2020 CA1 intermediate; the publisher's public intermediate is added
+    under data/certs and verification stays on (the SNAP manifest's verify_tls: false is not used)."""
+    if not NE_CA_BUNDLE.exists():
+        raise SystemExit(f"missing {NE_CA_BUNDLE}; build it from certifi + data/certs/digicert-global-g2-tls-rsa-sha256-2020-ca1.pem")
+    ne_session = requests.Session()
+    ne_session.headers.update(session.headers)
+    ne_session.verify = str(NE_CA_BUNDLE)
+    titles = json.loads(fetch(ne_session, NE_AGENCY_TITLES_URL, cache_dir / "ne" / "dhhs-titles.json"))["output"]
+    title = next(t for t in titles if t["titleNumber"] == 469)
+    chapters = json.loads(fetch(ne_session, NE_CHAPTERS_URL.format(title_id=title["id"]), cache_dir / "ne" / "title-469-chapters.json"))["output"]
+    if len(chapters) < 3:
+        raise SystemExit(f"only {len(chapters)} chapters in 469 NAC; API changed?")
+    docs = []
+    for chapter in sorted(chapters, key=lambda c: int(c["chapterNumber"])):
+        blob = chapter.get("officialPdfBlobName") or chapter["pdfBlobName"]
+        number = chapter["chapterNumber"]
+        docs.append(
+            {
+                "source_id": f"ne-dhhs-title-469-chapter-{number}",
+                "jurisdiction": "us-ne",
+                "document_class": "regulation",
+                "title": f"Nebraska Title 469 NAC Chapter {number}: {chapter['chapterName'].title()}",
+                "source_url": NE_PDF_URL.format(container=chapter["pdfContainerName"], blob=quote(blob)),
+                "source_format": "pdf",
+                "source_as_of": SOURCE_AS_OF,
+                "expression_date": chapter["effectiveDate"][:10],
+                "citation_path": f"us-ne/regulation/title-469/chapter-{number}",
+                "extraction": dict(NE_EXTRACTION),
+                "metadata": {
+                    "primary_source": True,
+                    "source_authority": "Nebraska Department of Health and Human Services (469 NAC), filed with the Secretary of State",
+                    "document_subtype": "filed_administrative_regulation_chapter",
+                    "program": "ssi_state_supplement",
+                    "state_program": "Assistance to the Aged, Blind, or Disabled (AABD) payment program; State Disability Program",
+                    "federal_program": "SSI",
+                    "state": "NE",
+                    "nac_title": "469",
+                    "nac_title_name": title["titleName"],
+                    "nac_chapter": number,
+                    "effective_date_api": chapter["effectiveDate"][:10],
+                    "pdf_blob_name": blob,
+                    "rules_landing_page": NE_LANDING_URL.format(title_id=title["id"]),
+                    "rules_api_url": NE_CHAPTERS_URL.format(title_id=title["id"]),
+                    "index_url": NE_LANDING_URL.format(title_id=title["id"]),
+                    "source_discovery_group": "us-ne/regulation/title-469",
+                    "discovered_via": f"{DISCOVERED_VIA_2} {NE_CHAPTERS_URL.format(title_id=title['id'])}",
+                    "tls_note": "rules.nebraska.gov omits the DigiCert Global G2 TLS RSA SHA256 2020 CA1 intermediate; extract with REQUESTS_CA_BUNDLE=data/certs/rules-nebraska-gov-ca-bundle.pem (certifi + the publisher's public intermediate); verification not disabled",
+                },
+            }
+        )
+    index_info = {
+        "index_url": NE_LANDING_URL.format(title_id=title["id"]),
+        "index_document_count": len(chapters),
+        "taken_count": len(docs),
+        "families": [
+            {"family": f"469 NAC {title['titleName'].title()} chapters (API GetByTitleId/{title['id']})", "found": len(chapters), "taken": len(docs)},
+            {"family": "other DHHS (agency 37) NAC titles on the agency listing (separate titles, not inventoried)", "found": len(titles) - 1, "taken": 0},
+        ],
+    }
+    return docs, index_info
+
+
+# ---------------------------------------------------------------- New Mexico (8.106 NMAC)
+
+NM_INDEX_URL = "https://www.hca.nm.gov/lookingforinformation/income-support-division-1/"
+NM_SRCA_CHAPTER_URL = "https://www.srca.nm.gov/nmac-home/nmac-titles/title-8-social-services/chapter-106-state-funded-assistance-programs/"
+
+
+@builder2("NM")
+def build_nm(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """New Mexico supplement for SSI recipients in adult residential shelter care homes (ARSCH)
+    and General Assistance: 8.106 NMAC 'State Funded Assistance Programs' (HCA Income Support
+    Division), all parts linked from the HCA ISD regulations index and served by the State
+    Records Center and Archives (srca.nm.gov), the same publisher and convention as the 8.100 /
+    8.139 NMAC SNAP scope (us-nm/regulation/nmac/8/<chapter>/<part>)."""
+    index = fetch(session, NM_INDEX_URL, cache_dir / "nm" / "hca-isd-index.html")
+    all_parts = re.findall(r'href="(https://www\.srca\.nm\.gov/parts/title08/08\.(\d{3})\.(\d{4})\.html)"', index)
+    chapter_counts: dict[str, int] = {}
+    seen: set[str] = set()
+    for url, chapter, _part in all_parts:
+        if url in seen:
+            continue
+        seen.add(url)
+        chapter_counts[chapter] = chapter_counts.get(chapter, 0) + 1
+    parts = sorted({(url, part) for url, chapter, part in all_parts if chapter == "106"}, key=lambda x: int(x[1]))
+    if len(parts) < 10:
+        raise SystemExit(f"only {len(parts)} 8.106 NMAC parts on {NM_INDEX_URL}")
+    docs = []
+    for url, part in parts:
+        page = fetch(session, url, cache_dir / "nm" / f"08.106.{part}.html", pause=0.5)
+        text = strip_tags(re.sub(r"<style.*?</style>|<xml>.*?</xml>|<!--.*?-->", "", page, flags=re.S))
+        part_number = str(int(part))
+        title_match = re.search(r"CHAPTER 106\s+STATE FUNDED ASSISTANCE(?: PROGRAMS)?\s+PART " + part_number + r"\s+(.*?)\s+8\.106\." + part_number + r"\.1\s+ISSUING AGENCY", text)
+        eff = re.search(r"8\.106\." + part_number + r"\.5\s+EFFECTIVE DATE:\s*([A-Za-z]+ \d{1,2}, \d{4})", text)
+        if not (title_match and eff):
+            raise SystemExit(f"8.106.{part_number} NMAC page lacks title or effective date")
+        part_title = title_match.group(1).strip().title().replace("Ga ", "GA ").replace("Ssi", "SSI")
+        docs.append(
+            {
+                "source_id": f"nm-srca-nmac-8-106-{part_number}",
+                "jurisdiction": "us-nm",
+                "document_class": "regulation",
+                "title": f"8.106.{part_number} NMAC {part_title}",
+                "source_url": url,
+                "source_format": "html",
+                "source_as_of": SOURCE_AS_OF,
+                "expression_date": long_date(eff.group(1)),
+                "citation_path": f"us-nm/regulation/nmac/8/106/{part_number}",
+                "extraction": {
+                    "html_content_selector": ".WordSection1, .Section1",
+                    "segmentation": "labeled_sections",
+                    "section_heading_pattern": (
+                        r"^(?P<label>8\.\s*106\.\s*" + part_number + r"\.\s*\d+(?:\s*-\s*\d+)?)\s+"
+                        r"(?P<heading>[A-Z][^:]{0,180}:|\[RESERVED\]|[A-Z][A-Z0-9 /()\[\]\-–—,'&]{0,180})(?:\s+(?P<body>.*))?$"
+                    ),
+                    "normalize_label_internal_whitespace": True,
+                },
+                "metadata": {
+                    "primary_source": True,
+                    "source_authority": "New Mexico State Records Center and Archives (NMAC publisher)",
+                    "issuing_agency": "New Mexico Health Care Authority, Income Support Division",
+                    "document_subtype": "administrative_code",
+                    "program": "ssi_state_supplement",
+                    "state_program": "Supplement for SSI recipients in adult residential shelter care homes (ARSCH); General Assistance (same chapter)",
+                    "federal_program": "SSI",
+                    "state": "NM",
+                    "nmac_citation": f"8.106.{part_number}",
+                    "nmac_title": "8",
+                    "nmac_chapter": "106",
+                    "nmac_part": part_number,
+                    "effective_date_printed": long_date(eff.group(1)),
+                    "index_url": NM_INDEX_URL,
+                    "srca_chapter_page": NM_SRCA_CHAPTER_URL,
+                    "source_discovery_group": "us-nm/regulation/nmac/8/106",
+                    "discovered_via": f"{DISCOVERED_VIA_2} {NM_INDEX_URL}",
+                },
+            }
+        )
+    index_info = {
+        "index_url": NM_INDEX_URL,
+        "index_document_count": len(seen),
+        "taken_count": len(docs),
+        "families": [
+            {"family": f"8.{ch} NMAC parts linked on the HCA ISD index", "found": n, "taken": len(docs) if ch == "106" else 0}
+            for ch, n in sorted(chapter_counts.items())
+        ],
+    }
+    return docs, index_info
+
+
+# ---------------------------------------------------------------- New Hampshire (Adult Assistance Manual)
+
+NH_LANDING_URL = "https://www.dhhs.nh.gov/aam_htm/newaam.htm"
+NH_TOC_BASE = "https://www.dhhs.nh.gov/aam_htm/whgdata/"
+NH_HTML_BASE = "https://www.dhhs.nh.gov/aam_htm/html/"
+
+
+@builder2("NH")
+def build_nh(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """New Hampshire Old Age Assistance, Aid to the Needy Blind and Aid to the Permanently and
+    Totally Disabled (the state supplement categories): the DHHS Adult Assistance Manual (AAM),
+    every topic page reachable from the RoboHelp table of contents (whgdata/whlstt*.htm), the same
+    publisher, structure and citation convention as the Family Assistance Manual scope
+    (us-nh/manual/dhhs/fam/<topic>-fam). dhhs.nh.gov answers HTTP 403 to a plain client and 200
+    to a browser TLS fingerprint; the extractor's browser_impersonation option is used."""
+    queue = ["whlstt0.htm"]
+    seen_toc: list[str] = []
+    pages: list[tuple[str, str]] = []
+    while queue:
+        name = queue.pop(0)
+        if name in seen_toc:
+            continue
+        seen_toc.append(name)
+        text = fetch_impersonated(NH_TOC_BASE + name, cache_dir / "nh" / "whgdata" / name, pause=0.3)
+        for match in re.finditer(r'href="(whlstt\d+\.htm)#?\d*"', text):
+            if match.group(1) not in seen_toc:
+                queue.append(match.group(1))
+        for match in re.finditer(r'<a[^>]*href="\.\./html/([^"#]+\.htm)"[^>]*>(.*?)</a>', text, re.S):
+            item = (match.group(1), strip_tags(match.group(2)))
+            if item[0] not in {p[0] for p in pages}:
+                pages.append(item)
+    if len(pages) < 400:
+        raise SystemExit(f"only {len(pages)} AAM topic pages found from the TOC; layout changed?")
+    docs = []
+    for filename, label in pages:
+        slug = re.sub(r"[^a-z0-9]+", "-", filename[:-4].lower()).strip("-")
+        docs.append(
+            {
+                "source_id": f"nh-dhhs-aam-{slug}",
+                "jurisdiction": "us-nh",
+                "document_class": "manual",
+                "title": f"New Hampshire Adult Assistance Manual: {label}",
+                "source_url": NH_HTML_BASE + filename,
+                "source_format": "html",
+                "source_as_of": SOURCE_AS_OF,
+                "expression_date": SOURCE_AS_OF,
+                "citation_path": f"us-nh/manual/dhhs/aam/{slug}",
+                "request": {"browser_impersonation": True},
+                "metadata": {
+                    "primary_source": True,
+                    "source_authority": "New Hampshire Department of Health and Human Services, Bureau of Family Assistance",
+                    "document_subtype": "policy_manual_topic",
+                    "program": "ssi_state_supplement",
+                    "state_program": "Old Age Assistance (OAA), Aid to the Needy Blind (ANB), Aid to the Permanently and Totally Disabled (APTD)",
+                    "federal_program": "SSI",
+                    "state": "NH",
+                    "manual_landing_page": NH_LANDING_URL,
+                    "manual_toc_url": NH_TOC_BASE + "whlstt0.htm",
+                    "toc_label": label,
+                    "index_url": NH_TOC_BASE + "whlstt0.htm",
+                    "source_discovery_group": "us-nh/manual/dhhs/aam",
+                    "discovered_via": f"{DISCOVERED_VIA_2} {NH_TOC_BASE}whlstt0.htm",
+                    "access_note": "dhhs.nh.gov: HTTP 403 (424-byte body) to a plain client, HTTP 200 to a chrome120 TLS fingerprint on 2026-09-10; fetched with the extractor's browser_impersonation option, TLS verification on",
+                },
+            }
+        )
+    if len({d["citation_path"] for d in docs}) != len(docs):
+        raise SystemExit("duplicate AAM citation paths")
+    index_info = {
+        "index_url": NH_TOC_BASE + "whlstt0.htm",
+        "index_document_count": len(pages),
+        "taken_count": len(docs),
+        "families": [
+            {"family": f"Adult Assistance Manual topic pages ({len(seen_toc)} RoboHelp TOC files walked)", "found": len(pages), "taken": len(docs)},
+        ],
+    }
+    return docs, index_info
+
+
+# ---------------------------------------------------------------- Maine (10-144 Ch. 332 Part 11)
+
+ME_RULES_INDEX_URL = "https://www.maine.gov/sos/rulemaking/agency-rules/department-health-and-human-services-rules"
+ME_CH332_INDEX_URL = "https://www.maine.gov/sos/rulemaking/agency-rules/mainecare-eligibility-manual"
+ME_CH332_EXPRESSION_DATE = "2025-04-29"  # filing 2025-101; the date the 2026-09-10 CHIP scope records for the same docx
+
+
+@builder2("ME")
+def build_me(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """Maine State Supplement: 10-144 C.M.R. Chapter 332 MaineCare Eligibility Manual, Part 11
+    'State Supplement' (DHHS Office for Family Independence), from the Secretary of State's
+    agency-rules index (the chapter is one Word document; Part 11 is segmented out with the same
+    start/stop convention and citation as the CHIP scope's Part 5,
+    us-me/regulation/dhhs/ofi/chapter-332/part-<n>/section-<m>)."""
+    rules_index = fetch(session, ME_RULES_INDEX_URL, cache_dir / "me" / "dhhs-rules.html")
+    start = rules_index.find("10-144 Department of He")
+    end = rules_index.find("10-146 Office of Data")
+    segment = rules_index[start:end] if 0 < start < end else rules_index
+    chapters_10_144 = sorted(set(re.findall(r"Ch\. (\d+)\b", strip_tags(segment))), key=int)
+    if "332" not in chapters_10_144:
+        raise SystemExit("10-144 Ch. 332 not listed on the SOS DHHS rules index")
+    ch332 = fetch(session, ME_CH332_INDEX_URL, cache_dir / "me" / "ch332.html", pause=1.0)
+    docx = re.search(r'href="(/sos/sites/maine\.gov\.sos/files/inline-files/144c332-[^"]+\.docx)"', ch332)
+    appendices = re.findall(r'href="(/sos/sites/maine\.gov\.sos/files/inline-files/144c332-App[^"]+\.docx)"', ch332)
+    others = sorted(set(re.findall(r'href="(/sos/sites/maine\.gov\.sos/files/content/assets/144c33[3-6]\.docx?)"', ch332)))
+    if not docx:
+        raise SystemExit("no Chapter 332 Word document on the MaineCare Eligibility Manual page")
+    url = "https://www.maine.gov" + docx.group(1)
+    filing = re.search(r"144c332-(\d{4}-\d{3})", url)
+    doc = {
+        "source_id": "me-ofi-mainecare-eligibility-manual-part-11",
+        "jurisdiction": "us-me",
+        "document_class": "regulation",
+        "title": "Maine 10-144 C.M.R. Chapter 332 MaineCare Eligibility Manual, Part 11: State Supplement",
+        "source_url": url,
+        "source_format": "docx",
+        "source_as_of": SOURCE_AS_OF,
+        "expression_date": ME_CH332_EXPRESSION_DATE,
+        "citation_path": "us-me/regulation/dhhs/ofi/chapter-332/part-11",
+        "extraction": {
+            "segmentation": "labeled_sections",
+            "start_after_pattern": r"^PART 11$",
+            "stop_text_pattern": r"^PART 12$",
+            "section_heading_pattern": r"^SECTION (?P<section>\d+):\s+(?P<heading>.+?)\s*$",
+            "section_label_template": "section-{section}",
+        },
+        "metadata": {
+            "primary_source": True,
+            "source_authority": "Maine Department of Health and Human Services Office for Family Independence",
+            "publication_authority": "Maine Secretary of State Administrative Procedure Act Office",
+            "document_subtype": "administrative_rules_part",
+            "program": "ssi_state_supplement",
+            "state_program": "State Supplement (State Optional Supplement Program, 1974)",
+            "federal_program": "SSI",
+            "state": "ME",
+            "rule_chapter": "10-144 C.M.R. Chapter 332",
+            "rule_part": "11",
+            "rule_filing": filing.group(1) if filing else None,
+            "manual_landing_page": ME_CH332_INDEX_URL,
+            "index_url": ME_RULES_INDEX_URL,
+            "source_discovery_group": "us-me/regulation/ssi-state-supplement",
+            "discovered_via": f"{DISCOVERED_VIA_2} {ME_RULES_INDEX_URL}",
+            "extraction_note": "the chapter Word document carries all 18 parts; Part 11 is cut from the body heading 'PART 11' (the table-of-contents line 'PART 11: STATE SUPPLEMENT' is not matched) to 'PART 12'; the Part 11 preamble before SECTION 1 is not a labeled section",
+            "expression_date_note": "filing 2025-101; the same date the 2026-09-10 CHIP scope records for this document",
+        },
+    }
+    doc["metadata"] = {k: v for k, v in doc["metadata"].items() if v is not None}
+    index_info = {
+        "index_url": ME_RULES_INDEX_URL,
+        "index_document_count": len(chapters_10_144) + len(appendices),
+        "taken_count": 1,
+        "families": [
+            {"family": "10-144 Ch. 332 MaineCare Eligibility Manual parts (one Word document, 18 parts)", "found": 18, "taken": 1},
+            {"family": "10-144 Ch. 332 appendices and charts", "found": len(appendices), "taken": 0},
+            {"family": f"other 10-144 chapters on the SOS DHHS rules index (incl. OFI Ch. 301, 323, 331, 333-336; Ch. 332 page also links {len(others)} of them)", "found": len(chapters_10_144) - 1, "taken": 0},
+        ],
+    }
+    return [doc], index_info
+
+
+# ---------------------------------------------------------------- South Carolina (MPPM Chapter 403)
+
+SC_MPPM_PAGE_URL = "https://www.scdhhs.gov/providers/manuals/sc-medicaid-policy-and-procedures-manual"
+SC_OSS_PROGRAM_URL = "https://www.scdhhs.gov/resources/programs-and-initiatives/long-term-living/optional-state-supplementation-oss"
+SC_OSS_PROVIDER_MANUAL_URL = "https://www.scdhhs.gov/providers/manuals/optional-state-supplementation-services-manual"
+
+
+@builder2("SC")
+def build_sc(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """South Carolina Optional State Supplementation (OSS): SCDHHS Medicaid Policy and Procedures
+    Manual Chapter 403 (Word document) from the MPPM index (scdhhs.gov redirects to
+    img1.scdhhs.gov/mppm/, whose chain omits the Go Daddy Secure Certificate Authority G2
+    intermediate; the publisher's public intermediate is added under data/certs, verification on).
+    Retry of the batch-1 blocked row: scdhhs.gov answered on 2026-09-10 from a US network."""
+    if not SC_CA_BUNDLE.exists():
+        raise SystemExit(f"missing {SC_CA_BUNDLE}; build it from certifi + data/certs/godaddy-secure-certificate-authority-g2.pem")
+    sc_session = requests.Session()
+    sc_session.headers.update(session.headers)
+    sc_session.verify = str(SC_CA_BUNDLE)
+    page = fetch(sc_session, SC_MPPM_PAGE_URL, cache_dir / "sc" / "mppm-index.html")
+    links: list[tuple[str, str]] = []
+    for url, label in re.findall(r'<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>', page, re.S):
+        label = strip_tags(label)
+        if label and (url, label) not in links and not url.startswith("#"):
+            links.append((url, label))
+    mppm_docs = [(u, text) for u, text in links if re.search(r"img1\.scdhhs\.gov/mppm/SCMPPM/.*\.docx$", u)]
+    internal = [(u, text) for u, text in links if "sharepoint.com" in u]
+    forms = [(u, text) for u, text in links if "medsweb.scdhhs.gov" in u]
+    chapter = [(u, text) for u, text in mppm_docs if u.endswith("/Chapter_403.docx")]
+    if len(chapter) != 1:
+        raise SystemExit("MPPM Chapter 403 (Optional State Supplementation) not found on the MPPM index")
+    url, label = chapter[0]
+    doc = {
+        "source_id": "sc-scdhhs-mppm-chapter-403",
+        "jurisdiction": "us-sc",
+        "document_class": "manual",
+        "title": f"South Carolina Medicaid Policy and Procedures Manual, Chapter 403: {label}",
+        "source_url": url,
+        "source_format": "docx",
+        "source_as_of": SOURCE_AS_OF,
+        "expression_date": SOURCE_AS_OF,
+        "citation_path": "us-sc/manual/scdhhs/mppm/chapter-403",
+        "extraction": {
+            "segmentation": "labeled_sections",
+            # page 1 is the chapter table of contents ("403.01 Introduction 2" ... "403.12 Terminated SSI Benefits 12")
+            "start_after_pattern": r"^403\.12\s+Terminated SSI Benefits\s+\d+\s*$",
+            "section_heading_pattern": r"^(?P<label>403\.\d{2}(?:\.\d{2}[A-Z]?)?)\s+(?P<heading>[A-Z][^\n]{2,120}?)\s*$",
+        },
+        "metadata": {
+            "primary_source": True,
+            "source_authority": "South Carolina Department of Health and Human Services",
+            "hosting_authority": "img1.scdhhs.gov (SCDHHS document host the MPPM page redirects to)",
+            "document_subtype": "policy_manual_chapter_docx",
+            "program": "ssi_state_supplement",
+            "state_program": "Optional State Supplementation (OSS)",
+            "federal_program": "SSI",
+            "state": "SC",
+            "manual_chapter": "403",
+            "mppm_index_url": SC_MPPM_PAGE_URL,
+            "program_page_url": SC_OSS_PROGRAM_URL,
+            "provider_manual_alternative": f"{SC_OSS_PROVIDER_MANUAL_URL} (OSS Services provider manual; separate family, not taken)",
+            "index_url": SC_MPPM_PAGE_URL,
+            "source_discovery_group": "us-sc/manual/scdhhs/mppm",
+            "discovered_via": f"{DISCOVERED_VIA_2} {SC_MPPM_PAGE_URL}",
+            "extraction_granularity": "labeled_sections (403.xx headings); the page-1 table of contents is skipped with start_after_pattern",
+            "expression_date_note": "fetch date; each section prints its own Eff./Rev. date (latest 05/01/25)",
+            "tls_note": "img1.scdhhs.gov omits the Go Daddy Secure Certificate Authority - G2 intermediate; extract with REQUESTS_CA_BUNDLE=data/certs/img1-scdhhs-gov-ca-bundle.pem (certifi + the publisher's public intermediate); verification not disabled",
+            "retry_note": "batch 1 (2026-09-10, non-US network): HTTP 403 to plain and chrome120 clients; retried 2026-09-10T21:38Z from a US network: site answers, /resources/mppm is HTTP 404 (moved to /providers/manuals/sc-medicaid-policy-and-procedures-manual)",
+        },
+    }
+    index_info = {
+        "index_url": SC_MPPM_PAGE_URL,
+        "index_document_count": len(mppm_docs) + len(internal) + len(forms) + 1,
+        "taken_count": 1,
+        "families": [
+            {"family": "MPPM Word documents (sections 100-800, chapters 401-703, MIAP manual)", "found": len(mppm_docs), "taken": 1},
+            {"family": "internal SharePoint training and job-aid links (not public)", "found": len(internal), "taken": 0},
+            {"family": "forms and manual notices listing (medsweb.scdhhs.gov)", "found": len(forms), "taken": 0},
+            {"family": f"OSS Services provider manual ({SC_OSS_PROVIDER_MANUAL_URL})", "found": 1, "taken": 0},
+        ],
+    }
+    return [doc], index_info
+
+
+# ---------------------------------------------------------------- batch 2 static rows
+
+# Adapter scopes extracted directly into the corpus base (no manifest): OH and MD.
+ADAPTER_ROWS = {
+    "OH": {
+        "queue_status": "agent_ready",
+        "source_kind": "official_state_regulation",
+        "primary_source_url": "https://codes.ohio.gov/ohio-administrative-code/chapter-5122-36",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-oh", "document_class": "regulation",
+                         "version": "2026-09-10-ssi-state-supplement-agency-5122-chapter-5122-36"},
+        "index_url": "https://codes.ohio.gov/ohio-administrative-code/chapter-5122-36",
+        "index_document_count": 5,
+        "taken_count": 5,
+        "index_families": "OAC chapter 5122-36 Residential State Supplement Program rules (5122-36-01 Purpose and definitions, -02 RSS non-financial eligibility, -03 Application process, -04 Responsibilities of the living arrangement, -05 Determination of RSS payment): 5 found / 5 taken",
+        "notes": (
+            "Retry 2026-09-10T21:36Z from a US network: codes.ohio.gov HTTP 200 (48,015 bytes) to a plain client (batch 1: "
+            "connect timeout). Residential State Supplement (RSS), OAC chapter 5122-36 (Department of Behavioral Health, "
+            "agency 5122), extracted with the existing adapter `extract-ohio-administrative-code --only-chapter 5122-36` "
+            "(no manifest; run id 2026-09-10-ssi-state-supplement-agency-5122-chapter-5122-36): 8 rows (collection, agency, "
+            "chapter, 5 rules; rules effective 2022-09-03 and 2023-07-01), coverage complete. Citation "
+            "us-oh/regulation/agency-5122/chapter-5122-36/rule-5122-36-0N, the adapter convention of the 5101-4 SNAP scope. "
+            "The container row us-oh/regulation is shared with the 2026-07-16-agency-5101-4 scope by adapter design "
+            "(collection root); rule rows are unique across us-oh."
+        ),
+    },
+    "MD": {
+        "queue_status": "agent_ready",
+        "source_kind": "official_state_regulation",
+        "primary_source_url": "https://regs.maryland.gov",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-md", "document_class": "regulation",
+                         "version": "2026-09-10-ssi-state-supplement-publication-2026-09-09-title-07-subtitle-03-chapter-07"},
+        "index_url": "https://github.com/maryland-dsd/law-xml-codified (us/md/exec/comar/07/03, publication/2026-09-09.2026-09-09)",
+        "index_document_count": 25,
+        "taken_count": 2,
+        "index_families": "COMAR Title 07 Subtitle 03 Family Investment Administration chapters: 25 found / 2 taken (07.03.06 Mandatory State Supplement for Supplemental Security Income Recipients, 07.03.07 Public Assistance to Adults); 07.03.03 Family Investment Program already in the corpus (TCA scope)",
+        "notes": (
+            "Replacement 1 (after OK blocked). Maryland's supplements: Public Assistance to Adults (PAA, optional supplement "
+            "for adults in assisted living and certain group homes) under COMAR 07.03.07 and the Mandatory State Supplement "
+            "for SSI recipients under COMAR 07.03.06 (DHS Family Investment Administration). Both chapters extracted with the "
+            "existing adapter `extract-maryland-comar --only-title 07 --only-subtitle 03 --only-chapter 06|07` from the "
+            "Division of State Documents' official COMAR XML publication (publication/2026-09-09.2026-09-09), two run ids "
+            "(...-chapter-06: 14 rows; ...-chapter-07: 19 rows), coverage complete, citation "
+            "us-md/regulation/title-07/subtitle-03/chapter-0N/regulation-NN (the TCA scope's convention). Container rows "
+            "us-md/regulation, .../title-07 and .../title-07/subtitle-03 are shared with the TCA chapter-03 scope by adapter "
+            "design; regulation rows are unique across us-md. regs.maryland.gov paths answered HTTP 404 to guessed URLs; the "
+            "adapter's XML source is the DSD publication repository."
+        ),
+    },
+}
+
+POINTER_ROWS_2 = {
+    "OR": {
+        "index_families": "pointer to the ODHS Oregon Programs Eligibility Notebook scope (1 PDF, 1,323 page rows; 47 pages name OSIP cash, 392 name OSIP or OSIPM): 0 new documents taken; OAR chapter 461 (secure.sos.state.or.us, HTTP 200) is the adopted-rule family, not taken",
+        "target_manifest": "manifests/us-or-snap-manual.yaml",
+        "target_scope": {"jurisdiction": "us-or", "document_class": "manual", "version": "2026-07-16-or-programs-eligibility-notebook"},
+        "index_url": "https://sharedsystems.dhsoha.state.or.us/DHSForms/Served/de2818.pdf",
+        "notes": (
+            "Done by pointer. Oregon Supplemental Income Program (OSIP) cash supplements and special needs payments are covered "
+            "by the ODHS Oregon Programs Eligibility Notebook (OPEN, DE 2818, 07/2026), in the corpus as us-or/manual/odhs/open "
+            "(1,323 page rows; 47 pages name OSIP cash, e.g. 'OSIP Oregon Supplemental Income Program Cash supplements and "
+            "special needs', OSIP maintenance standard, OAR 461-140-0296/-0300 references). The adopted rules are OAR chapter 461 "
+            "on the Secretary of State's OARD (displayChapterRules.action?selectedChapter=99, HTTP 200 on 2026-09-10), a "
+            "chapter shared with SNAP, TANF and ERDC; not taken. oregon.gov/odhs guessed OSIP page 404."
+        ),
+    },
+    "UT": {
+        "index_families": "pointer to the DWS Eligibility Manual scope (2,398 rows; section 205-10 State Supplemental Payments to SSI Recipients present with the 2026-01-01 rates): 0 new documents taken",
+        "target_manifest": "manifests/us-ut-manuals.yaml",
+        "target_scope": {"jurisdiction": "us-ut", "document_class": "manual", "version": "2026-05-27-ut-manuals-r2026-07-15-self-contained"},
+        "index_url": "https://jobs.utah.gov/infosource/eligibilitymanual/Welcome/Welcome.htm",
+        "notes": (
+            "Done by pointer. Utah's State Supplemental Payment to SSI recipients is administered by the Department of Workforce "
+            "Services under Eligibility Manual section 205-10 'State Supplemental Payments to SSI Recipients - General "
+            "Information' (rates as of 2026-01-01: $3.91/month single, $12.19 couples in the household of another, $5.75 couples "
+            "living alone or with others; institutionalized SSI recipients are handled under Medicaid, Utah Admin. Code "
+            "R414-306-6), in the corpus as us-ut/manual/dws/eligibility-manual/200-program-eligibility-requirements-205-10-... "
+            "(2 blocks). R414-306-6 (adminrules.utah.gov) is not in the corpus and not taken."
+        ),
+    },
+    "ID": {
+        "index_families": "pointer to IDAPA 16.03.05 Eligibility for Aid to the Aged, Blind, and Disabled (AABD) (1 PDF, 286 rows, program ssi_state_supplement, in the corpus): 0 new documents taken",
+        "target_manifest": "manifests/us-id-aabd-rules.yaml",
+        "target_scope": {"jurisdiction": "us-id", "document_class": "regulation", "version": "2026-07-04-id-aabd-rules"},
+        "index_url": "https://adminrules.idaho.gov/rules/current/16/160305.pdf",
+        "notes": (
+            "Done by pointer. Idaho's supplement is AABD cash assistance under IDAPA 16.03.05 'Eligibility for Aid to the Aged, "
+            "Blind, and Disabled (AABD)' (Department of Health and Welfare), already in the corpus in full as "
+            "us-id/regulation/idapa/16/03/05 (286 rows, version 2026-07-04-id-aabd-rules, metadata program ssi_state_supplement)."
+        ),
+    },
+}
+
+BLOCKED_ROWS_2 = {
+    "OK": (
+        "https://oklahoma.gov/okdhs/library/policy/current/oac-340/chapter-15.html",
+        "Oklahoma's State Supplemental Payment (SSP) is governed by OAC 340:15 (OKDHS). Both official publishers answer a "
+        "Cloudflare challenge: oklahoma.gov/okdhs policy library (chapter-15 and the OAC 340 index) HTTP 403 (5,564-byte "
+        "'Just a moment...' page) to a plain client and HTTP 403 (5,906 bytes) to chrome120 impersonation; the Secretary of "
+        "State's rules.ok.gov/home likewise HTTP 403 to both (the 2026-07-21 SNAP rules scope came from rules.ok.gov). The "
+        "corpus's OHCA Medicaid manual scope mentions SSP on 11 rows but does not carry OAC 340:15. No index inventory possible.",
+    ),
+}
+
+# Batch-1 blocked rows retried in batch 2; NY stays blocked.
+RETRY_NOTES = {
+    "NY": (
+        "Retried 2026-09-10T21:36Z from a US network, same failure: plain client 'Remote end closed connection without "
+        "response' on https://otda.ny.gov/programs/ssp/; chrome120 impersonation HTTP 200 with a 7,559-byte JavaScript "
+        "challenge ('Please enable JavaScript to view the page content. Your support ID is ...'), no page content."
+    ),
+}
+
+SOURCE_KINDS_2 = {
+    "KY": "official_state_regulation",
+    "LA": "official_state_agency_manual",
+    "NE": "official_state_regulation",
+    "NM": "official_state_regulation",
+    "NH": "official_state_agency_manual",
+    "ME": "official_state_regulation",
+    "SC": "official_state_agency_manual",
+}
+ROW_NOTES_2 = {
+    "KY": (
+        "State Supplementation: 921 KAR 2:015 'Supplemental programs for persons who are aged, blind, or have a disability' "
+        "(CHFS/DCBS), one HTML regulation from the LRC's 921 KAR Chapter 2 index (19 regulations listed: 14 current, 5 "
+        "inactive/repealed; 015 taken), history last effective 2024-07-30. document_class regulation, citation "
+        "us-ky/regulation/kar/921/002/015 (the CHIP 907 KAR convention). apps.legislature.ky.gov HTTP 200 to a plain client; "
+        "chfs.ky.gov operations-manual path guessed 404."
+    ),
+    "LA": (
+        "Optional State Supplement (OSS): LDH Medicaid Eligibility Manual section J-0000 'Medicaid Eligibility Cards and "
+        "Optional State Supplement Payments' (Reissued July 21, 2025; J-300 to J-340 OSS payment rules), one PDF of the 99 "
+        "sections on the LDH manual index. ldh.la.gov HTTP 403 to a plain client, 200 to a chrome120 TLS fingerprint: fetched "
+        "with the extractor's browser_impersonation option (as the POMS SI manifest), TLS verification on. document_class "
+        "manual, citation us-la/manual/ldh/medicaid-eligibility/j-0000, page granularity."
+    ),
+    "NE": (
+        "Assistance to the Aged, Blind, or Disabled (AABD) payment program: Title 469 NAC chapters 1-4 (DHHS; effective "
+        "2022-06-06) from the Secretary of State's rules.nebraska.gov chapter API, the 475 NAC SNAP scope's publisher. "
+        "rules.nebraska.gov omits the DigiCert Global G2 TLS RSA SHA256 2020 CA1 intermediate; the publisher's public "
+        "intermediate is in data/certs and REQUESTS_CA_BUNDLE=data/certs/rules-nebraska-gov-ca-bundle.pem is used "
+        "(verification on; the SNAP manifest's verify_tls: false is not used). document_class regulation, citation "
+        "us-ne/regulation/title-469/chapter-N/<section>, labeled sections."
+    ),
+    "NM": (
+        "Supplement for SSI recipients in adult residential shelter care homes (ARSCH) and General Assistance: 8.106 NMAC "
+        "'State Funded Assistance Programs' (HCA Income Support Division), all 17 parts linked from the HCA ISD regulations "
+        "index and served by the State Records Center and Archives (effective dates 2004-07-01 to 2025-03-01). GA and the "
+        "ARSCH supplement share the chapter's general, eligibility and benefit parts, so the whole chapter is taken. "
+        "document_class regulation, citation us-nm/regulation/nmac/8/106/<part>/8.106.<part>.<section> (the 8.100/8.139 SNAP "
+        "convention)."
+    ),
+    "NH": (
+        "Old Age Assistance, Aid to the Needy Blind and Aid to the Permanently and Totally Disabled (the state supplement "
+        "categories): DHHS Adult Assistance Manual, every topic page from the RoboHelp table of contents (the Family "
+        "Assistance Manual scope's structure). dhhs.nh.gov HTTP 403 to a plain client, 200 to a chrome120 TLS fingerprint: "
+        "fetched with the extractor's browser_impersonation option, TLS verification on. document_class manual, citation "
+        "us-nh/manual/dhhs/aam/<topic>-aam."
+    ),
+    "ME": (
+        "State Supplement: 10-144 C.M.R. Chapter 332 MaineCare Eligibility Manual, Part 11 'State Supplement' (DHHS OFI), "
+        "cut from the chapter Word document on the Secretary of State's agency-rules index (filing 2025-101; Part 5 CHIP is "
+        "already in the corpus from the same document). The SOS 10-144 index lists no separate state-supplement chapter. "
+        "document_class regulation, citation us-me/regulation/dhhs/ofi/chapter-332/part-11/section-N."
+    ),
+    "SC": (
+        "Optional State Supplementation (OSS): SCDHHS Medicaid Policy and Procedures Manual Chapter 403 (Word document, "
+        "sections 403.01-403.12 with printed Eff./Rev. dates to 05/01/25) from the MPPM index at img1.scdhhs.gov/mppm/ "
+        "(19 MPPM documents listed; 403 taken). Retry of the batch-1 blocked row: scdhhs.gov answered from a US network on "
+        "2026-09-10; img1.scdhhs.gov omits the Go Daddy G2 intermediate, added under data/certs "
+        "(REQUESTS_CA_BUNDLE=data/certs/img1-scdhhs-gov-ca-bundle.pem, verification on). document_class manual, citation "
+        "us-sc/manual/scdhhs/mppm/chapter-403/<section>. The OSS Services provider manual is a separate family, not taken."
+    ),
+}
+
+
+def update_queue_batch2(results: dict[str, dict]) -> dict:
+    """Rewrite only the batch-2 rows (and the retried batch-1 blocked rows NY, OH, SC)."""
+    queue = yaml.safe_load(QUEUE.read_text())
+    rows = {row["jurisdiction"]: row for row in queue["states"]}
+    for code, index in results.items():
+        row = rows[f"us-{code.lower()}"]
+        docs = index["docs"]
+        families = "; ".join(f"{f['family']}: {f['found']} found / {f['taken']} taken" for f in index["families"])
+        row.update(
+            {
+                "queue_status": "agent_ready",
+                "source_kind": index["source_kind"],
+                "primary_source_url": docs[0]["source_url"],
+                "target_manifest": str(manifest_path(code).relative_to(ROOT)),
+                "target_scope": {"jurisdiction": f"us-{code.lower()}", "document_class": docs[0]["document_class"], "version": VERSION},
+                "index_url": index["index_url"],
+                "index_document_count": index["index_document_count"],
+                "taken_count": index["taken_count"],
+                "index_families": families,
+                "notes": index["note"],
+            }
+        )
+    for code, fields in ADAPTER_ROWS.items():
+        rows[f"us-{code.lower()}"].update(fields)
+    for code, pointer in POINTER_ROWS_2.items():
+        rows[f"us-{code.lower()}"].update(
+            {
+                "queue_status": "done",
+                "source_kind": "official_state_or_ssa_document",
+                "primary_source_url": None,
+                "target_manifest": pointer["target_manifest"],
+                "target_scope": pointer["target_scope"],
+                "index_url": pointer["index_url"],
+                "index_document_count": None,
+                "taken_count": 0,
+                "index_families": pointer["index_families"],
+                "notes": pointer["notes"] + " (2026-09-10 state-supplement batch 2.)",
+            }
+        )
+    for code, (url, note) in BLOCKED_ROWS_2.items():
+        rows[f"us-{code.lower()}"].update(
+            {
+                "queue_status": "blocked_primary_source",
+                "source_kind": "state_agency_document",
+                "primary_source_url": url,
+                "target_manifest": None,
+                "index_url": url,
+                "index_document_count": None,
+                "taken_count": 0,
+                "index_families": "no index inventory possible (publisher blocked; see notes)",
+                "notes": f"Blocked 2026-09-10 (state-supplement batch 2): {note}",
+            }
+        )
+    for code, note in RETRY_NOTES.items():
+        row = rows[f"us-{code.lower()}"]
+        if note not in row["notes"]:
+            row["notes"] = row["notes"].rstrip() + " " + note
+    queue["status_counts"] = {}
+    for row in queue["states"]:
+        queue["status_counts"][row["queue_status"]] = queue["status_counts"].get(row["queue_status"], 0) + 1
+    note = (
+        "2026-09-10 SSI state-supplement batch 2: scripts/build_ssi_state_supplement_manifests.py --batch 2; NY, OH, SC retried "
+        "from a US network (OH, SC extracted; NY still blocked); next ten needs_review states by population attempted (LA, KY, "
+        "OR, OK, UT, NE, NM, ID, NH, ME) with replacement MD after OK blocked; "
+        "docs/ingest-runs/2026-09-10-ssi-state-supplements-batch-2.md."
+    )
+    notes = queue.setdefault("policy", {}).setdefault("notes", [])
+    if note not in notes:
+        notes.append(note)
+    QUEUE.write_text(yaml.safe_dump(queue, sort_keys=False, allow_unicode=True, width=120))
+    return queue["status_counts"]
+
+
+
 def index_markdown(code: str, index: dict) -> str:
     lines = [f"**us-{code.lower()}** — {index['index_url']}", "", "| Family | Found | Taken |", "| --- | ---: | ---: |"]
     for fam in index["families"]:
@@ -665,13 +1530,18 @@ def main() -> int:
     parser.add_argument("--only", help="comma-separated state codes to build (default: all extractable states)")
     parser.add_argument("--print-index", action="store_true", help="print each publisher index inventory as markdown")
     parser.add_argument("--skip-queue", action="store_true", help="do not rewrite manifests/ssi-agent-queue.yaml")
+    parser.add_argument("--batch", type=int, choices=(1, 2), default=2,
+                        help="which batch's builders and queue rows to run (default 2; batch-1 states are never regenerated by default)")
     args = parser.parse_args()
     session = requests.Session()
     session.headers.update({"User-Agent": USER_AGENT})
-    codes = [c.strip().upper() for c in args.only.split(",")] if args.only else list(BUILDERS)
+    builders = BUILDERS if args.batch == 1 else BUILDERS_2
+    source_kinds = SOURCE_KINDS if args.batch == 1 else SOURCE_KINDS_2
+    row_notes = ROW_NOTES if args.batch == 1 else ROW_NOTES_2
+    codes = [c.strip().upper() for c in args.only.split(",")] if args.only else list(builders)
     results: dict[str, dict] = {}
     for code in codes:
-        build = globals()[BUILDERS[code]]
+        build = globals()[builders[code]]
         docs, index = build(session, args.cache_dir)
         paths = [d["citation_path"] for d in docs]
         if len(set(paths)) != len(paths):
@@ -679,7 +1549,7 @@ def main() -> int:
         manifest_path(code).write_text(
             yaml.safe_dump({"version": VERSION, "documents": docs}, sort_keys=False, allow_unicode=True, width=120)
         )
-        index.update({"docs": docs, "source_kind": SOURCE_KINDS[code], "note": ROW_NOTES[code]})
+        index.update({"docs": docs, "source_kind": source_kinds[code], "note": row_notes[code]})
         results[code] = index
         if args.print_index:
             print(index_markdown(code, index), "\n")
@@ -695,7 +1565,8 @@ def main() -> int:
             )
         )
     if not args.skip_queue:
-        print("queue status_counts:", update_queue(results))
+        update = update_queue if args.batch == 1 else update_queue_batch2
+        print("queue status_counts:", update(results))
     return 0
 
 
