@@ -41,6 +41,15 @@ google_drive_download_url), MN, CT, UT and IA are built here. SC, LA, KY, AR, KS
 (www.oregon.gov SERVFAIL at every resolver), AL, OK, MS, NM (manual not published) and NV (manual page
 password-protected) are blocked_primary_source with the exact failure.
 
+Fourth batch (retry from a US network, 2026-09-10T21:34Z): every blocked row was re-probed once. OR (www.oregon.gov
+resolves again; the wicpolicy.aspx index lists 88 policies) and KY (www.chfs.ky.gov answers; the WIC page's 'WIC and
+Nutrition Manual' heading lists ten policy-group PDFs) are built here. AZ, TN, SC, LA and KS now answer but publish no
+manual index (details in BLOCKED); AR and MA still answer 403; IL does not resolve; the not-published rows are unchanged
+(RETRIED stamps). The same batch then attempted the next ten not-yet-attempted states by population (NE, WV, ID, HI, NH,
+ME, MT, RI, DE, SD): WV (eleven chapter pages, one PDF per policy), ME (one PDF per series-coded policy) and RI (the
+compiled Procedures Manual and the Vendor Policies PDFs on the program page) are built here; NE, ID, HI, SD publish no
+manual, MT publishes its policies only as the State Plan, and NH and DE answer 403 to the plain client.
+
     uv run python scripts/build_wic_manifests.py                      # everything
     uv run python scripts/build_wic_manifests.py --only us-va,us-wa   # selected rows only
 """
@@ -1008,6 +1017,219 @@ def build_ia() -> tuple[str, int, dict]:
     return write_manifest("us-ia-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
 
 
+def build_or() -> tuple[str, int, dict]:
+    """Oregon: the WIC Policy and Procedure Manual page lists every policy as '<a>NNN</a> Title' under 'Sec NNN: Title'
+    headings below the 'Policies' h2 (sections 100-1100; 400 and 500 are both 'Local Operations'). The
+    'WIC Policy Updates (Release Notes)' h2 above it lists the quarterly policy-update memos, which are inventoried,
+    not taken."""
+    index = "https://www.oregon.gov/OHA/PH/HEALTHYPEOPLEFAMILIES/WIC/Pages/wicpolicy.aspx"
+    page = soup_of(get(index))
+    docs, seen = [], set()
+    families = {"policy_pdf": 0, "policy_update_release_notes_pdf": 0, "duplicate_policy_number": [], "sections": {}}
+    policies_h2 = next(h for h in page.find_all("h2") if h.get_text(strip=True).startswith("Policies"))
+    for h3 in policies_h2.find_all_next("h3"):
+        m = re.match(r"^Sec (\d+): (.+)$", " ".join(h3.get_text(" ", strip=True).split()))
+        if not m:
+            continue
+        sec_num, sec_title = m.group(1), m.group(2)
+        families["sections"][sec_num] = sec_title
+        for a in h3.parent.find_all("a", href=True):
+            pm = re.search(r"/ppm/(\d+)\.pdf$", a["href"], re.I)
+            if not pm:
+                continue
+            label = pm.group(1)
+            sib = a.next_sibling
+            title = " ".join(sib.split()) if isinstance(sib, str) else ""
+            families["policy_pdf"] += 1
+            if label in seen:
+                families["duplicate_policy_number"].append(label)
+                continue
+            seen.add(label)
+            docs.append(state_doc(
+                "us-or", "oha", label,
+                f"Oregon WIC Policy and Procedure Manual, Section {sec_num} {sec_title}: Policy {label} {title}".rstrip(),
+                urljoin(index, a["href"]), authority="Oregon Health Authority, Public Health Division, WIC Program",
+                index_url=index, manual="Oregon WIC Policy and Procedure Manual",
+                extra={"section": sec_num, "section_title": sec_title, "index_link_text": a.get_text(strip=True),
+                       "index_policy_title": title},
+            ))
+    families["policy_update_release_notes_pdf"] = sum(
+        1 for a in page.find_all("a", href=True)
+        if "/ppm/" in a["href"] and a["href"].lower().endswith(".pdf") and not re.search(r"/ppm/\d+\.pdf$", a["href"], re.I)
+    )
+    if len(docs) < 80:
+        raise RuntimeError(f"OR index yielded only {len(docs)} policies")
+    return write_manifest("us-or-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
+
+
+def build_ky() -> tuple[str, int, dict]:
+    """Kentucky: the WIC page's 'WIC and Nutrition Manual' heading lists the manual's policy groups, one PDF each
+    (100-900 plus 800B Farmers Market), and the FY 25 summary of policy changes, which is inventoried, not taken."""
+    index = "https://www.chfs.ky.gov/agencies/dph/dmch/nsb/Pages/wic.aspx"
+    page = soup_of(get(index))
+    heading = next(h for h in page.find_all("h3") if "WIC and Nutrition Manual" in h.get_text(" ", strip=True))
+    docs = []
+    families = {"policy_group_pdf": 0, "summary_of_policy_changes_pdf": 0, "other_pdf_under_manual_heading": []}
+    for el in heading.find_all_next(["h3", "a"]):
+        if el.name == "h3":
+            break
+        href = el.get("href", "")
+        if not href.lower().endswith(".pdf"):
+            continue
+        text = " ".join(el.get_text(" ", strip=True).replace("\u200b", "").split())
+        m = re.match(r"^(\d{3}[A-Z]?) ?Policy Group - (.+)$", text)
+        if m:
+            families["policy_group_pdf"] += 1
+            docs.append(state_doc(
+                "us-ky", "chfs", m.group(1).lower(), f"Kentucky WIC and Nutrition Manual, {m.group(1)} Policy Group: {m.group(2)}",
+                urljoin(index, href),
+                authority="Kentucky Cabinet for Health and Family Services, Department for Public Health, Nutrition Services Branch",
+                index_url=index, manual="Kentucky WIC and Nutrition Manual",
+                extra={"policy_group": m.group(1), "index_link_text": text},
+            ))
+        elif "Summary of Policy Changes" in text:
+            families["summary_of_policy_changes_pdf"] += 1
+        else:
+            families["other_pdf_under_manual_heading"].append(text)
+    if len(docs) < 9:
+        raise RuntimeError(f"KY index yielded only {len(docs)} policy groups")
+    return write_manifest("us-ky-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
+
+
+def build_wv() -> tuple[str, int, dict]:
+    """West Virginia: the Policy/Procedure page links one page per manual chapter ('N.0 Title', 1.0-11.0); each chapter
+    page lists the policies as 'N.NN Title' PDFs with their attachments ('..., Attachment #k') and the chapter's index
+    table. Policies are taken; attachments, index tables, the two state plans and the participant agreements are
+    inventoried."""
+    index = "https://dhhr.wv.gov/WIC/policyprocedure/Pages/Default.aspx"
+    page = soup_of(get(index))
+    docs, labels, seen_urls = [], {}, set()
+    families = {"policy_pdf": 0, "attachment_pdf": 0, "chapter_index_table_pdf": 0, "other_chapter_page_file": [],
+                "state_plan_page": 0, "participant_agreement_pdf": 0, "duplicate_link_same_file": [],
+                "duplicate_policy_number": [], "chapters": {}}
+    chapter_pages = []
+    for a in (page.select_one("#contentBox") or page).find_all("a", href=True):
+        text = " ".join(a.get_text(" ", strip=True).replace("\u200b", "").split())
+        href = a["href"]
+        m = re.match(r"^(\d+)\.0 (.+)$", text)
+        if m and "/policyprocedure/Pages/" in href:
+            chapter_pages.append((m.group(1), m.group(2), urljoin(index, href)))
+            families["chapters"][m.group(1)] = m.group(2)
+        elif "State Plan" in text and "/policyprocedure/Pages/" in href:
+            families["state_plan_page"] += 1
+        elif "Participant Agreement" in text and href.lower().endswith(".pdf"):
+            families["participant_agreement_pdf"] += 1
+    for num, title, url in chapter_pages:
+        chapter = soup_of(get(url))
+        for a in (chapter.select_one("#contentBox") or chapter).find_all("a", href=True):
+            href = a["href"]
+            if not href.lower().endswith(".pdf"):
+                continue
+            text = " ".join(a.get_text(" ", strip=True).replace("\u200b", "").split())
+            if "Index Table" in text:
+                families["chapter_index_table_pdf"] += 1
+                continue
+            if re.search(r"Attachment", text, re.I):
+                families["attachment_pdf"] += 1
+                continue
+            pm = re.match(r"^(\d+\.\d+)\s+(.+)$", text)
+            if not pm or pm.group(1).split(".")[0] != num:
+                families["other_chapter_page_file"].append(f"{num}.0: {text}")
+                continue
+            label, ptitle = pm.group(1), pm.group(2)
+            if urljoin(url, href) in seen_urls:  # 3.16 is linked twice to the same file
+                families["duplicate_link_same_file"].append(text)
+                continue
+            seen_urls.add(urljoin(url, href))
+            families["policy_pdf"] += 1
+            if label in labels:
+                labels[label] += 1
+                families["duplicate_policy_number"].append(f"{text} -> {label}-{labels[label]}")
+                label = f"{label}-{labels[label]}"
+            else:
+                labels[label] = 1
+            docs.append(state_doc(
+                "us-wv", "dhhr", label, f"West Virginia WIC Program Policy and Procedure Manual, Chapter {num}.0 {title}: {pm.group(1)} {ptitle}",
+                urljoin(url, href), authority="West Virginia Department of Health, Office of Nutrition Services, WIC Program",
+                index_url=url, manual="West Virginia WIC Program Policy and Procedure Manual",
+                extra={"chapter": f"{num}.0", "chapter_title": title, "index_link_text": text, "policy_index_url": index},
+            ))
+    if len(docs) < 50:
+        raise RuntimeError(f"WV chapter pages yielded only {len(docs)} policies")
+    return write_manifest("us-wv-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
+
+
+def build_me() -> tuple[str, int, dict]:
+    """Maine: the 'WIC Policies' page lists the Maine WIC Policy and Procedure Manual as one PDF per policy, labelled by
+    series code and number ('CE-2 Income Eligibility Determination and Documentation'), with the appendices ('Appendix
+    CE-2-A ...') under each series. Policies are taken; appendices and any other file are inventoried."""
+    index = "https://www.maine.gov/dhhs/mecdc/healthy-living/wic/wic-administration-and-policies/wic-policies"
+    page = soup_of(get(index))
+    docs, labels = [], {}
+    families = {"policy_pdf": 0, "appendix_file": 0, "other_file": [], "duplicate_policy_code": [], "series": {}}
+    main = page.select_one("main") or page
+    for a in main.find_all("a", href=True):
+        href = a["href"]
+        if not re.search(r"\.(pdf|docx?)$", href.split("?")[0], re.I) or "/files/" not in href:
+            continue
+        text = " ".join(a.get_text(" ", strip=True).split())
+        text = re.sub(r"\s*\((PDF|Word)\)$", "", text)
+        text = re.sub(r"\.pdf$", "", text, flags=re.I)
+        if text.lower().startswith("appendix"):
+            families["appendix_file"] += 1
+            continue
+        m = re.match(r"^([A-Z]{2,5})-(\d+)[\s_]+(.+)$", text)
+        if not m:
+            families["other_file"].append(text)
+            continue
+        code = f"{m.group(1)}-{m.group(2)}"
+        label = code.lower()
+        families["policy_pdf"] += 1
+        families["series"][m.group(1)] = families["series"].get(m.group(1), 0) + 1
+        if label in labels:
+            labels[label] += 1
+            families["duplicate_policy_code"].append(f"{text} -> {label}-{labels[label]}")
+            label = f"{label}-{labels[label]}"
+        else:
+            labels[label] = 1
+        docs.append(state_doc(
+            "us-me", "mecdc", label, f"Maine WIC Policy and Procedure Manual, {code}: {m.group(3)}", urljoin(index, href),
+            authority="Maine Department of Health and Human Services, Maine CDC, WIC Nutrition Program",
+            index_url=index, manual="Maine WIC Policy and Procedure Manual",
+            extra={"series": m.group(1), "index_link_text": text},
+        ))
+    if len(docs) < 40:
+        raise RuntimeError(f"ME index yielded only {len(docs)} policies")
+    return write_manifest("us-me-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
+
+
+def build_ri() -> tuple[str, int, dict]:
+    """Rhode Island: the WIC program page publishes the manual as one compiled PDF ('WIC Procedures Manual') plus the
+    'WIC Vendor Policies' PDF; both are taken as single documents (no per-policy index exists)."""
+    index = "https://health.ri.gov/programs/wic/"
+    page = soup_of(get(index))
+    wanted = {"WIC Procedures Manual": ("procedures-manual", "Rhode Island WIC Procedures Manual"),
+              "WIC Vendor Policies": ("vendor-policies", "Rhode Island WIC Vendor Policies")}
+    docs, families = [], {"compiled_manual_pdf": 0, "vendor_policies_pdf": 0, "other_pdf_on_program_page": 0}
+    for a in page.find_all("a", href=True):
+        text = " ".join(a.get_text(" ", strip=True).split())
+        if not a["href"].lower().endswith(".pdf"):
+            continue
+        if text not in wanted:
+            families["other_pdf_on_program_page"] += 1
+            continue
+        label, title = wanted[text]
+        families["compiled_manual_pdf" if label == "procedures-manual" else "vendor_policies_pdf"] += 1
+        docs.append(state_doc(
+            "us-ri", "ridoh", label, title, urljoin(index, a["href"]),
+            authority="Rhode Island Department of Health, WIC Program", index_url=index,
+            manual="Rhode Island WIC Procedures Manual", extra={"index_link_text": text, "compiled_manual": True},
+        ))
+    if len(docs) != 2:
+        raise RuntimeError(f"RI program page yielded {len(docs)} of the two expected PDFs")
+    return write_manifest("us-ri-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
+
+
 BLOCKED = {
     "us-ny": (
         "New York State Department of Health",
@@ -1040,19 +1262,21 @@ BLOCKED = {
     "us-az": (
         "Arizona Department of Health Services",
         "https://www.azdhs.gov/prevention/azwic/local-agencies/index.php",
-        "The Arizona WIC Policy and Procedure Manual chapters exist as PDFs under azdhs.gov/documents/prevention/azwic/manuals/policy/, "
-        "but azdhs.gov answers every request for the local-agencies index page and for the chapter PDFs with a Cloudflare "
-        "'Attention Required!' HTTP 403: plain requests, browser user agent, curl with browser headers, curl_cffi impersonation "
-        "(chrome120/124/131, safari17, firefox133, edge101, android chrome) and the Claude fetch proxy. No mirror was used.",
+        "azdhs.gov answered every request with a Cloudflare HTTP 403 in batch 2. Retried 2026-09-10T21:34Z from a US network: the host "
+        "now answers 200, but the batch-2 Local Agencies URL (local-agencies/index.php) is a soft 404 ('Page or Document Not Found') and "
+        "the relocated Local Agencies page (prevention/azwic/agencies/index.php) links 'WIC Manuals' to an in-page anchor (#manuals) that "
+        "the served page does not contain, for the plain client and one curl_cffi impersonation alike; candidate manuals sub-pages are the "
+        "same soft 404 and the documents/prevention/azwic/manuals/policy/ directory answers 403. No manual index is published on the site "
+        "as served. No mirror was used.",
     ),
     "us-tn": (
         "Tennessee Department of Health",
         "https://www.tn.gov/health/health-program-areas/fhw/wic.html",
-        "Individual WIC Policy & Procedures Manual policies are hosted on tn.gov (content/dam/tn/health/program-areas/wic/"
-        "FY2022-ADM-01-03-02-Access-to-WIC-Services.pdf), but www.tn.gov answers HTTP 403 (awselb/2.0) or times out for every "
-        "client tried (plain requests, browser user agent, curl with browser headers, curl_cffi impersonation chrome120/124/131, "
-        "safari17, firefox133, edge101, android chrome, and the Claude fetch proxy), so neither the WIC pages nor a manual "
-        "index could be read from the publisher.",
+        "www.tn.gov answered HTTP 403 (awselb/2.0) or timed out for every client in batch 2. Retried 2026-09-10T21:34Z from a US network: "
+        "the host now answers (two of six requests still failed with a TLS EOF), the batch-2 WIC URL (health-program-areas/fhw/wic.html) is "
+        "404 and the relocated WIC page (health/wic.html) links participant, vendor and nutrition-education material, the WIC state rule "
+        "(1200-15-02) and the vendor Food Package Policy but no Policy & Procedures Manual index; individual manual policies still exist under "
+        "content/dam/tn/health/program-areas/wic/ (FY2022-ADM-01-03-02 answers 200 to HEAD) but no page lists them. No mirror was used.",
     ),
     "us-mo": (
         "Missouri Department of Health and Senior Services",
@@ -1086,9 +1310,10 @@ BLOCKED = {
     "us-sc": (
         "South Carolina Department of Public Health",
         "https://dph.sc.gov/health-wellness/family-planning/women-infants-and-children-wic-nutrition-program",
-        "dph.sc.gov answers HTTP 403 (CloudFront) to the first probe of the WIC program page and of the site root, for both the "
-        "plain client with a browser User-Agent and one curl_cffi chrome124 impersonation attempt (20 s timeouts), so no manual "
-        "index could be read from the publisher. No mirror was used.",
+        "dph.sc.gov answered HTTP 403 (CloudFront) in batch 3. Retried 2026-09-10T21:34Z from a US network: the host now answers 200, but the "
+        "WIC program page and its WIC Resources, Healthcare Providers & Formulas and South Carolina WIC subpages link only participant, formula, "
+        "food-guide and referral material, and the linked apps.dhec.sc.gov/Health/WIC is a participant sign-in portal; no policy manual index "
+        "is published on the site. No mirror was used.",
     ),
     "us-al": (
         "Alabama Department of Public Health",
@@ -1101,25 +1326,10 @@ BLOCKED = {
     "us-la": (
         "Louisiana Department of Health",
         "https://ldh.la.gov/bureau-of-nutrition-services/women-infants-children-program",
-        "ldh.la.gov answers HTTP 403 (Cloudflare) to the first probe of the WIC page and of the site root for the plain client and "
-        "one curl_cffi chrome124 impersonation attempt (20 s timeouts). A chapter of the Louisiana WIC Policy & Procedure Manual "
-        "demonstrably exists on the host (assets/docs/LegisReports/Act542/WIC_Chapter11.pdf), so this is an access block, not a "
-        "publication gap. No mirror was used.",
-    ),
-    "us-ky": (
-        "Kentucky Cabinet for Health and Family Services, Department for Public Health",
-        "https://www.chfs.ky.gov/agencies/dph/dmch/nsb/Pages/wic.aspx",
-        "www.chfs.ky.gov answers HTTP 403 to the first probe of the WIC page and of the site root for the plain client and one "
-        "curl_cffi chrome124 impersonation attempt (20 s timeouts). The WIC and Nutrition Manual policy groups (200-800) demonstrably "
-        "exist on the host under agencies/dph/dmch/nsb/wnm/, so this is an access block, not a publication gap. No mirror was used.",
-    ),
-    "us-or": (
-        "Oregon Health Authority, Public Health Division",
-        "https://www.oregon.gov/OHA/PH/HEALTHYPEOPLEFAMILIES/WIC/Pages/wicpolicy.aspx",
-        "www.oregon.gov could not be resolved at the time of the run: the system resolver, 1.1.1.1 and 8.8.8.8 all return SERVFAIL "
-        "for www.oregon.gov (checked 2026-09-10T19:23Z, 19:27Z and 19:34Z), so the plain and impersonation probes fail before any HTTP "
-        "request. The Oregon WIC Policy and Procedure Manual is published on that host (Documents/ppm/<number>.pdf), so this is a "
-        "publisher-side DNS outage, not a publication gap; it is the first retry when the name resolves again. No mirror was used.",
+        "ldh.la.gov answered HTTP 403 (Cloudflare) in batch 3. Retried 2026-09-10T21:34Z from a US network: the host now answers 200, but the "
+        "Bureau of Nutrition Services WIC page, the LDH Forms & Policies page and the agency's louisianawic.org site (participant, vendor, "
+        "medical-provider pages) link no Policy & Procedure Manual; the one chapter known on the host (assets/docs/LegisReports/Act542/"
+        "WIC_Chapter11.pdf) is a legislative-report attachment, not an index. No mirror was used.",
     ),
     "us-ok": (
         "Oklahoma State Department of Health",
@@ -1153,10 +1363,12 @@ BLOCKED = {
     "us-ks": (
         "Kansas Department of Health and Environment",
         "https://www.kdhe.ks.gov/1149/Information-for-WIC-Local-Agencies",
-        "www.kdhe.ks.gov answers HTTP 403 (Cloudflare) to the first probe of the WIC program page and of the site root for the plain "
-        "client and one curl_cffi chrome124 impersonation attempt (20 s timeouts). The Kansas WIC Policy & Procedures Manual policies "
-        "demonstrably exist on the host (DocumentCenter/View/<id>/<POLICY>-PDF), so this is an access block, not a publication gap. "
-        "Replacement for a blocked batch-3 state. No mirror was used.",
+        "www.kdhe.ks.gov answered HTTP 403 (Cloudflare) in batch 3. Retried 2026-09-10T21:34Z from a US network: the host now answers 200 and "
+        "the For Local WIC Agencies page links the Policy & Procedure Manual folder (DocumentCenter/Index/903), but that page is an empty React "
+        "shell whose document list is fetched from an admin-area endpoint (Admin/DocumentCenter/.../Document_AjaxBinding); the endpoint returned "
+        "the site HTML to the plain client and, after five requests, a Cloudflare 'Just a moment' HTTP 429 challenge, which was not worked "
+        "around. The manual policies demonstrably exist on the host (DocumentCenter/View/<id>/<POLICY>-PDF) but no static index lists them. "
+        "No mirror was used.",
     ),
     "us-nm": (
         "New Mexico Department of Health, New Mexico WIC",
@@ -1166,6 +1378,55 @@ BLOCKED = {
         "section point at the department intranet (http://chilenet/...). The manual is not published. Replacement for a blocked "
         "batch-3 state.",
     ),
+    # fourth batch (retry): next not-yet-attempted states by population
+    "us-ne": (
+        "Nebraska Department of Health and Human Services",
+        "https://dhhs.ne.gov/Pages/WIC-Policies-and-Procedures.aspx",
+        "The Nebraska WIC policy manual is not published on dhhs.ne.gov: the Local Agency Staff page's 'Policies, Procedures & Forms' "
+        "page lists three policy memos (hospital certification, Afghan refugees, eWIC Journey use), budget templates, forms and two "
+        "vendor letter templates from a 'WIC Procedure Manuals' folder, but no manual index or chapter PDFs.",
+    ),
+    "us-id": (
+        "Idaho Department of Health and Welfare",
+        "https://healthandwelfare.idaho.gov/services-programs/food-assistance/about-wic",
+        "The Idaho WIC Program Policy Manual is not published on healthandwelfare.idaho.gov: the batch-2-era WIC URLs (services-programs/"
+        "food-assistance/wic, .../children-families/women-infants-and-children-wic, /wic, providers/wic) all answer 404, and the current "
+        "About WIC page links only the vendor page and the public health districts; no page lists a manual.",
+    ),
+    "us-hi": (
+        "Hawaii Department of Health, WIC Services Branch",
+        "https://health.hawaii.gov/wic/wic-la-information/",
+        "The Hawaii WIC policy and procedure manual is not published on health.hawaii.gov: the 'Information for WIC Local Agencies' page "
+        "links only the federal and state cost-principles documents, the WIC Nutrition Services Standards and FNS Instruction 113-1; "
+        "no page lists a manual.",
+    ),
+    "us-nh": (
+        "New Hampshire Department of Health and Human Services",
+        "https://www.dhhs.nh.gov/programs-services/health-care/nutrition-services/wic",
+        "www.dhhs.nh.gov answers HTTP 403 to the plain client with a browser User-Agent for the WIC page and for the site root (first probe, "
+        "2026-09-10T21:47Z from a US network); one curl_cffi chrome120 impersonation of the WIC URL answers 404, so the page has also moved "
+        "and no manual index could be read from the publisher. No mirror was used.",
+    ),
+    "us-mt": (
+        "Montana Department of Public Health and Human Services, WIC Program",
+        "https://dphhs.mt.gov/ecfsd/wic/wicstateplan",
+        "Montana publishes no separate WIC policy manual: the WIC page's 'State Plan Program Policies' link is the 2026 Montana WIC State Plan "
+        "page (section drawers with State Plan attachments under assets/ecfsd/WIC/StatePlan/), which is the state-plan document family, not "
+        "a policy/procedure manual index.",
+    ),
+    "us-de": (
+        "Delaware Division of Public Health, WIC Program",
+        "https://www.dhss.delaware.gov/dhss/dph/chs/wichome.html",
+        "www.dhss.delaware.gov answers HTTP 403 to the plain client with a browser User-Agent for the WIC home page and the site root (first "
+        "probe, 2026-09-10T21:47Z from a US network); one curl_cffi chrome120 impersonation fails TLS verification ('self signed certificate "
+        "in certificate chain'), which was not disabled. No manual index could be read from the publisher. No mirror was used.",
+    ),
+    "us-sd": (
+        "South Dakota Department of Health, WIC Program",
+        "https://doh.sd.gov/programs/wic/",
+        "The South Dakota WIC policy manual is not published on doh.sd.gov: the WIC program page links only the sd.gov/wic participant "
+        "portal (approved foods, eligibility, news), the Family Nutrition Services page and the grocery-store lookup; no page lists a manual.",
+    ),
 }
 
 STATE_NAMES = {"us-ca": "California", "us-tx": "Texas", "us-fl": "Florida", "us-ny": "New York", "us-pa": "Pennsylvania",
@@ -1174,21 +1435,40 @@ STATE_NAMES = {"us-ca": "California", "us-tx": "Texas", "us-fl": "Florida", "us-
                "us-ma": "Massachusetts", "us-in": "Indiana", "us-md": "Maryland", "us-mo": "Missouri", "us-wi": "Wisconsin",
                "us-co": "Colorado", "us-mn": "Minnesota", "us-sc": "South Carolina", "us-al": "Alabama", "us-la": "Louisiana",
                "us-ky": "Kentucky", "us-or": "Oregon", "us-ok": "Oklahoma", "us-ct": "Connecticut", "us-ut": "Utah",
-               "us-ia": "Iowa", "us-nv": "Nevada", "us-ar": "Arkansas", "us-ms": "Mississippi", "us-ks": "Kansas", "us-nm": "New Mexico"}
+               "us-ia": "Iowa", "us-nv": "Nevada", "us-ar": "Arkansas", "us-ms": "Mississippi", "us-ks": "Kansas", "us-nm": "New Mexico",
+               "us-ne": "Nebraska", "us-wv": "West Virginia", "us-id": "Idaho", "us-hi": "Hawaii", "us-nh": "New Hampshire",
+               "us-me": "Maine", "us-mt": "Montana", "us-ri": "Rhode Island", "us-de": "Delaware", "us-sd": "South Dakota"}
 
 BATCH_NOTE = {
     1: "Selected in the first batch as one of the ten largest states by population.",
     2: "Selected in the second batch as one of the next ten states by population (NJ, VA, WA, AZ, TN, MA, IN, MD, MO, WI).",
     3: "Selected in the third batch as one of the next ten states by population (CO, MN, SC, AL, LA, KY, OR, OK, CT, UT).",
     4: "Selected in the third batch as a replacement (in order IA, NV, AR, MS, KS, NM) for a blocked or non-publishing state.",
+    5: "Selected in the fourth batch (retry) as one of the next ten not-yet-attempted states by population (NE, WV, ID, HI, NH, ME, MT, RI, DE, SD).",
 }
 BATCH = dict.fromkeys(("us-ca", "us-tx", "us-fl", "us-ny", "us-pa", "us-il", "us-oh", "us-ga", "us-nc", "us-mi"), 1)
 BATCH.update(dict.fromkeys(("us-nj", "us-va", "us-wa", "us-az", "us-tn", "us-ma", "us-in", "us-md", "us-mo", "us-wi"), 2))
 BATCH.update(dict.fromkeys(("us-co", "us-mn", "us-sc", "us-al", "us-la", "us-ky", "us-or", "us-ok", "us-ct", "us-ut"), 3))
 BATCH.update(dict.fromkeys(("us-ia", "us-nv", "us-ar", "us-ms", "us-ks", "us-nm"), 4))
+BATCH.update(dict.fromkeys(("us-ne", "us-wv", "us-id", "us-hi", "us-nh", "us-me", "us-mt", "us-ri", "us-de", "us-sd"), 5))
 
 # Batch-1 blocked rows re-checked once during batch 2 (agency site only; nothing else was tried).
 RECHECKED = {"us-ny": "2026-09-10T18:47Z", "us-fl": "2026-09-10T18:47Z", "us-il": "2026-09-10T18:47Z", "us-oh": "2026-09-10T18:47Z"}
+
+# Batch-4 retry from a US network (2026-09-10T21:34Z first probe of every blocked row; not-published pages re-read 21:38Z).
+RETRIED = {
+    "us-ar": "retried 2026-09-10T21:34Z from US network, same failure (HTTP 403 Cloudflare for the WIC page and the site root).",
+    "us-ma": "retried 2026-09-10T21:34Z from US network, same failure (HTTP 403 for the WIC organization page).",
+    "us-il": "retried 2026-09-10T21:34Z from US network: www.dhs.state.il.us did not resolve (NameResolutionError, twice), so the page "
+             "could not be re-read.",
+    "us-oh": "re-probed 2026-09-10T21:38Z from US network: the Local Staff page and the Women-Infants-Children program page both answer "
+             "404; still not published.",
+    "us-mo": "re-probed 2026-09-10T21:38Z from US network: the manual URL still redirects to health.mo.gov/topic/781/login.",
+    "us-nv": "re-probed 2026-09-10T21:38Z from US network: the Policy and Procedures page is still password-protected.",
+    "us-nm": "re-probed 2026-09-10T21:38Z from US network: the Policies & Procedures page still links only the intranet.",
+    **dict.fromkeys(("us-ny", "us-fl", "us-in", "us-wi", "us-al", "us-ok", "us-ms"),
+                    "re-probed 2026-09-10T21:38Z from US network, still not published (page reachable, no manual link)."),
+}
 
 # inventory keys that annotate documents already counted in another family (or that are not documents at all)
 INDEX_ANNOTATION_KEYS = {"vacant_chapter", "duplicate_link_same_file", "policy_pdf_labeled_by_title",
@@ -1197,7 +1477,9 @@ INDEX_ANNOTATION_KEYS = {"vacant_chapter", "duplicate_link_same_file", "policy_p
                          "compiled_manual_links", "section_without_policies", "duplicate_policy_title",
                          "link_text_number_differs_from_filename", "chapters", "series_pages",
                          "functional_area_without_policies", "fy2027_state_plan_section_ii_draft_pdf_on_separate_page",
-                         "image_only_pdf_ocr"}
+                         "image_only_pdf_ocr",
+                         # batch 4 (retry)
+                         "sections", "series", "duplicate_policy_code"}
 
 STATE_BUILDERS = {
     "us-ca": lambda bundle: build_ca(bundle), "us-tx": lambda bundle: build_tx(), "us-ga": lambda bundle: build_ga(),
@@ -1206,6 +1488,8 @@ STATE_BUILDERS = {
     "us-nj": lambda bundle: build_nj(),
     "us-co": lambda bundle: build_co(), "us-mn": lambda bundle: build_mn(), "us-ct": lambda bundle: build_ct(),
     "us-ut": lambda bundle: build_ut(), "us-ia": lambda bundle: build_ia(),
+    "us-or": lambda bundle: build_or(), "us-ky": lambda bundle: build_ky(),
+    "us-wv": lambda bundle: build_wv(), "us-me": lambda bundle: build_me(), "us-ri": lambda bundle: build_ri(),
 }
 
 
@@ -1280,6 +1564,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
         row = rows.get(jur) or {"jurisdiction": jur, "name": STATE_NAMES[jur], "lead_counts": {}, "candidate_sources": []}
         recheck = f" re-checked {RECHECKED[jur]}, still not published." if jur in RECHECKED else ""
+        recheck += f" {RETRIED[jur]}" if jur in RETRIED else ""
         row.update({
             "name": STATE_NAMES[jur],
             "queue_status": "blocked_primary_source",
