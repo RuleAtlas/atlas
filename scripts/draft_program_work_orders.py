@@ -5,9 +5,17 @@ variable path preserved (docs/source-discovery-checklist.md). Classified by
 axiom_corpus.corpus.source_discovery. Every row is a candidate for a human to confirm;
 queue_status is needs_review throughout. Nothing here is a corpus source.
 """
-import json, os, re, subprocess, sys, glob, collections, datetime
+import collections
+import datetime
+import json
+import os
+import re
+import subprocess
+import sys
 from pathlib import Path
+
 import yaml
+
 sys.path.insert(0, os.path.expanduser("~/axiom-corpus/src"))
 from axiom_corpus.corpus.source_discovery import build_source_discovery_report, canonicalize_url
 
@@ -20,13 +28,15 @@ spec = yaml.safe_load((Path(os.path.expanduser("~/axiom-encode-economics/data/co
 PE_DIRS = {"tax": ["irs", "tax"], "snap": ["snap"], "medicaid": ["medicaid"], "chip": ["chip"], "tanf": ["tanf"], "wic": ["wic"],
            "ccdf": ["ccdf"], "medicare": ["medicare"], "liheap": ["liheap"], "ssi": ["ssi"]}
 dirs = {d: k for k, ds in PE_DIRS.items() for d in ds}
-href = re.compile(r"href:\s*(\S+)"); url_re = re.compile(r"https?://[^\s\"']+")
+href = re.compile(r"href:\s*(\S+)")
+url_re = re.compile(r"https?://[^\s\"']+")
 # 1. reference JSONL with citing path, program, jurisdiction
 refs = []
 root = PE / "policyengine_us"
 for sub, ext in (("parameters", ".yaml"), ("variables", ".py")):
     for f in sorted((root / sub / "gov").rglob(f"*{ext}")):
-        rel = f.relative_to(root / sub).as_posix(); parts = rel.split("/")
+        rel = f.relative_to(root / sub).as_posix()
+        parts = rel.split("/")
         if parts[1] in ("contrib", "local"):
             continue
         prog = next((dirs[seg] for seg in parts[:-1] if seg in dirs), None)
@@ -49,8 +59,10 @@ for mf in (CORPUS / "manifests").glob("*.yaml"):
     for doc in d.get("documents") or []:
         su = doc.get("source_url")
         if su:
-            covered.add(su); c = canonicalize_url(su)
-            if c: manifest_of[c.canonical_url] = mf.stem
+            covered.add(su)
+            c = canonicalize_url(su)
+            if c:
+                manifest_of[c.canonical_url] = mf.stem
 report = build_source_discovery_report((), reference_input_paths=(jsonl,), covered_source_urls=covered, source_name="policyengine-us")
 by_canon = {r.canonical_url: r for r in report.rows}
 # 3. program × jurisdiction leads

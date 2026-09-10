@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import datetime as dt
 import html
-import os
 import re
 import sys
 from pathlib import Path
