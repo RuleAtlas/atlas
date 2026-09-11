@@ -378,10 +378,13 @@ states:
     a finding aid, not a chapter, and is not taken. The existing us/guidance/cms/original-medicare-part-a-b scope is not re-ingested.
     Pub 100-02 (Benefit Policy), Pub 100-04 (Claims Processing) and Pub 45 (State Medicaid Manual) are candidate later families;
     cms.gov fact sheets, medicare.gov pages, SSA POMS and state pages on the lead list are not CMS manuals and stay out of
-    this family.'
+    this family. Pub 100-24 (State Payment of Medicare Premiums, the Part A/Part B buy-in manual) taken in full: 6 chapter
+    PDFs from its publication page; the ''100-24 Table of Contents'' PDF on the same page is a finding aid, not a chapter,
+    and is not taken. Its appendices (1.A-1.D, 5.A-5.D, 6.A-6.B) are bold sections with their own transmittal lines and are
+    emitted as sections labeled by appendix code.'
   index_url: https://www.cms.gov/medicare/regulations-guidance/manuals/internet-only-manuals-ioms
   index_document_count: 25
-  taken_count: 1
+  taken_count: 2
   publication_page:
     url: https://www.cms.gov/regulations-and-guidance/guidance/manuals/internet-only-manuals-ioms-items/cms050111
     document_count: 8
@@ -592,7 +595,7 @@ states:
     other_document_count: 1
     other_documents:
     - 100-24 Table of Contents
-    taken: false
+    taken: true
   - publication: 100-25
     title: Information Security Acceptable Risk Safeguards Manual
     url: https://www.cms.gov/regulations-and-guidance/guidance/manuals/internet-only-manuals-ioms-items/cms1248023
@@ -622,3 +625,124 @@ states:
       chapter_count: 12
       other_document_count: 0
       taken: false
+  publications:
+  - publication: 100-24
+    title: State Payment of Medicare Premiums
+    url: https://www.cms.gov/regulations-and-guidance/guidance/manuals/internet-only-manuals-ioms-items/cms019212
+    target_manifest: manifests/us-cms-iom-100-24.yaml
+    target_scope:
+      jurisdiction: us
+      document_class: manual
+      version: 2026-09-10-medicare-cms-iom-100-24
+    document_count: 7
+    chapter_count: 6
+    chapters_taken: 6
+    not_taken:
+    - 100-24 Table of Contents
+    heading_style: bold 'N.N Title' / 'N.N - Title' headings and bold 'Appendix N.X - Title' appendices; the body starts after
+      the table of contents
+    run_note: docs/ingest-runs/2026-09-10-medicare-cms-iom-100-24.md
+  index_families:
+  - publication: '100'
+    title: Introduction
+    chapter_count: 0
+    status: whole_manual_download_only
+  - publication: 100-01
+    title: Medicare General Information, Eligibility and Entitlement Manual
+    chapter_count: 7
+    status: taken
+  - publication: 100-02
+    title: Medicare Benefit Policy Manual
+    chapter_count: 17
+    status: candidate_later_family
+  - publication: 100-03
+    title: Medicare National Coverage Determinations (NCD) Manual
+    chapter_count: 4
+    status: not_taken
+  - publication: 100-04
+    title: Medicare Claims Processing Manual
+    chapter_count: 41
+    status: candidate_later_family
+  - publication: 100-05
+    title: Medicare Secondary Payer Manual
+    chapter_count: 8
+    status: not_taken
+  - publication: 100-06
+    title: Medicare Financial Management Manual
+    chapter_count: 11
+    status: not_taken
+  - publication: 100-07
+    title: State Operations Manual
+    chapter_count: 10
+    status: not_taken
+  - publication: 100-08
+    title: Medicare Program Integrity Manual
+    chapter_count: 15
+    status: not_taken
+  - publication: 100-09
+    title: Medicare Contractor Beneficiary and Provider Communications Manual
+    chapter_count: 5
+    status: not_taken
+  - publication: 100-10
+    title: Quality Improvement Organization Manual
+    chapter_count: 12
+    status: not_taken
+  - publication: 100-11
+    title: Programs of All-Inclusive Care for the Elderly (PACE)Manual
+    chapter_count: 17
+    status: not_taken
+  - publication: 100-12
+    title: State Medicaid Manual (The new manual is under development. Please continue to use the Paper-Based Manual to make
+      your selection.)
+    chapter_count: 0
+    status: no_documents
+  - publication: 100-13
+    title: Medicaid State Childrens Health Insurance Program (Under Development)
+    chapter_count: 0
+    status: no_documents
+  - publication: 100-15
+    title: Medicaid Program Integrity Manual
+    chapter_count: 5
+    status: not_taken
+  - publication: 100-16
+    title: Medicare Managed Care Manual
+    chapter_count: 15
+    status: not_taken
+  - publication: 100-17
+    title: CMS/Business Partners Systems Security Manual
+    chapter_count: 0
+    status: whole_manual_download_only
+  - publication: 100-18
+    title: Medicare Prescription Drug Benefit Manual
+    chapter_count: 0
+    status: whole_manual_download_only
+  - publication: 100-19
+    title: Demonstrations
+    chapter_count: 0
+    status: whole_manual_download_only
+  - publication: 100-20
+    title: One-Time Notification
+    chapter_count: 0
+    status: whole_manual_download_only
+  - publication: 100-21
+    title: Reserved
+    chapter_count: 0
+    status: whole_manual_download_only
+  - publication: 100-22
+    title: Medicare Quality Reporting Incentive programs Manual
+    chapter_count: 3
+    status: not_taken
+  - publication: 100-23
+    title: Payment Error Rate Measurement (Under Development)
+    chapter_count: 0
+    status: no_documents
+  - publication: 100-24
+    title: State Payment of Medicare Premiums
+    chapter_count: 6
+    status: taken
+    target_manifest: manifests/us-cms-iom-100-24.yaml
+    version: 2026-09-10-medicare-cms-iom-100-24
+  - publication: 100-25
+    title: Information Security Acceptable Risk Safeguards Manual
+    chapter_count: 0
+    status: whole_manual_download_only
