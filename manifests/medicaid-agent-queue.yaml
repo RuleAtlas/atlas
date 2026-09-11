@@ -55,7 +55,7 @@ lead_list:
 status_counts:
   needs_review: 2
   agent_ready: 41
-  blocked_primary_source: 4
+  blocked_primary_source: 5
   done: 6
 states:
 - jurisdiction: us
@@ -1578,6 +1578,33 @@ states:
       taken: 0
   notes: 'Batch 1 (2026-09-10): 251 manual documents taken from the publisher''s own index (428 documents inventoried across
     6 families; 251 taken). Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-medicaid-state-eligibility-manuals-batch-1.md.'
+- jurisdiction: us-gu
+  name: Guam
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: https://dphss.guam.gov/services/medicaremedicaid
+  target_manifest: manifests/us-gu-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-gu
+    document_class: manual
+    version: null
+  index_url: https://dphss.guam.gov/services/medicaremedicaid
+  index_document_count: 0
+  taken_count: 0
+  index_families:
+    medicare_medicaid_service_page_html:
+      found: 1
+      taken: 0
+    eligibility_manual_or_state_plan_pdf:
+      found: 0
+      taken: 0
+  notes: 'Territories pass (2026-09-11): Guam DPHSS (Division of Public Welfare, Bureau of Health Care Financing Administration)
+    publishes no Medicaid eligibility manual: the Medicare/Medicaid services page and the BHCFA bureau page are text-only
+    program descriptions with no document links (HTTP 200), and the 2019 ''Guam Medicaid State Plan'' (1-of-2, 2-of-2) and
+    ''Guam Medicaid Handbook'' PDFs that search engines still index under wp-content/uploads/2019 answer HTTP 404 on the current
+    site. 0 taken. Nothing was worked around.'
 - jurisdiction: us-hi
   name: Hawaii
   lead_counts: {}

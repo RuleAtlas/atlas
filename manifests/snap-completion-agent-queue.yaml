@@ -37,6 +37,9 @@ policy:
     since the released scopes are recorded for superseding scopes. Ohio''s OAC 5101:4 is complete (82 of 82 rules) and its
     eManuals host does not answer (blocked_primary_source for the manual family). Generator: scripts/build_snap_state_manual_completion_manifests.py
     --static-only.'
+  - 'Territories pass (2026-09-11, US network): PR (Reglamento 8684, the NAP eligibility regulation) and MP (FFY 2025 NAP
+    block-grant MOU) extracted; GU and VI (SNAP) and AS (ASNAP) publish no manual or plan. Generator: scripts/build_snap_state_manual_completion_manifests.py
+    --only us-pr --only us-mp --only us-gu --only us-vi --only us-as --corpus-base <corpus>.'
 states:
 - jurisdiction: us-al
   name: Alabama
@@ -237,6 +240,37 @@ states:
     scope) revised sections 3035, 3105, 3110, 3205, 3335, 3350, 3405, 3420, 3515, 3614, 3617, 3710, 3715, 3725, 3730 and 3805
     and Appendices E and F (18 items); their citation paths exist, so a superseding GA scope is needed (MT 86 of January 3,
     2026 and MT 85 of November 1, 2025 predate the release). #680''s 110 ''captured'' is the document count plus queue rows.'
+- jurisdiction: us-gu
+  name: Guam
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: https://dphss.guam.gov/bureau-economic-security-bes
+  target_manifest: manifests/us-gu-snap-manual-completion.yaml
+  target_scope:
+    jurisdiction: us-gu
+    document_class: manual
+    version: null
+  index_url: https://dphss.guam.gov/bureau-economic-security-bes
+  index_document_count: 6
+  taken_count: 0
+  index_families:
+    application_and_change_report_form_pdf:
+      found: 4
+      taken: 0
+    snap_employment_and_training_state_plan_pdf:
+      found: 1
+      taken: 0
+    tanf_state_plan_pdf:
+      found: 1
+      taken: 0
+    snap_state_plan_or_manual:
+      found: 0
+      taken: 0
+  notes: 'Territories pass (2026-09-11): Guam runs SNAP (7 U.S.C. 2012(r)) through DPHSS''s Bureau of Economic Security, whose
+    page (HTTP 200) lists the Application for Public Benefits, change-report and self-employment forms, the FY26 SNAP Employment
+    and Training State Plan and the FY26 TANF State Plan; its ''FY26 SNAP State Plan'' entry carries no link (the anchor is
+    commented out in the page source) and the SNAP services page is a text-only description. No SNAP policy manual or plan
+    of operation is published. 0 taken. Nothing was worked around.'
 - jurisdiction: us-hi
   name: Hawaii
   queue_status: done
@@ -1033,5 +1067,5 @@ states:
     Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-2.md.'
 status_counts:
   done: 20
-  blocked_primary_source: 3
+  blocked_primary_source: 4
   agent_ready: 5

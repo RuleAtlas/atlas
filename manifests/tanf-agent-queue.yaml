@@ -29,9 +29,9 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 5
+  needs_review: 4
   done: 26
-  agent_ready: 25
+  agent_ready: 26
   blocked_primary_source: 1
 states:
 - jurisdiction: us
@@ -1468,17 +1468,24 @@ states:
   notes: Georgia DFCS TANF Policy Manual already ingested. Done per the prior-ingest list.
 - jurisdiction: us-gu
   name: Guam
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_pdf_state_plan
+  primary_source_url: https://dphss.guam.gov/sites/default/files/GUAM%20TANF%20State%20Plan%20Renewal%20FY%202024%20-%202026%20FINAL%20CERTIFIED%20(1).pdf
+  target_manifest: manifests/us-gu-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-gu
-    document_class: null
-    version: null
+    document_class: policy
+    version: 2026-09-11-tanf-territory-state-plan
   lead_counts: null
   candidate_sources: []
-  notes: Row added by territories pass (2026-09-11) (not on the policyengine-us lead list).
+  notes: 'Territories pass (2026-09-11). Primary source confirmed from the publisher''s own index. Inventory: 6 PDFs on the
+    Bureau of Economic Security page: Application for Public Benefits, SNAP change report forms and self-employment income
+    form (application family), FY26 SNAP Employment and Training State Plan (E&T family), FY26 TANF State Plan (the FY 2024-2026
+    certified renewal); the ''FY26 SNAP State Plan'' entry has no link; taken 1. Extraction proven 2026-09-11 (coverage complete,
+    0 missing/extra/duplicate).'
+  index_url: https://dphss.guam.gov/bureau-economic-security-bes
+  index_document_count: 6
+  taken_count: 1
 - jurisdiction: us-hi
   name: Hawaii
   queue_status: done

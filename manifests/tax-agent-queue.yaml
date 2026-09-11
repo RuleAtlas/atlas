@@ -29,7 +29,7 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  agent_ready: 19
+  agent_ready: 20
   done: 34
 states:
 - jurisdiction: us
@@ -6677,6 +6677,31 @@ states:
   notes: Current-year individual income tax material already ingested (2026-07 state income tax runs / zero-liability states);
     not re-ingested and not counted toward batch 1. Scope taken from the prior run note / local coverage artifact.
   taken_count: 0
+- jurisdiction: us-gu
+  name: Guam
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://www.guamtax.com/forms/2025GUAM1040TaxForm.pdf
+  target_manifest: manifests/us-gu-individual-income-tax-forms-ty2025.yaml
+  target_scope:
+    jurisdiction: us-gu
+    document_class: form
+    version: 2026-09-11-tax-territory-forms-ty2025
+  index_url: https://www.guamtax.com/forms/
+  index_document_count: 59
+  taken_count: 2
+  notes: 'Territories pass (2026-09-11) = the five inhabited territories: us-pr, us-gu, us-mp built here; us-vi done by pointer
+    (its publisher''s index links the IRS Form 1040); us-as needs_review (Form 390 posted only as an Excel workbook). TY2025
+    resident individual income tax return material confirmed from the Guam Department of Revenue and Taxation index. The DRT
+    Forms & Publications page lists 59 PDFs; the Income Tax section carries the Guam prints of Form 1040 and Form 1040-SR
+    for 2019-2025. Guam applies the Internal Revenue Code as the Guam Territorial Income Tax (48 U.S.C. 1421i) and DRT publishes
+    no Guam instructions booklet: its filing-season notices refer taxpayers to the IRS instructions, which are in the corpus
+    as us/form/irs/ty2025/i1040gi. Taken: the 2025 Form 1040 Guam and 2025 Form 1040-SR Guam. Extraction proven 2026-09-10.'
+  index_families:
+  - 'Guam individual income tax returns 2019-2025 (12): Form 1040 Guam and Form 1040-SR Guam per year'
+  - business privilege tax, gross receipts tax and other DRT forms and instructions (47); not taken
 - jurisdiction: us-hi
   name: Hawaii
   queue_status: done
