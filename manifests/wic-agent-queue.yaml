@@ -1,0 +1,141 @@
+version: '2026-09-10'
+document_family: wic_policy_sources
+program: WIC
+queue_status: draft
+policy:
+  canonical_pipeline: source-first
+  source_policy: primary_official_only
+  durable_artifacts:
+  - sources
+  - inventory
+  - provisions
+  - coverage
+  forbidden_sources:
+  - secondary summaries
+  - State Options Reports
+  - benefitswiki
+  - policy manuals reposted by non-government sites
+  notes:
+  - Drafted 2026-09-10 for the ten board Year 1 programs (ballmer-proposal-2026 encoding-program-list.md).
+  - 'Lead list only: PolicyEngine-US citations extracted offline with the citing path preserved, classified by axiom_corpus.corpus.source_discovery.
+    Not corpus sources; every selected document must be re-fetched from the official publisher.'
+  - The lead list under-names agency manuals and state plans. Reviewers must add them from the official publisher before the
+    queue is agent_ready.
+  - 'policyengine-us 84253b6afafb (2026-08-17); lead file: policyengine-us-committed-program-references.jsonl'
+lead_list:
+  source: policyengine-us
+  commit: 84253b6afafbb1875c65f12e654c6535744728b7
+  committed_at: '2026-08-17T17:54:20-04:00'
+  reference_file: policyengine-us-committed-program-references.jsonl
+  classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
+status_counts:
+  needs_review: 1
+states:
+- jurisdiction: us
+  name: Federal
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-wic-sources.yaml
+  target_scope:
+    jurisdiction: us
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 6
+    excluded_secondary: 3
+  candidate_sources:
+  - url: https://fns-prod.azureedge.net/sites/default/files/resource-files/WICPC2018FoodPackage-Summary.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: fns-prod.azureedge.net
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/usda/wic/wic.py
+    - policyengine-us#variables/gov/usda/wic/wic_if_takes_up.py
+  - url: https://fns-prod.azureedge.us/sites/default/files/resource-files/WICPC2018FoodPackage-1.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: fns-prod.azureedge.us
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/usda/wic/value.yaml
+  - url: https://fns.usda.gov/wic/2024-cash-value-voucher-benefit-amounts
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: fns.usda.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/usda/wic/cvb/current.yaml
+    - policyengine-us#parameters/gov/usda/wic/cvb/replaces_included_value.yaml
+  - url: https://fns.usda.gov/wic/agency/cvvb-fy26
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: fns.usda.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/usda/wic/cvb/current.yaml
+    - policyengine-us#parameters/gov/usda/wic/cvb/replaces_included_value.yaml
+  - url: https://fns.usda.gov/wic/food-packages
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: fns.usda.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/usda/wic/cvb/included_in_value.yaml
+    - policyengine-us#variables/gov/usda/wic/wic.py
+    - policyengine-us#variables/gov/usda/wic/wic_if_takes_up.py
+  - url: https://fns.usda.gov/wic/income-eligibility-guidelines-2025-26
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: fns.usda.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/usda/wic/wic_income_limit.py
+  - url: https://law.cornell.edu/cfr/text/7/246.10
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/usda/wic/is_wic_fully_breastfeeding.py
+    - policyengine-us#variables/gov/usda/wic/wic.py
+    - policyengine-us#variables/gov/usda/wic/wic_breastfeeding_infant_count.py
+  - url: https://law.cornell.edu/cfr/text/7/246.7
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/usda/wic/income/sources.yaml
+    - policyengine-us#variables/gov/usda/wic/is_wic_eligible.py
+    - policyengine-us#variables/gov/usda/wic/wic.py
+  - url: https://law.cornell.edu/uscode/text/42/1786
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/usda/wic/is_wic_at_nutritional_risk.py
+    - policyengine-us#variables/gov/usda/wic/meets_wic_categorical_eligibility.py
+    - policyengine-us#variables/gov/usda/wic/meets_wic_categorical_eligibility.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.

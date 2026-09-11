@@ -1,0 +1,898 @@
+version: '2026-09-10'
+document_family: chip_policy_sources
+program: CHIP
+queue_status: draft
+policy:
+  canonical_pipeline: source-first
+  source_policy: primary_official_only
+  durable_artifacts:
+  - sources
+  - inventory
+  - provisions
+  - coverage
+  forbidden_sources:
+  - secondary summaries
+  - State Options Reports
+  - benefitswiki
+  - policy manuals reposted by non-government sites
+  notes:
+  - Drafted 2026-09-10 for the ten board Year 1 programs (ballmer-proposal-2026 encoding-program-list.md).
+  - 'Lead list only: PolicyEngine-US citations extracted offline with the citing path preserved, classified by axiom_corpus.corpus.source_discovery.
+    Not corpus sources; every selected document must be re-fetched from the official publisher.'
+  - The lead list under-names agency manuals and state plans. Reviewers must add them from the official publisher before the
+    queue is agent_ready.
+  - 'policyengine-us 84253b6afafb (2026-08-17); lead file: policyengine-us-committed-program-references.jsonl'
+lead_list:
+  source: policyengine-us
+  commit: 84253b6afafbb1875c65f12e654c6535744728b7
+  committed_at: '2026-08-17T17:54:20-04:00'
+  reference_file: policyengine-us-committed-program-references.jsonl
+  classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
+status_counts:
+  needs_review: 18
+states:
+- jurisdiction: us
+  name: Federal
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-chip-sources.yaml
+  target_scope:
+    jurisdiction: us
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 6
+    needs_review: 12
+    excluded_secondary: 7
+  candidate_sources:
+  - url: https://ecfr.gov/current/title-42/chapter-IV/subchapter-D/part-457/subpart-E/section-457.560
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: regulation
+    host: ecfr.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/chip/chip_premium.py
+  - url: https://ecfr.gov/current/title-42/part-457/section-457.560
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: regulation
+    host: ecfr.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/cost_sharing/cap/rate.yaml
+  - url: https://ecfr.gov/current/title-42/section-457.310
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: regulation
+    host: ecfr.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/disqualifying_health_coverage.yaml
+    - policyengine-us#variables/gov/hhs/chip/has_chip_disqualifying_health_coverage.py
+  - url: https://ecfr.gov/current/title-42/section-457.320
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: regulation
+    host: ecfr.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/disqualifying_health_coverage.yaml
+    - policyengine-us#variables/gov/hhs/chip/has_chip_disqualifying_health_coverage.py
+  - url: https://ecfr.gov/current/title-45/section-146.113
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: regulation
+    host: ecfr.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/disqualifying_health_coverage.yaml
+    - policyengine-us#variables/gov/hhs/chip/has_chip_disqualifying_health_coverage.py
+  - url: https://medicaid.gov/medicaid/national-medicaid-chip-program-information/medicaid-childrens-health-insurance-program-basic-health-program-eligibility-levels
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: form
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: us-medicaid-chip-eligibility-levels
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/child/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/chip/fcep/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/chip/pregnant/income_limit.yaml
+  - url: https://alabamapublichealth.gov/perinatal/assets/al-im-reduction-plan.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: alabamapublichealth.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/fcep/al_counties.yaml
+  - url: https://ccf.georgetown.edu/2024/10/15/more-states-expanding-medicaid-chip-for-pregnant-women-including-immigrants
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: ccf.georgetown.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/fcep/al_statewide.yaml
+  - url: https://data.medicaid.gov/dataset/d7e4cccb-1c56-5b5d-acce-5e7744c6d3b4
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: data.medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/child/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/chip/pregnant/income_limit.yaml
+  - url: https://healthcare.gov/medicaid-chip/childrens-health-insurance-program
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: healthcare.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/chip/is_chip_eligible_child.py
+  - url: https://macpac.gov/publication/chip-spending-by-state
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: macpac.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/chip/chip.py
+    - policyengine-us#variables/gov/hhs/chip/chip_gross.py
+    - policyengine-us#variables/gov/hhs/chip/per_capita_chip.py
+  - url: https://macpac.gov/publication/medicaid-and-chip-income-eligibility-levels-as-a-percentage-of-the-federal-poverty-level-for-children-and-pregnant-women-by-state
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: macpac.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/fcep/income_limit.yaml
+  - url: https://medicaid.gov/CHIP/Downloads/AL-24-0031-FCEP%20and%20AL-24-0031-ABSC.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: us-cms-chip-fcep-spa-official-documents
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/fcep/al_statewide.yaml
+  - url: https://medicaid.gov/chip/chip-eligibility-enrollment
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/chip/is_chip_fcep_eligible_person.py
+  - url: https://medicaid.gov/medicaid/financial-management/state-expenditure-reporting-for-medicaid-chip/expenditure-reports-mbescbes
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/chip/chip_gross.py
+    - policyengine-us#variables/gov/hhs/chip/per_capita_chip_gross.py
+  - url: https://medicaid.gov/sites/default/files/2023-04/AL-23-0026-RIM2.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/fcep/al_counties.yaml
+  - url: https://ssa.gov/OP_Home/ssact/title21/2110.htm
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/chip/chip_category.py
+    - policyengine-us#variables/gov/hhs/chip/is_chip_eligible_child.py
+    - policyengine-us#variables/gov/hhs/chip/is_chip_eligible_pregnant.py
+  - url: https://web.archive.org/web/20240227134117if_/https://www.alabamapublichealth.gov/allbabies/assets/allbabies-map.pdf
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: web.archive.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/fcep/al_counties.yaml
+  - url: https://kff.org/affordable-care-act/state-indicator/medicaid-and-chip-income-eligibility-limits-for-pregnant-women-as-a-percent-of-the-federal-poverty-level
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/chip/chip_category.py
+    - policyengine-us#variables/gov/hhs/chip/is_chip_eligible_pregnant.py
+    - policyengine-us#variables/gov/hhs/chip/is_chip_fcep_eligible_person.py
+  - url: https://kff.org/affordable-care-act/state-indicator/medicaid-and-chip-income-eligibility-limits-for-pregnant-women-as-a-percent-of-the-federal-poverty-level?currentTimeframe=0&sortModel=%7B%22colId%22%3A%22Location%22%2C%22sort%22%3A%22asc%22%7D
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/fcep/income_limit.yaml
+    - policyengine-us#parameters/gov/hhs/chip/pregnant/income_limit.yaml
+  - url: https://kff.org/medicaid/state-indicator/separate-childrens-health-insurance-program-chip-income-eligibility-limits-for-children?currentTimeframe=0&selectedDistributions=january-2018--january-2021--january-2025&sortModel=%7B%22colId%22%3A%22Location%22%2C%22sort%22%3A%22asc%22%7D
+    source_status: analytical_or_report
+    disposition: excluded_secondary
+    document_class: other
+    host: kff.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/child/income_limit.yaml
+  - url: https://law.cornell.edu/cfr/text/42/457.10
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/chip/is_chip_fcep_eligible_person.py
+  - url: https://law.cornell.edu/uscode/text/42/1397ee
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/chip/chip_federal_cost.py
+    - policyengine-us#variables/gov/hhs/chip/chip_federal_share.py
+    - policyengine-us#variables/gov/hhs/chip/chip_state_cost.py
+  - url: https://law.cornell.edu/uscode/text/42/1397jj
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/chip/child/max_age.yaml
+  - url: https://law.cornell.edu/uscode/text/42/chapter-7/subchapter-XXI
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/chip/chip_enrolled.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-al
+  name: Alabama
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-al-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-al
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 2
+  candidate_sources:
+  - url: https://alabamapublichealth.gov/allkids/assets/allkidsincomeguidelines.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: alabamapublichealth.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/al/hhs/chip/enrollment_fee/per_child.yaml
+  - url: https://alabamapublichealth.gov/allkids/premiums-and-copays.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: alabamapublichealth.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/al/hhs/chip/enrollment_fee/family_cap.yaml
+    - policyengine-us#parameters/gov/states/al/hhs/chip/enrollment_fee/per_child.yaml
+    - policyengine-us#variables/gov/states/al/hhs/chip/al_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-ct
+  name: Connecticut
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-ct-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-ct
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 2
+  candidate_sources:
+  - url: https://portal.ct.gov/-/media/hh/pdf/husky-health-monthly-income-chart-march-1-2025.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: portal.ct.gov
+    jurisdiction_inferred: us-ct
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ct/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ct/hhs/chip/premium/per_child.yaml
+    - policyengine-us#variables/gov/states/ct/hhs/chip/ct_chip_premium.py
+  - url: https://portal.ct.gov/dss/archived-folder/health-programs-overview/husky-b
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: portal.ct.gov
+    jurisdiction_inferred: us-ct
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ct/hhs/chip/premium/per_child.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-de
+  name: Delaware
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-de-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-de
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 2
+  candidate_sources:
+  - url: https://dhss.delaware.gov/dmma/dhcpflyer
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dhss.delaware.gov
+    jurisdiction_inferred: us-de
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/de/hhs/chip/premium.yaml
+    - policyengine-us#variables/gov/states/de/hhs/chip/de_chip_premium.py
+  - url: https://nashp.org/delaware-chip-fact-sheet
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: nashp.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/de/hhs/chip/premium.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-fl
+  name: Florida
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-fl-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-fl
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 1
+  candidate_sources:
+  - url: https://floridakidcare.org/docs/cost/florida_kidcare_income_guidelines.pdf
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: floridakidcare.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/fl/hhs/chip/premium.yaml
+    - policyengine-us#variables/gov/states/fl/hhs/chip/fl_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-ga
+  name: Georgia
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-ga-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-ga
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 1
+    needs_review: 2
+  candidate_sources:
+  - url: https://mmis.georgia.gov/portal/Portals/0/StaticContent/Public/ALL/NOTICES/Covid-19-%20Spring%20Medicaid%20Fair%202021%2020210325165058.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: guidance
+    host: mmis.georgia.gov
+    jurisdiction_inferred: us-ga
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ga/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ga/hhs/chip/premium/per_child.yaml
+  - url: https://dch.georgia.gov/announcement/2024-08-13/peachcare-kidsr-co-payments-and-premiums-resume-oct-1-2024
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: dch.georgia.gov
+    jurisdiction_inferred: us-ga
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ga/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ga/hhs/chip/premium/per_child.yaml
+    - policyengine-us#variables/gov/states/ga/hhs/chip/ga_chip_premium.py
+  - url: https://pamms.dhs.ga.gov/dfcs/medicaid/2194
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: pamms.dhs.ga.gov
+    jurisdiction_inferred: us-ga
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ga/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ga/hhs/chip/premium/min_age.yaml
+    - policyengine-us#parameters/gov/states/ga/hhs/chip/premium/per_child.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-ia
+  name: Iowa
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-ia-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-ia
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 1
+  candidate_sources:
+  - url: https://hhs.iowa.gov/media/10189/download?inline=
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: hhs.iowa.gov
+    jurisdiction_inferred: us-ia
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ia/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ia/hhs/chip/premium/per_child.yaml
+    - policyengine-us#variables/gov/states/ia/hhs/chip/ia_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-id
+  name: Idaho
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-id-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-id
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 1
+  candidate_sources:
+  - url: https://medicaid.gov/CHIP/Downloads/ID/IDCurrentFactsheet.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/id/hhs/chip/premium/per_child.yaml
+    - policyengine-us#variables/gov/states/id/hhs/chip/id_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-il
+  name: Illinois
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-il-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-il
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 1
+  candidate_sources:
+  - url: https://hfs.illinois.gov/medicalprograms/allkids/income.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: hfs.illinois.gov
+    jurisdiction_inferred: us-il
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/il/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/il/hhs/chip/premium/per_child.yaml
+    - policyengine-us#variables/gov/states/il/hhs/chip/il_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-in
+  name: Indiana
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-in-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-in
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 1
+  candidate_sources:
+  - url: https://in.gov/medicaid/members/member-programs/hhw-package-c-medworks-premium
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: in.gov
+    jurisdiction_inferred: us-in
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/in/hhs/chip/premium/rate_one_child.yaml
+    - policyengine-us#parameters/gov/states/in/hhs/chip/premium/rate_two_or_more_children.yaml
+    - policyengine-us#variables/gov/states/in/hhs/chip/in_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-ks
+  name: Kansas
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-ks-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-ks
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 1
+  candidate_sources:
+  - url: https://klrd.gov/2026/03/02/briefing-book-2026-childrens-eligibility-for-chip-mchip-medicaid-and-hcbs-including-information-on-premium-requirements-for-chip
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: form
+    host: klrd.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ks/hhs/chip/premium.yaml
+    - policyengine-us#variables/gov/states/ks/hhs/chip/ks_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-la
+  name: Louisiana
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-la-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-la
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 1
+  candidate_sources:
+  - url: https://ldh.la.gov/faq/category/19
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ldh.la.gov
+    jurisdiction_inferred: us-la
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/la/hhs/chip/premium.yaml
+    - policyengine-us#variables/gov/states/la/hhs/chip/la_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-ma
+  name: Massachusetts
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-ma-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-ma
+    document_class: null
+    version: null
+  lead_counts:
+    excluded_secondary: 1
+  candidate_sources:
+  - url: https://law.cornell.edu/regulations/massachusetts/130-CMR-506-011
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ma/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ma/hhs/chip/premium/per_child.yaml
+    - policyengine-us#variables/gov/states/ma/hhs/chip/ma_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-mi
+  name: Michigan
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-mi-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-mi
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 1
+  candidate_sources:
+  - url: https://michigan.gov/mdhhs/assistance-programs/healthcare/childrenteens/michild/qanda/michild-program-general-information
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: form
+    host: michigan.gov
+    jurisdiction_inferred: us-mi
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/mi/hhs/chip/premium.yaml
+    - policyengine-us#variables/gov/states/mi/hhs/chip/mi_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-mo
+  name: Missouri
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-mo-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-mo
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 1
+    needs_review: 5
+  candidate_sources:
+  - url: https://dssmanuals.mo.gov/wp-content/uploads/2019/05/appendix-e.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: dssmanuals.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/fpl_floor/tier_1.yaml
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/fpl_floor/tier_2.yaml
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/fpl_floor/tier_3.yaml
+  - url: https://mydss.mo.gov/childrens-health-insurance-program-chip-premium-chart
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: mydss.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/tier_1.yaml
+    - policyengine-us#variables/gov/states/mo/hhs/chip/mo_chip_premium.py
+  - url: https://revisor.mo.gov/main/OneSection.aspx?section=208.640
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: revisor.mo.gov
+    jurisdiction_inferred: us-mo
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/fpl_floor/tier_1.yaml
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/fpl_floor/tier_2.yaml
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/fpl_floor/tier_3.yaml
+  - url: https://web.archive.org/web/20210226122055/https://dssmanuals.mo.gov/wp-content/uploads/2019/05/appendix-e.pdf
+    source_status: unknown
+    disposition: needs_review
+    document_class: manual
+    host: web.archive.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/tier_1.yaml
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/tier_2.yaml
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/tier_3.yaml
+  - url: https://web.archive.org/web/20250202220119/https://dssmanuals.mo.gov/wp-content/uploads/2019/05/appendix-e.pdf
+    source_status: unknown
+    disposition: needs_review
+    document_class: manual
+    host: web.archive.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/tier_1.yaml
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/tier_2.yaml
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/tier_3.yaml
+  - url: https://web.archive.org/web/20250623210133/https://dssmanuals.mo.gov/wp-content/uploads/2019/05/appendix-e.pdf
+    source_status: unknown
+    disposition: needs_review
+    document_class: manual
+    host: web.archive.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/tier_1.yaml
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/tier_2.yaml
+    - policyengine-us#parameters/gov/states/mo/hhs/chip/premium/tier_3.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-ny
+  name: New York
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-ny-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-ny
+    document_class: null
+    version: null
+  lead_counts:
+    needs_review: 7
+  candidate_sources:
+  - url: https://health.ny.gov/health_care/child_health_plus/eligibility_and_cost.htm
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: health.ny.gov
+    jurisdiction_inferred: us-ny
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/per_child.yaml
+    - policyengine-us#variables/gov/states/ny/hhs/chip/ny_chip_premium.py
+  - url: https://info.nystateofhealth.ny.gov/sites/default/files/2026%20Income%20Levels_for%20Medicaid,%20CHPlus%20&%20EP.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: info.nystateofhealth.ny.gov
+    jurisdiction_inferred: us-ny
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/per_child.yaml
+  - url: https://medicaid.gov/CHIP/Downloads/NY-22-0033-CHIP.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: medicaid.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/per_child.yaml
+  - url: https://mmcor.phpcoalition.org/docs/Rate%20Setting%20Documents/CY25/NY%20CY25%20CHPlus%20Rate%20Presentation%20-%202024.11.08.pdf
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: mmcor.phpcoalition.org
+    jurisdiction_inferred: us-ny
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/per_child.yaml
+  - url: https://mmcor.phpcoalition.org/docs/Rate%20Setting%20Documents/CY26/NY%20CY26%20CHPlus%20Rate%20Presentation%20-%202025.11.10_FINAL.pdf
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: mmcor.phpcoalition.org
+    jurisdiction_inferred: us-ny
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/per_child.yaml
+  - url: https://web.archive.org/web/20200118155511/https://www.health.ny.gov/health_care/child_health_plus/eligibility_and_cost.htm
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: web.archive.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/per_child.yaml
+  - url: https://web.archive.org/web/20230207084107/https://www.health.ny.gov/health_care/child_health_plus/eligibility_and_cost.htm
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: web.archive.org
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/family_cap.yaml
+    - policyengine-us#parameters/gov/states/ny/hhs/chip/premium/per_child.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-tx
+  name: Texas
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-tx-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-tx
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 2
+  candidate_sources:
+  - url: https://hhs.texas.gov/handbooks/texas-works-handbook/d-1820-enrollment-fees
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: hhs.texas.gov
+    jurisdiction_inferred: us-tx
+    already_registered: us-tx-manuals
+    discovered_via:
+    - policyengine-us#parameters/gov/states/tx/hhs/chip/enrollment_fee.yaml
+    - policyengine-us#variables/gov/states/tx/hhs/chip/tx_chip_premium.py
+  - url: https://hhs.texas.gov/sites/default/files/documents/laws-regulations/handbooks/umcm/6-3.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: regulation
+    host: hhs.texas.gov
+    jurisdiction_inferred: us-tx
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/tx/hhs/chip/enrollment_fee.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-wi
+  name: Wisconsin
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-wi-chip-sources.yaml
+  target_scope:
+    jurisdiction: us-wi
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 1
+  candidate_sources:
+  - url: https://emhandbooks.wisconsin.gov/bcplus/policyfiles/6/48.1.htm
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: emhandbooks.wisconsin.gov
+    jurisdiction_inferred: us-wi
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/wi/hhs/chip/premium/per_child.yaml
+    - policyengine-us#variables/gov/states/wi/hhs/chip/wi_chip_premium.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.

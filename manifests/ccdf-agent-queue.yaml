@@ -1,0 +1,256 @@
+version: '2026-09-10'
+document_family: ccdf_policy_sources
+program: CCDF
+queue_status: draft
+policy:
+  canonical_pipeline: source-first
+  source_policy: primary_official_only
+  durable_artifacts:
+  - sources
+  - inventory
+  - provisions
+  - coverage
+  forbidden_sources:
+  - secondary summaries
+  - State Options Reports
+  - benefitswiki
+  - policy manuals reposted by non-government sites
+  notes:
+  - Drafted 2026-09-10 for the ten board Year 1 programs (ballmer-proposal-2026 encoding-program-list.md).
+  - 'Lead list only: PolicyEngine-US citations extracted offline with the citing path preserved, classified by axiom_corpus.corpus.source_discovery.
+    Not corpus sources; every selected document must be re-fetched from the official publisher.'
+  - The lead list under-names agency manuals and state plans. Reviewers must add them from the official publisher before the
+    queue is agent_ready.
+  - 'policyengine-us 84253b6afafb (2026-08-17); lead file: policyengine-us-committed-program-references.jsonl'
+lead_list:
+  source: policyengine-us
+  commit: 84253b6afafbb1875c65f12e654c6535744728b7
+  committed_at: '2026-08-17T17:54:20-04:00'
+  reference_file: policyengine-us-committed-program-references.jsonl
+  classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
+status_counts:
+  needs_review: 2
+states:
+- jurisdiction: us
+  name: Federal
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-ccdf-sources.yaml
+  target_scope:
+    jurisdiction: us
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 2
+    needs_review: 7
+    excluded_secondary: 2
+  candidate_sources:
+  - url: https://acf.hhs.gov/occ/form/approved-ccdf-plans-fy-2025-2027
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: form
+    host: acf.hhs.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/ccdf/child_care_subsidy_programs.yaml
+  - url: https://congress.gov/113/statute/STATUTE-128/STATUTE-128-Pg1971.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: statute
+    host: congress.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/ccdf/income_limit_smi.yaml
+  - url: https://congress.gov/bill/101st-congress/senate-bill/3209/text
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: congress.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/ccdf/asset_limit.yaml
+    - policyengine-us#parameters/gov/hhs/ccdf/income_limit_smi.yaml
+  - url: https://congress.gov/bill/113th-congress/senate-bill/1086/text
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: congress.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/ccdf/asset_limit.yaml
+  - url: https://docs.google.com/spreadsheets/d/1WkApq1lljpm73kZepN8LmjwONJj-e3llG9p4PBkgYf8/edit
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: docs.google.com
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/ccdf/copay_percent.yaml
+  - url: https://ocfs.ny.gov/main/policies/external/ocfs_2019/LCM/19-OCFS-LCM-23.docx
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ocfs.ny.gov
+    jurisdiction_inferred: us-ny
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/ccdf/county_cluster.yaml
+  - url: https://ocfs.ny.gov/main/policies/external/ocfs_2019/LCM/19-OCFS-LCM-23.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ocfs.ny.gov
+    jurisdiction_inferred: us-ny
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/ccdf/ccdf_age_group.py
+    - policyengine-us#variables/gov/hhs/ccdf/ccdf_duration_of_care.py
+  - url: https://ocfs.ny.gov/main/reports/2019-Child-Care-Market-Rate-Survey.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ocfs.ny.gov
+    jurisdiction_inferred: us-ny
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/ccdf/amount.yaml
+  - url: https://ocfs.ny.gov/programs/childcare/stateplan/assets/2022-plan/FFY2022-2024-CCDF-Plan.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ocfs.ny.gov
+    jurisdiction_inferred: us-ny
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/hhs/ccdf/age_limit.yaml
+    - policyengine-us#variables/gov/hhs/ccdf/spm_unit_total_ccdf_copay.py
+  - url: https://law.cornell.edu/cfr/text/45/98.20
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/ccdf/is_ccdf_immigration_eligible_child.py
+  - url: https://law.cornell.edu/uscode/text/8/1641
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/hhs/ccdf/is_ccdf_immigration_eligible_child.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
+- jurisdiction: us-in
+  name: Indiana
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-in-ccdf-sources.yaml
+  target_scope:
+    jurisdiction: us-in
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 2
+    needs_review: 7
+  candidate_sources:
+  - url: https://in.gov/fssa/carefinder/files/CCDF-Policy-Manual.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: in.gov
+    jurisdiction_inferred: us-in
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/assets/limit.yaml
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/eligibility/child_age_limit.yaml
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/eligibility/disabled_child_age_limit.yaml
+  - url: https://in.gov/fssa/carefinder/files/CCDF-Provider-Manual.pdf
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: in.gov
+    jurisdiction_inferred: us-in
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/age_group/infant_max_months.yaml
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/age_group/kindergarten_max_months.yaml
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/age_group/preschool_max_months.yaml
+  - url: https://content.govdelivery.com/accounts/INOECOSL/bulletins/366774c
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: content.govdelivery.com
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/income/get_on_fpg_rate.yaml
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/income/stay_on_smi_rate.yaml
+  - url: https://content.govdelivery.com/accounts/INOECOSL/bulletins/3f4db24
+    source_status: unknown
+    disposition: needs_review
+    document_class: other
+    host: content.govdelivery.com
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/rates/full_time.yaml
+  - url: https://in.gov/fssa/carefinder/files/CCDFSlidingFeeSchedule_withCopays_2026.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: in.gov
+    jurisdiction_inferred: us-in
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/copay/fee_factor.yaml
+    - policyengine-us#variables/gov/states/in/fssa/ccdf/copay/in_ccdf_copay.py
+  - url: https://in.gov/fssa/carefinder/files/Income-Get-on-CCDF.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: in.gov
+    jurisdiction_inferred: us-in
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/income/get_on_fpg_rate.yaml
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/income/sources.yaml
+  - url: https://in.gov/fssa/carefinder/files/Income-Stay-On-CCDF.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: in.gov
+    jurisdiction_inferred: us-in
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/income/stay_on_smi_rate.yaml
+  - url: https://in.gov/fssa/carefinder/files/MarionReimbRateCCDF.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: in.gov
+    jurisdiction_inferred: us-in
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/rates/full_time.yaml
+  - url: https://in.gov/fssa/carefinder/files/Updated-Child-Care-Voucher-Rates-.pdf
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: in.gov
+    jurisdiction_inferred: us-in
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/states/in/fssa/ccdf/rates/full_time.yaml
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.

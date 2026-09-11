@@ -1,0 +1,567 @@
+version: '2026-09-10'
+document_family: ssi_policy_sources
+program: SSI
+queue_status: draft
+policy:
+  canonical_pipeline: source-first
+  source_policy: primary_official_only
+  durable_artifacts:
+  - sources
+  - inventory
+  - provisions
+  - coverage
+  forbidden_sources:
+  - secondary summaries
+  - State Options Reports
+  - benefitswiki
+  - policy manuals reposted by non-government sites
+  notes:
+  - Drafted 2026-09-10 for the ten board Year 1 programs (ballmer-proposal-2026 encoding-program-list.md).
+  - 'Lead list only: PolicyEngine-US citations extracted offline with the citing path preserved, classified by axiom_corpus.corpus.source_discovery.
+    Not corpus sources; every selected document must be re-fetched from the official publisher.'
+  - The lead list under-names agency manuals and state plans. Reviewers must add them from the official publisher before the
+    queue is agent_ready.
+  - 'policyengine-us 84253b6afafb (2026-08-17); lead file: policyengine-us-committed-program-references.jsonl'
+lead_list:
+  source: policyengine-us
+  commit: 84253b6afafbb1875c65f12e654c6535744728b7
+  committed_at: '2026-08-17T17:54:20-04:00'
+  reference_file: policyengine-us-committed-program-references.jsonl
+  classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
+status_counts:
+  needs_review: 1
+states:
+- jurisdiction: us
+  name: Federal
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: manifests/us-ssi-sources.yaml
+  target_scope:
+    jurisdiction: us
+    document_class: null
+    version: null
+  lead_counts:
+    ready_for_manifest: 4
+    needs_review: 31
+    excluded_secondary: 16
+  candidate_sources:
+  - url: https://federalregister.gov/documents/2024/03/27/2024-06464/omitting-food-from-in-kind-support-and-maintenance-calculations
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: rulemaking
+    host: federalregister.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/ism/food_counts.yaml
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_receives_food_from_others.py
+  - url: https://hhs.texas.gov/handbooks/medicaid-elderly-people-disabilities-handbook/h-6000-co-payment-ssi-cases
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: manual
+    host: hhs.texas.gov
+    jurisdiction_inferred: us-tx
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/amount/institutional/couple.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/amount/institutional/individual.yaml
+  - url: https://ssa.gov/oact/cola/SSIamts.html
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: guidance
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/amount/couple.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/amount/individual.yaml
+  - url: https://ssa.gov/oact/cola/studentEIE.html
+    source_status: primary_official
+    disposition: ready_for_manifest
+    document_class: guidance
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://github.com/PolicyEngine/policyengine-us/issues/2494
+    source_status: unknown
+    disposition: needs_review
+    document_class: manual
+    host: github.com
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/deemed/from_ineligible_parent/ssi_unearned_income_deemed_from_ineligible_parent.py
+  - url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0500520001
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_lives_in_medical_treatment_facility.py
+  - url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0500520011
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_medicaid_pays_majority_of_care.py
+  - url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0500835200
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_lives_in_another_persons_household.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_others_pay_all_meals.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_receives_shelter_from_others_in_household.py
+  - url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0500835300
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/ism/pmv_fbr_fraction.yaml
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_receives_outside_shelter_support.py
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0500501154
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/ssi_couple_computation_applies.py
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0500502100
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/eligibility/status/qualified_noncitizen_status.yaml
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/is_ssi_qualified_noncitizen.py
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0500502135
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/sources/qualifying_quarters_threshold.yaml
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0500835300
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/ism/ssi_pmv_amount.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/ism/ssi_shelter_support_value.py
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0501110000
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/resources/meets_ssi_resource_test.py
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0501140000
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/resources/ssi_countable_resources.py
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0501140200
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/eligibility/resources/countable.yaml
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0501140220
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/eligibility/resources/countable.yaml
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0501140240
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/eligibility/resources/countable.yaml
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0501140250
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/eligibility/resources/countable.yaml
+  - url: https://secure.ssa.gov/poms.nsf/lnx/0501320150
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: secure.ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/ism/ssi_pmv_amount.py
+  - url: https://ssa.gov/OACT/ssir/SSI12/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/OACT/ssir/SSI24/V_E_WorkIncentives.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/OP_Home/cfr20/416/416-0971.htm
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/ssi_engaged_in_sga.py
+  - url: https://ssa.gov/oact/ssir/SSI11/Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI13/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI14/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI15/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI16/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI17/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI18/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI19/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI20/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI21/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI22/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://ssa.gov/oact/ssir/SSI23/V_B_Exclusions.html
+    source_status: primary_official
+    disposition: needs_review
+    document_class: other
+    host: ssa.gov
+    jurisdiction_inferred: us
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://law.cornell.edu/cfr/text/20/416.1110
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/sources/earned.yaml
+  - url: https://law.cornell.edu/cfr/text/20/416.1112
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/age_limit.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/amount.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/income/exclusions/blind_or_disabled_working_student/cap.yaml
+  - url: https://law.cornell.edu/cfr/text/20/416.1121
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/sources/unearned.yaml
+  - url: https://law.cornell.edu/cfr/text/20/416.1130
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/ism/food_counts.yaml
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/ism/ssi_in_kind_support_and_maintenance.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_receives_food_from_others.py
+  - url: https://law.cornell.edu/cfr/text/20/416.1131
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/amount/one_third_reduction_rate.yaml
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_federal_living_arrangement.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_others_pay_all_meals.py
+  - url: https://law.cornell.edu/cfr/text/20/416.1132
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_federal_living_arrangement.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_lives_in_another_persons_household.py
+  - url: https://law.cornell.edu/cfr/text/20/416.1140
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/income/ism/pmv_fbr_fraction.yaml
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/ism/ssi_in_kind_support_and_maintenance.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/ism/ssi_pmv_amount.py
+  - url: https://law.cornell.edu/cfr/text/20/416.1141
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/ism/ssi_pmv_applies.py
+  - url: https://law.cornell.edu/cfr/text/20/416.1163
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/deemed/from_ineligible_spouse/is_ssi_spousal_deeming_applies.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/deemed/from_ineligible_spouse/ssi_earned_income_deemed_from_ineligible_spouse.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/deemed/from_ineligible_spouse/ssi_income_deemed_from_ineligible_spouse.py
+  - url: https://law.cornell.edu/cfr/text/20/416.1165
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/deemed/from_ineligible_parent/ssi_unearned_income_deemed_from_ineligible_parent.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/deemed/from_ineligible_parent/ssi_unearned_income_deemed_from_ineligible_parent.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_federal_living_arrangement.py
+  - url: https://law.cornell.edu/cfr/text/20/416.1205
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/eligibility/resources/limit/couple.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/eligibility/resources/limit/individual.yaml
+  - url: https://law.cornell.edu/cfr/text/20/416.202
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/eligibility/aged_threshold.yaml
+  - url: https://law.cornell.edu/cfr/text/20/416.414
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: regulation
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/amount/medical_facility.yaml
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_federal_living_arrangement.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/ssi_lives_in_medical_treatment_facility.py
+  - url: https://law.cornell.edu/uscode/text/42/1382
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/amount/institutional/couple.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/amount/institutional/individual.yaml
+    - policyengine-us#parameters/gov/ssa/ssi/amount/medical_facility.yaml
+  - url: https://law.cornell.edu/uscode/text/42/1382a
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#parameters/gov/ssa/ssi/amount/one_third_reduction_rate.yaml
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/income/ssi_countable_income.py
+  - url: https://law.cornell.edu/uscode/text/42/1382c
+    source_status: secondary_mirror
+    disposition: excluded_secondary
+    document_class: statute
+    host: law.cornell.edu
+    jurisdiction_inferred: null
+    already_registered: null
+    discovered_via:
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/is_ssi_aged_blind_disabled.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/is_ssi_disabled.py
+    - policyengine-us#variables/gov/ssa/ssi/eligibility/status/is_ssi_eligible_spouse.py
+  notes: Drafted from the lead list; a reviewer must confirm the primary official source, add agency manuals the lead list
+    does not cite, set source_kind and target_scope, then move queue_status to agent_ready.
