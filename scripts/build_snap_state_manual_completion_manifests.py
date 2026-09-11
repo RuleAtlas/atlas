@@ -132,13 +132,17 @@ def registered_citation_paths(*manifests: str) -> set[str]:
     return paths
 
 
-def corpus_citation_paths(corpus_base: Path | None, jurisdiction: str) -> set[str]:
+def corpus_citation_paths(corpus_base: Path | None, jurisdiction: str, *, exclude_version: str | None = None) -> set[str]:
     """Every citation_path in every provisions JSONL of the jurisdiction (all document
-    classes, all versions). Empty when no corpus base is available (sparse worktree)."""
+    classes, all versions). Empty when no corpus base is available (sparse worktree).
+    ``exclude_version`` leaves out the scope a builder is regenerating, so re-running a
+    generator after its own extraction does not count its own rows as collisions."""
     if corpus_base is None:
         return set()
     paths: set[str] = set()
     for jsonl in sorted((corpus_base / "provisions" / jurisdiction).glob("*/*.jsonl")):
+        if exclude_version and jsonl.stem == exclude_version:
+            continue
         with jsonl.open() as handle:
             for line in handle:
                 if line.strip():
@@ -684,6 +688,25 @@ TERRITORY_BROWSER_UA = (
 )
 
 
+def fetch_territory_index(url: str, *, must_contain: str, attempts: int = 4) -> str:
+    """GET a territory publisher index with a cookie-keeping browser session; retry when the host
+    answers a transient redirect loop (serviciosenlinea.adsef.pr.gov, ASP.NET) or a page that lacks
+    the expected link text (cnminap.gov.mp occasionally serves a truncated page). TLS stays on."""
+    last: Exception | None = None
+    for attempt in range(attempts):
+        session = requests.Session()
+        session.headers.update({"User-Agent": TERRITORY_BROWSER_UA})
+        try:
+            page = fetch(url, session=session)
+            if must_contain in page:
+                return page
+            last = RuntimeError(f"{url}: page without {must_contain!r} ({len(page)} bytes)")
+        except requests.RequestException as exc:  # TooManyRedirects, HTTPError, timeouts
+            last = exc
+        time.sleep(3 * (attempt + 1))
+    raise RuntimeError(f"territory index fetch failed after {attempts} attempts: {last}")
+
+
 def build_pr_nap() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Puerto Rico NAP (Programa de Asistencia Nutricional, PAN): ADSEF's Reglamentos page lists the two
     adopted eligibility regulations, PAN 8684 and TANF 7653. Reglamento 8684 (28 de diciembre de 2015),
@@ -692,11 +715,7 @@ def build_pr_nap() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     The 2023 NAP State Plan of Operations on the same page (scanned, 86 pages) and the FNA-hosted FY 2026
     plan approval letter are the plan family, recorded and not taken; the TANF regulation is taken by the
     TANF territories row."""
-    # serviciosenlinea.adsef.pr.gov (ASP.NET) sometimes answers a session-less client with a redirect
-    # loop; a cookie-keeping session with a browser User-Agent reads the page as a browser would.
-    session = requests.Session()
-    session.headers.update({"User-Agent": TERRITORY_BROWSER_UA})
-    page = fetch(PR_ADSEF_REGLAMENTOS, session=session)
+    page = fetch_territory_index(PR_ADSEF_REGLAMENTOS, must_contain="ReglamentoPAN")
     items = links(page, PR_ADSEF_REGLAMENTOS)
     pdfs = list({h: (h, t) for h, t in items if h.lower().endswith(".pdf")}.values())  # unique by href
     target = [h for h, t in pdfs if t.strip().upper().startswith("PAN")]
@@ -747,16 +766,14 @@ def build_mp_nap() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     application and checklist and the Summer EBT waiver; the Application Center lists forms, the 2021
     Nutrition Assistance Program Guide (self-screening leaflet) and the 2025 applicant orientation paper.
     The MOU is taken (policy, scanned image-only PDF, page OCR); the leaflets are participant guidance."""
-    session = requests.Session()
-    session.headers.update({"User-Agent": TERRITORY_BROWSER_UA})
-    page = fetch(MP_NAP_INDEX, session=session)
+    page = fetch_territory_index(MP_NAP_INDEX, must_contain="Memorandum of Understanding")
     items = links(page, MP_NAP_INDEX)
     pdfs = [(h, t) for h, t in items if h.lower().endswith(".pdf")]
     target = [h for h, t in pdfs if "Memorandum of Understanding" in t]
     if len(target) != 1:
         raise RuntimeError(f"expected one MOU link on the CNMI NAP home page, found {target}")
     url = target[0].replace("http://", "https://", 1)
-    apps = fetch(MP_NAP_INDEX + "application-center/", session=session)
+    apps = fetch_territory_index(MP_NAP_INDEX + "application-center/", must_contain="NAP-Application")
     app_pdfs = {h for h, _t in links(apps, MP_NAP_INDEX) if h.lower().endswith(".pdf")}
     families = {
         "nap_block_grant_mou_pdf": {"found": 1, "taken": 1},
@@ -1588,7 +1605,7 @@ def main() -> int:
         if not docs:
             print(f"{jur}: no documents found; index layout changed?", file=sys.stderr)
             return 1
-        in_corpus = corpus_citation_paths(corpus_base, jur)
+        in_corpus = corpus_citation_paths(corpus_base, jur, exclude_version=info.get("version", VERSION))
         skipped = sorted(d["citation_path"] for d in docs if d["citation_path"] in in_corpus)
         if skipped:
             docs = [d for d in docs if d["citation_path"] not in in_corpus]

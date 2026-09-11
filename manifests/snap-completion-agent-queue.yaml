@@ -571,6 +571,35 @@ states:
     TOC edition) revised BEM 106, 230B, 554 and 630, BAM 220 and 401E, both TOCs and the log (9 revised editions); RFT 000
     (RFB 2026-006, 5-1-2026) and RFS 000 (RFB 2026-003, 1-1-2026) are the released editions. Their citation paths exist, so
     a superseding MI scope is needed. #680''s 196 ''captured'' is the document count; the manual is complete.'
+- jurisdiction: us-mp
+  name: Northern Mariana Islands
+  queue_status: agent_ready
+  source_kind: official_pdf_block_grant_mou
+  primary_source_url: https://cnminap.gov.mp/
+  target_manifest: manifests/us-mp-nap-mou-fy2025.yaml
+  target_scope:
+    jurisdiction: us-mp
+    document_class: policy
+    version: 2026-09-11-snap-nap-mou
+  index_url: https://cnminap.gov.mp/
+  index_document_count: 27
+  taken_count: 1
+  index_families:
+    nap_block_grant_mou_pdf:
+      found: 1
+      taken: 1
+    disaster_nap_application_and_checklist_pdf:
+      found: 2
+      taken: 0
+    summer_ebt_waiver_pdf:
+      found: 1
+      taken: 0
+    application_center_forms_guides_and_reports_pdf:
+      found: 23
+      taken: 0
+  notes: 'Territories pass (2026-09-11): 1 documents taken from the publisher''s own index (27 documents inventoried across
+    4 families; 1 taken; citation paths checked against every us-mp provisions file in /Users/pavelmakarchuk/axiom-corpus/data/corpus).
+    Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-11-territories-ten-programs.md.'
 - jurisdiction: us-mt
   name: Montana
   queue_status: done
@@ -904,6 +933,38 @@ states:
     edition (no 10012026 page yet, HTTP 404), and the three dependency-chapter API responses are content-identical to the
     released files. D-4-C''s citation path exists, so a superseding OK policy scope is needed. Nothing new to take. #680''s
     87 ''captured'' is 77 sections plus the policy rows.'
+- jurisdiction: us-pr
+  name: Puerto Rico
+  queue_status: agent_ready
+  source_kind: official_pdf_regulation
+  primary_source_url: https://serviciosenlinea.adsef.pr.gov/sobre-adsef/reglamento
+  target_manifest: manifests/us-pr-nap-eligibility-regulation.yaml
+  target_scope:
+    jurisdiction: us-pr
+    document_class: regulation
+    version: 2026-09-11-snap-nap-regulation
+  index_url: https://serviciosenlinea.adsef.pr.gov/sobre-adsef/reglamento
+  index_document_count: 16
+  taken_count: 1
+  index_families:
+    adsef_reglamento_pdf:
+      found: 2
+      taken: 1
+    nap_state_plan_of_operations_pdf:
+      found: 1
+      taken: 0
+    other_program_state_plan_pdf:
+      found: 2
+      taken: 0
+    application_and_certification_form_pdf:
+      found: 8
+      taken: 0
+    public_notice_and_rfp_pdf:
+      found: 3
+      taken: 0
+  notes: 'Territories pass (2026-09-11): 1 documents taken from the publisher''s own index (16 documents inventoried across
+    5 families; 1 taken; citation paths checked against every us-pr provisions file in /Users/pavelmakarchuk/axiom-corpus/data/corpus).
+    Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-11-territories-ten-programs.md.'
 - jurisdiction: us-tn
   name: Tennessee
   queue_status: done
@@ -1134,4 +1195,4 @@ states:
 status_counts:
   done: 20
   blocked_primary_source: 6
-  agent_ready: 5
+  agent_ready: 7
