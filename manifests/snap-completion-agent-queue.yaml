@@ -475,6 +475,21 @@ states:
     released 144c609_0.docx; its citation path us-me/regulation/dhhs/ofi/chapter-609 already exists, so a completion scope
     cannot carry it and a superseding ME rules scope is needed instead. #680''s 2 ''captured'' is a document count (two rulebooks),
     not a section count. Nothing new to take here.'
+  superseding_scope:
+    jurisdiction: us-me
+    document_class: regulation
+    version: 2026-09-11-me-snap-manual-supersede
+    supersedes: 2026-07-17-me-snap-rules
+    manifest: manifests/us-me-snap-rules.yaml
+    taken_at: '2026-09-11'
+    provision_count: 223
+    revised_documents:
+    - me-ofi-snap-et-rules-chapter-609
+    run_note: docs/ingest-runs/2026-09-11-snap-superseding-scopes-batch-2.md
+    notes: 'Superseding scope taken 2026-09-11 (both rulebooks re-extracted, same two citation paths): Ch. 609 SNAP E&T is the
+      edition amended August 30, 2026 (filing 2026-191, file 144c609-2026-191-AMD.docx, Last-Modified 2026-08-28), body changed;
+      Ch. 301 is the same 144c301-2026-133-NSC.docx and text-identical. Extraction 1 s; validate-release on the swapped selector
+      ok, 0 errors.'
 - jurisdiction: us-mi
   name: Michigan
   queue_status: done
