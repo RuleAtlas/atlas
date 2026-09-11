@@ -31,6 +31,9 @@ policy:
   - '2026-09-10 SSI state-supplement batch 2: scripts/build_ssi_state_supplement_manifests.py --batch 2; NY, OH, SC retried
     from a US network (OH, SC extracted; NY still blocked); next ten needs_review states by population attempted (LA, KY,
     OR, OK, UT, NE, NM, ID, NH, ME) with replacement MD after OK blocked; docs/ingest-runs/2026-09-10-ssi-state-supplements-batch-2.md.'
+  - '2026-09-11 SSI state-supplement batch 3: scripts/build_ssi_state_supplement_manifests.py --batch 3; the six states with
+    no optional supplement (AR, AZ, MS, ND, TN, WV) added as done rows pointing at POMS SI 01415.010; MO, WI, SD, AK extracted;
+    WY blocked (script-rendered Drive embed); OK re-probed and extracted from the rules.ok.gov segments API; docs/ingest-runs/2026-09-10-ssi-state-supplements-batch-3.md.'
 lead_list:
   source: policyengine-us
   commit: 84253b6afafbb1875c65f12e654c6535744728b7
@@ -38,9 +41,8 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  agent_ready: 23
-  needs_review: 5
-  done: 16
+  agent_ready: 28
+  done: 22
   blocked_primary_source: 2
 states:
 - jurisdiction: us
@@ -590,21 +592,27 @@ states:
   name: Alaska
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
-  primary_source_url: null
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual
+  primary_source_url: http://dpaweb.hss.state.ak.us/manuals/apa/transmittals/title_page.htm
+  target_manifest: manifests/us-ak-ssi-state-supplement.yaml
   target_scope:
     jurisdiction: us-ak
-    document_class: null
-    version: null
-  index_url: null
-  index_document_count: null
-  taken_count: 0
+    document_class: manual
+    version: 2026-09-10-ssi-state-supplement
+  index_url: http://dpaweb.hss.state.ak.us/manuals/apa/whxdata/toc.new.js
+  index_document_count: 330
+  taken_count: 330
   administration: S
-  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
-    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
-    regional description in the federal family: us/manual/ssa/poms/si/sea01415.034.'
+  notes: 'Adult Public Assistance (APA), Alaska''s SSI supplement: the Division of Public Assistance''s Adult Public Assistance
+    Manual, every topic page from the RoboHelp table of contents at dpaweb.hss.state.ak.us/manuals/apa/ (sections 400 General
+    Information to 482 Claims, addendum, transmittals and manual-change memos) plus a snapshot of each TOC file, the 2026-07-16
+    SNAP manual scope''s structure. document_class manual, citation us-ak/manual/dpa/apa/<topic> and us-ak/manual/dpa/apa/navigation/toc-<key>.
+    dpaweb.hss.state.ak.us HTTP 200 to a plain client over http (the https port does not answer). The corpus''s us-ak/guidance
+    APA standards PDF (2026-06-30) is the payment-standard table; the manual is the governing text.'
+  index_families: 'Adult Public Assistance Manual policy topic pages (sections 400-482, addendum): 147 found / 147 taken;
+    Adult Public Assistance Manual transmittal and manual-change memo pages: 78 found / 78 taken; RoboHelp table-of-contents
+    files (whxdata/*.new.js), snapshotted as navigation rows: 105 found / 105 taken'
 - jurisdiction: us-al
   name: Alabama
   lead_counts: {}
@@ -627,6 +635,44 @@ states:
     answer TCP. (2026-09-10 state-supplement batch 1.)
   index_families: 'pointer to Alabama Administrative Code chapter 660-2-4 Optional Supplementation (62 rows, in the corpus):
     1 chapter found / 0 new documents taken'
+- jurisdiction: us-ar
+  name: Arkansas
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415010
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 1
+  taken_count: 1
+  index_families: 'POMS SI 01415.010 Administration of State Supplementary Programs (state table): 1 found / 1 taken in the
+    federal family; no state document family exists'
+  administration: N
+  notes: 'No optional state supplement (POMS SI 01415.010 state table, Arkansas row: Mandatory = F, Optional = N; federally
+    administered mandatory supplement only). Done with that finding: the governing text is the federal POMS row, already in
+    the corpus as us/manual/ssa/poms/si/01415.010 (version 2026-09-10-ssi-poms-si); no state agency document exists to inventory
+    and nothing was fetched. (2026-09-11 state-supplement batch 3.)'
+- jurisdiction: us-az
+  name: Arizona
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415010
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 1
+  taken_count: 1
+  index_families: 'POMS SI 01415.010 Administration of State Supplementary Programs (state table): 1 found / 1 taken in the
+    federal family; no state document family exists'
+  administration: N
+  notes: 'No optional state supplement (POMS SI 01415.010 state table, Arizona row: Mandatory = S, Optional = N; state-administered
+    mandatory supplement only). Done with that finding: the governing text is the federal POMS row, already in the corpus
+    as us/manual/ssa/poms/si/01415.010 (version 2026-09-10-ssi-poms-si); no state agency document exists to inventory and
+    nothing was fetched. (2026-09-11 state-supplement batch 3.)'
 - jurisdiction: us-ca
   name: California
   lead_counts: {}
@@ -1041,20 +1087,49 @@ states:
   name: Missouri
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
-  primary_source_url: null
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual
+  primary_source_url: https://dssmanuals.mo.gov/supplemental-nursing-care/0600-000-00/
+  target_manifest: manifests/us-mo-ssi-state-supplement.yaml
   target_scope:
     jurisdiction: us-mo
-    document_class: null
-    version: null
-  index_url: null
-  index_document_count: null
-  taken_count: 0
+    document_class: manual
+    version: 2026-09-10-ssi-state-supplement
+  index_url: https://dssmanuals.mo.gov/
+  index_document_count: 139
+  taken_count: 89
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+  notes: 'Supplemental Nursing Care (SNC) and Supplemental Aid to the Blind (SAB), Missouri''s state-administered supplements:
+    the Family Support Division''s SNC Manual (0600-0635) and SAB Manual (0400-0440), every section page from the dssmanuals.mo.gov
+    WordPress sitemap (the 2026-09-10 MHABD Medicaid scope''s method). document_class manual, citation us-mo/manual/dss/snc/<section>
+    and us-mo/manual/dss/sab/<section>, .entry-content selector. The Blind Pension Manual (state-only pension for blind persons
+    not eligible for SAB; 0505.000.00 password-protected) is a separate family, not taken. The MHABD scope mentions SNC on
+    22 rows but carries no SNC or SAB eligibility text. 13 CSR 40-2 (Secretary of State) has no SNC/SAB-specific rule; the
+    manuals are the governing text.'
+  index_families: 'Supplemental Nursing Care (SNC) Manual section pages (dssmanuals.mo.gov sitemap): 35 found / 35 taken;
+    Supplemental Aid to the Blind (SAB) Manual section pages (dssmanuals.mo.gov sitemap): 54 found / 54 taken; Blind Pension
+    Manual section pages (dssmanuals.mo.gov sitemap): 42 found / 0 taken; other DSS manuals on the site index (childrens-services-policy-manual,
+    family-mo-healthnet-magi, food-stamps, forms-manual, independent-living-rehabilitation-policy-manual, mo-healthnet-for-the-aged-blind-and-disabled,
+    prevention-of-blindness-policy-manual, temporary-assistance-case-management): 8 found / 0 taken'
+- jurisdiction: us-ms
+  name: Mississippi
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415010
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 1
+  taken_count: 1
+  index_families: 'POMS SI 01415.010 Administration of State Supplementary Programs (state table): 1 found / 1 taken in the
+    federal family; no state document family exists'
+  administration: N
+  notes: 'No optional state supplement (POMS SI 01415.010 state table, Mississippi row: Mandatory = F, Optional = N; federally
+    administered mandatory supplement only). Done with that finding: the governing text is the federal POMS row, already in
+    the corpus as us/manual/ssa/poms/si/01415.010 (version 2026-09-10-ssi-poms-si); no state agency document exists to inventory
+    and nothing was fetched. (2026-09-11 state-supplement batch 3.)'
 - jurisdiction: us-mt
   name: Montana
   lead_counts: {}
@@ -1093,6 +1168,25 @@ states:
     page granularity.'
   index_families: 'EIS system documents: 3 found / 0 taken; administrative letters: 33 found / 0 taken; change notices: 50
     found / 0 taken; forms and notices: 23 found / 0 taken; program manuals: 2 found / 2 taken'
+- jurisdiction: us-nd
+  name: North Dakota
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415010
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 1
+  taken_count: 1
+  index_families: 'POMS SI 01415.010 Administration of State Supplementary Programs (state table): 1 found / 1 taken in the
+    federal family; no state document family exists'
+  administration: N
+  notes: 'No optional state supplement (POMS SI 01415.010 state table, North Dakota row: Mandatory = NR, Optional = N; no
+    mandatory supplement (NR)). Done with that finding: the governing text is the federal POMS row, already in the corpus
+    as us/manual/ssa/poms/si/01415.010 (version 2026-09-10-ssi-poms-si); no state agency document exists to inventory and
+    nothing was fetched. (2026-09-11 state-supplement batch 3.)'
 - jurisdiction: us-ne
   name: Nebraska
   lead_counts: {}
@@ -1248,25 +1342,28 @@ states:
   name: Oklahoma
   lead_counts: {}
   candidate_sources: []
-  queue_status: blocked_primary_source
-  source_kind: state_agency_document
-  primary_source_url: https://oklahoma.gov/okdhs/library/policy/current/oac-340/chapter-15.html
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_state_regulation
+  primary_source_url: https://rules.ok.gov/home
+  target_manifest: manifests/us-ok-ssi-state-supplement.yaml
   target_scope:
     jurisdiction: us-ok
-    document_class: null
-    version: null
-  index_url: https://oklahoma.gov/okdhs/library/policy/current/oac-340/chapter-15.html
-  index_document_count: null
-  taken_count: 0
+    document_class: regulation
+    version: 2026-09-10-ssi-state-supplement
+  index_url: https://prod-ok-rules-api.tecuity.com/GetSegmentsByTitleNum?titleNum=340
+  index_document_count: 30
+  taken_count: 1
   administration: S
-  notes: 'Blocked 2026-09-10 (state-supplement batch 2): Oklahoma''s State Supplemental Payment (SSP) is governed by OAC 340:15
-    (OKDHS). Both official publishers answer a Cloudflare challenge: oklahoma.gov/okdhs policy library (chapter-15 and the
-    OAC 340 index) HTTP 403 (5,564-byte ''Just a moment...'' page) to a plain client and HTTP 403 (5,906 bytes) to chrome120
-    impersonation; the Secretary of State''s rules.ok.gov/home likewise HTTP 403 to both (the 2026-07-21 SNAP rules scope
-    came from rules.ok.gov). The corpus''s OHCA Medicaid manual scope mentions SSP on 11 rows but does not carry OAC 340:15.
-    No index inventory possible.'
-  index_families: no index inventory possible (publisher blocked; see notes)
+  notes: 'State Supplemental Payment (SSP): OAC Title 340 Chapter 15 (Department of Human Services; Subchapter 1 State Supplemental
+    Payment, 7 sections of which 2 revoked, and Subchapter 3 Children and Youth with Special Health Care Needs) from the Secretary
+    of State''s Office of Administrative Rules (rules.ok.gov) segments API, the 2026-07-21 SNAP rules scope''s source and
+    convention (records segmentation; revoked sections excluded). Title 340 lists 30 chapters (17 current, 13 revoked); chapter
+    15 taken. document_class regulation, citation us-ok/regulation/oac/340/15/<section>. Re-probe 2026-09-11 (batch 3, US
+    network): oklahoma.gov/okdhs policy library now 301 -> rules.ok.gov/home; rules.ok.gov/home Cloudflare HTTP 403 (5,316
+    bytes) plain, HTTP 200 (1,551-byte application shell) then 403 (5,906 bytes) to chrome120 impersonation; the publication''s
+    own API (prod-ok-rules-api.tecuity.com) HTTP 200 plain. Batch 2 (2026-09-10): both hosts 403.'
+  index_families: 'OAC Title 340 (Department of Human Services) chapters, current: 17 found / 1 taken; OAC Title 340 chapters,
+    revoked: 13 found / 0 taken'
 - jurisdiction: us-or
   name: Oregon
   lead_counts: {}
@@ -1356,21 +1453,45 @@ states:
   name: South Dakota
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
-  primary_source_url: null
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_state_regulation
+  primary_source_url: https://sdlegislature.gov/api/Rules/67:12:14
+  target_manifest: manifests/us-sd-ssi-state-supplement.yaml
   target_scope:
     jurisdiction: us-sd
-    document_class: null
-    version: null
-  index_url: null
-  index_document_count: null
-  taken_count: 0
+    document_class: regulation
+    version: 2026-09-10-ssi-state-supplement
+  index_url: https://sdlegislature.gov/api/Rules/67:12
+  index_document_count: 21
+  taken_count: 1
   administration: S
-  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
-    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
-    regional description in the federal family: us/manual/ssa/poms/si/den01415.011.'
+  notes: 'Optional State Supplemental Program: ARSD chapter 67:12:14 (Department of Social Services; 11 sections, sources
+    5 SDR 6 1978 to 20 SDR 92 effective 1993-12-31) from the Legislative Research Council''s rules API (sdlegislature.gov/api/Rules),
+    the publisher and JSON/labeled-section convention of the 2026-09-10 CHIP (67:46) and TANF (67:10) scopes. The Article
+    67:12 Assistance Payments index lists 21 chapters (11 repealed or transferred); 67:12:14 taken. document_class regulation,
+    citation us-sd/regulation/arsd/67/12/14/<section>. sdlegislature.gov HTTP 200 to a plain client (the HTML site is a JavaScript
+    application; the API is its data source).'
+  index_families: 'ARSD Article 67:12 Assistance Payments chapters in force: 8 found / 1 taken; ARSD Article 67:12 chapters
+    repealed or transferred: 13 found / 0 taken'
+- jurisdiction: us-tn
+  name: Tennessee
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415010
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 1
+  taken_count: 1
+  index_families: 'POMS SI 01415.010 Administration of State Supplementary Programs (state table): 1 found / 1 taken in the
+    federal family; no state document family exists'
+  administration: N
+  notes: 'No optional state supplement (POMS SI 01415.010 state table, Tennessee row: Mandatory = F, Optional = N; federally
+    administered mandatory supplement only). Done with that finding: the governing text is the federal POMS row, already in
+    the corpus as us/manual/ssa/poms/si/01415.010 (version 2026-09-10-ssi-poms-si); no state agency document exists to inventory
+    and nothing was fetched. (2026-09-11 state-supplement batch 3.)'
 - jurisdiction: us-tx
   name: Texas
   lead_counts: {}
@@ -1484,36 +1605,76 @@ states:
   name: Wisconsin
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
-  source_kind: state_agency_document
-  primary_source_url: null
-  target_manifest: null
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual
+  primary_source_url: https://www.emhandbooks.wisconsin.gov/ssi-admin/policyfiles/1.1.htm
+  target_manifest: manifests/us-wi-ssi-state-supplement.yaml
   target_scope:
     jurisdiction: us-wi
-    document_class: null
-    version: null
-  index_url: https://www.dhs.wisconsin.gov/ssi/index.htm
-  index_document_count: null
-  taken_count: 0
+    document_class: manual
+    version: 2026-09-10-ssi-state-supplement
+  index_url: https://www.dhs.wisconsin.gov/ssi/publications.htm
+  index_document_count: 66
+  taken_count: 13
   administration: S
-  notes: State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state agency's
-    own document and must be confirmed from the state's official index; not extracted in the 2026-09-10 run.
+  notes: 'State SSI Supplement (Wis. Stat. 49.77, administered by DHS): the SSI Administration Handbook (P-23129) and the
+    SSI Exceptional Expense (SSI-E) Handbook (P-20679), every topic page from each RoboHelp TOC on emhandbooks.wisconsin.gov
+    (the DHS handbook host), both listed on the DHS SSI program''s Forms and Publications page. document_class manual, citation
+    us-wi/manual/dhs/ssi/ssi-admin/<topic> and us-wi/manual/dhs/ssi/ssi-e/<topic>; expression_date the handbooks'' printed
+    Release 26-01 date (2026-05-01). The SSI Caretaker Supplement handbook (P-23131; TANF-funded benefit to SSI parents, Wis.
+    Stat. 49.775), the DHS SSI program web pages, forms and fact sheets are separate families, not taken. Wisconsin has no
+    administrative-rule chapter for the state SSI payment (the batch-2 lead ''DHS 2 Wis. Adm. Code'' is Recoupment of Benefit
+    Overpayments).'
+  index_families: 'SSI Administration Handbook (P-23129) topic pages, RoboHelp TOC on emhandbooks.wisconsin.gov: 5 found /
+    5 taken; SSI Exceptional Expense (SSI-E) Handbook (P-20679) topic pages, RoboHelp TOC on emhandbooks.wisconsin.gov: 8
+    found / 8 taken; SSI Caretaker Supplement (CTS) Policy Handbook (P-23131) topic pages, RoboHelp TOC on emhandbooks.wisconsin.gov:
+    27 found / 0 taken; DHS SSI program web pages (index, apply, benefits, caretaker, eligibility, forms & publications, glossary,
+    SSI-E, contacts): 9 found / 0 taken; Forms (F-numbers) on the Forms and Publications page: 10 found / 0 taken; Interim-assistance
+    letter templates (Word): 3 found / 0 taken; Fact sheets and publications (P-numbers other than the handbooks): 4 found
+    / 0 taken'
+- jurisdiction: us-wv
+  name: West Virginia
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415010
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014
+  index_document_count: 1
+  taken_count: 1
+  index_families: 'POMS SI 01415.010 Administration of State Supplementary Programs (state table): 1 found / 1 taken in the
+    federal family; no state document family exists'
+  administration: N
+  notes: 'No optional state supplement (POMS SI 01415.010 state table, West Virginia row: Mandatory = N, Optional = N; no
+    mandatory supplement). Done with that finding: the governing text is the federal POMS row, already in the corpus as us/manual/ssa/poms/si/01415.010
+    (version 2026-09-10-ssi-poms-si); no state agency document exists to inventory and nothing was fetched. (2026-09-11 state-supplement
+    batch 3.)'
 - jurisdiction: us-wy
   name: Wyoming
   lead_counts: {}
   candidate_sources: []
-  queue_status: needs_review
+  queue_status: blocked_primary_source
   source_kind: state_agency_document
-  primary_source_url: null
+  primary_source_url: https://ecom.wyo.gov/m1800-other-programs/m1804-state-supplemental-payments
   target_manifest: null
   target_scope:
     jurisdiction: us-wy
     document_class: null
     version: null
-  index_url: null
-  index_document_count: null
+  index_url: https://ecom.wyo.gov/
+  index_document_count: 107
   taken_count: 0
   administration: S
-  notes: 'State-administered optional supplement (POMS SI 01415.010 column Optional = S). The primary source is the state
-    agency''s own document and must be confirmed from the state''s official index; not extracted in the 2026-09-10 run. SSA
-    regional description in the federal family: us/manual/ssa/poms/si/den01415.013.'
+  notes: 'Blocked 2026-09-11 (state-supplement batch 3): Wyoming''s State Supplemental Payments are administered by the Department
+    of Health (Division of Healthcare Financing); the agency''s governing text is Eligibility Operations Manual (EOM) section
+    M1804 State Supplemental Payments on ecom.wyo.gov (Google Sites; the EOM navigation lists 107 sections, M1804 the one
+    SSP section). The page answers HTTP 200 (248,711 bytes) to a plain client, but its content is a Google Drive viewer embed
+    rendered by script (embeds.googleusercontent.com inner frame); the HTML carries only the title and navigation and no document
+    URL or file id, so the document is not addressable from the publisher''s page. DFS (dfs.wyo.gov) lists no SSI supplement
+    family (Cash Assistance = POWER; policy manuals: APS, Child Support, SNAP/POWER, Foster Care). rules.wyo.gov (Secretary
+    of State, ASP.NET search application) was not searched for a Department of Health SSP rule chapter. No index document
+    taken. The SSA regional description is in the federal family: us/manual/ssa/poms/si/01415.010 (Wyoming row S/S).'
+  index_families: 'Department of Health EOM sections (Google Sites navigation): 107 found / 0 taken (M1804 content is a script-rendered
+    Drive embed; see notes); DFS index: no SSI supplement family'

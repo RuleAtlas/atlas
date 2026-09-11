@@ -27,6 +27,12 @@ document itself when it snapshots the source.
 Batch 2 (default ``--batch 2``; see the "batch 2" section below) adds KY, LA, NE, NM, NH, ME and
 SC manifests, adapter rows for OH and MD, pointers for OR, UT, ID, the OK block and the NY retry::
 
+    uv run python scripts/build_ssi_state_supplement_manifests.py --batch 2 --print-index
+
+Batch 3 (default ``--batch 3``; the "batch 3" section below) finishes the queue: AK, WI, MO, SD and OK
+manifests, ``done`` rows for the six states with no optional supplement (AR, AZ, MS, ND, TN, WV; POMS
+SI 01415.010 pointer) and the WY block::
+
     uv run python scripts/build_ssi_state_supplement_manifests.py --print-index
 """
 from __future__ import annotations
@@ -1515,6 +1521,691 @@ def update_queue_batch2(results: dict[str, dict]) -> dict:
     return queue["status_counts"]
 
 
+# ======================================================================= batch 3 (2026-09-11)
+# The remaining rows: the six states with no row (AR, AZ, MS, ND, TN, WV: no optional state
+# supplement per POMS SI 01415.010, done with the POMS pointer), the five needs_review rows
+# (MO, WI, SD, AK, WY) and one re-probe of OK.
+
+BATCH3_ORDER = ("AR", "AZ", "MS", "ND", "TN", "WV", "MO", "WI", "SD", "AK", "WY", "OK")
+SOURCE_AS_OF_3 = "2026-09-11"
+DISCOVERED_VIA_3 = "manual-review:ssi-agent-queue batch 3 (state-administered supplements); publisher index"
+POMS_SI_01415_010_URL = "https://secure.ssa.gov/apps10/poms.nsf/lnx/0501415010"
+POMS_SI_01415_INDEX_URL = "https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05014"
+BUILDERS_3: dict[str, str] = {}
+
+
+def builder3(code: str):
+    def register(func):
+        BUILDERS_3[code] = func.__name__
+        return func
+
+    return register
+
+
+def robohelp_toc(load, first: str = "toc.new.js") -> tuple[list[tuple[str, str]], list[str]]:
+    """Walk an Adobe RoboHelp 2022 table of contents: ``whxdata/toc.new.js`` and every book's
+    ``whxdata/<key>.new.js`` file. ``load(name)`` returns the JavaScript text. Returns the
+    topic pages in TOC order as (relative url, label) and the list of TOC files walked."""
+    queue = [first]
+    seen: list[str] = []
+    topics: list[tuple[str, str]] = []
+    while queue:
+        name = queue.pop(0)
+        if name in seen:
+            continue
+        seen.append(name)
+        text = load(name)
+        match = re.search(r"var toc =\s*(\[.*?\]);\s*window", text, re.S)
+        if not match:
+            raise SystemExit(f"RoboHelp TOC file {name} has no toc array; layout changed?")
+        for item in json.loads(match.group(1)):
+            url = (item.get("url") or "").split("#")[0]
+            if url and url not in {t[0] for t in topics}:
+                topics.append((url, re.sub(r"\s+", " ", item["name"]).strip()))
+            if item.get("key"):
+                queue.append(f"{item['key']}.new.js")
+    return topics, seen
+
+
+ROBOHELP_DROP_SELECTORS = [".topic-header", ".topic-header-shadow", ".breadcrumbs", ".minitoc", ".expanding-content"]
+
+
+# ---------------------------------------------------------------- Alaska (Adult Public Assistance Manual)
+
+AK_LANDING_URL = "http://dpaweb.hss.state.ak.us/manuals/apa/apa.htm"
+AK_BASE_URL = "http://dpaweb.hss.state.ak.us/manuals/apa/"
+AK_TOC_URL = AK_BASE_URL + "whxdata/toc.new.js"
+
+
+@builder3("AK")
+def build_ak(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """Alaska Adult Public Assistance (APA), the state's SSI supplement: the Division of Public
+    Assistance's Adult Public Assistance Manual, every topic page reachable from the RoboHelp
+    table of contents, plus a snapshot of each TOC file, the structure and citation convention
+    of the 2026-07-16 Alaska SNAP manual scope (us-ak/manual/dpa/snap/...)."""
+    topics, toc_files = robohelp_toc(
+        lambda name: fetch(session, AK_BASE_URL + "whxdata/" + name, cache_dir / "ak" / "whxdata" / name, pause=0.2)
+    )
+    # the TOC lists 561 entries, 336 of them same-page anchors (#...): 225 distinct topic pages
+    if len(topics) < 200:
+        raise SystemExit(f"only {len(topics)} APA topic pages found from the TOC; layout changed?")
+    title_page = strip_tags(fetch(session, AK_BASE_URL + "transmittals/title_page.htm", cache_dir / "ak" / "title_page.htm"))
+    if "ADULT PUBLIC ASSISTANCE MANUAL" not in title_page.upper():
+        raise SystemExit("APA title page does not name the Adult Public Assistance Manual")
+    common = {
+        "primary_source": True,
+        "source_authority": "Alaska Department of Health, Division of Public Assistance",
+        "program": "ssi_state_supplement",
+        "state_program": "Adult Public Assistance (APA)",
+        "federal_program": "SSI",
+        "state": "AK",
+        "manual_landing_page": AK_LANDING_URL,
+        "manual_toc_url": AK_TOC_URL,
+        "manual_base_url": AK_BASE_URL,
+        "index_url": AK_TOC_URL,
+        "source_discovery_group": "us-ak/manual/dpa/apa",
+        "discovered_via": f"{DISCOVERED_VIA_3} {AK_TOC_URL}",
+        "expression_date_note": "fetch date; topic pages carry their own manual-change (MC) transmittal references, latest Memo MC #76 (09/26)",
+    }
+    docs = []
+    for order, (url, label) in enumerate(topics, start=1):
+        slug = re.sub(r"[^a-z0-9]+", "-", url[:-4].lower()).strip("-") if url.lower().endswith(".htm") else re.sub(r"[^a-z0-9]+", "-", url.lower()).strip("-")
+        docs.append(
+            {
+                "source_id": f"ak-dpa-apa-{slug}",
+                "jurisdiction": "us-ak",
+                "document_class": "manual",
+                "title": f"Alaska Adult Public Assistance Manual: {label}",
+                "source_url": AK_BASE_URL + quote(url, safe="/:()_.-"),
+                "source_format": "html",
+                "source_as_of": SOURCE_AS_OF_3,
+                "expression_date": SOURCE_AS_OF_3,
+                "citation_path": f"us-ak/manual/dpa/apa/{slug}",
+                "extraction": {
+                    "html_drop_selectors": [".topic-header", ".topic-header-shadow", ".expanding-content", 'table:has(a[href*="transmittals/"])']
+                },
+                "metadata": {**common, "document_subtype": "policy_manual_topic", "toc_label": label, "toc_order": order},
+            }
+        )
+    for order, name in enumerate(toc_files, start=1):
+        key = "root" if name == "toc.new.js" else name[: -len(".new.js")]
+        docs.append(
+            {
+                "source_id": f"ak-dpa-apa-toc-{key}",
+                "jurisdiction": "us-ak",
+                "document_class": "manual",
+                "title": f"Alaska Adult Public Assistance Manual TOC: {key}",
+                "source_url": AK_BASE_URL + "whxdata/" + name,
+                "source_format": "javascript",
+                "source_as_of": SOURCE_AS_OF_3,
+                "expression_date": SOURCE_AS_OF_3,
+                "citation_path": f"us-ak/manual/dpa/apa/navigation/toc-{key}",
+                "metadata": {**common, "document_subtype": "manual_toc_snapshot", "toc_snapshot_key": key, "snapshot_order": order},
+            }
+        )
+    if len({d["citation_path"] for d in docs}) != len(docs):
+        raise SystemExit("duplicate APA citation paths")
+    transmittals = sum(1 for url, _ in topics if url.lower().startswith("transmittals/"))
+    index_info = {
+        "index_url": AK_TOC_URL,
+        "index_document_count": len(topics) + len(toc_files),
+        "taken_count": len(docs),
+        "families": [
+            {"family": "Adult Public Assistance Manual policy topic pages (sections 400-482, addendum)", "found": len(topics) - transmittals, "taken": len(topics) - transmittals},
+            {"family": "Adult Public Assistance Manual transmittal and manual-change memo pages", "found": transmittals, "taken": transmittals},
+            {"family": "RoboHelp table-of-contents files (whxdata/*.new.js), snapshotted as navigation rows", "found": len(toc_files), "taken": len(toc_files)},
+        ],
+    }
+    return docs, index_info
+
+
+# ---------------------------------------------------------------- Wisconsin (DHS SSI handbooks)
+
+WI_SSI_INDEX_URL = "https://www.dhs.wisconsin.gov/ssi/index.htm"
+WI_PUBLICATIONS_URL = "https://www.dhs.wisconsin.gov/ssi/publications.htm"
+WI_HANDBOOK_BASE = "https://www.emhandbooks.wisconsin.gov/"
+WI_HANDBOOKS = {
+    # slug on emhandbooks.wisconsin.gov -> (publication number, title, taken)
+    "ssi-admin": ("P-23129", "SSI Administration Handbook", True),
+    "ssi-e": ("P-20679", "SSI Exceptional Expense (SSI-E) Handbook", True),
+    "cts": ("P-23131", "SSI Caretaker Supplement (CTS) Policy Handbook", False),
+}
+
+
+@builder3("WI")
+def build_wi(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """Wisconsin state SSI supplement (Wis. Stat. 49.77): the Department of Health Services'
+    SSI Administration Handbook (P-23129) and SSI Exceptional Expense (SSI-E) Handbook
+    (P-20679), every topic page from each handbook's RoboHelp table of contents on
+    emhandbooks.wisconsin.gov, the DHS handbook host. Both handbooks are listed on the DHS
+    SSI program's Forms and Publications page. The Caretaker Supplement handbook (P-23131) is
+    a TANF-funded benefit to SSI parents (Wis. Stat. 49.775) and is a separate family."""
+    pubs_page = fetch(session, WI_PUBLICATIONS_URL, cache_dir / "wi" / "publications.htm")
+    main = re.search(r"<main.*?</main>", pubs_page, re.S)
+    body = main.group(0) if main else pubs_page
+    anchors = [(href, strip_tags(text)) for href, text in re.findall(r'<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>', body, re.S)]
+    handbooks = [(h, t) for h, t in anchors if "emhandbooks.wisconsin.gov" in h]
+    forms = [(h, t) for h, t in anchors if re.search(r"/library/[Ff]-\d", h)]
+    letters = [(h, t) for h, t in anchors if re.search(r"\.docx?$", h, re.I)]
+    publications = [(h, t) for h, t in anchors if re.search(r"\bP-\d{5}", t) and "emhandbooks" not in h]
+    for slug in WI_HANDBOOKS:
+        if not any(f"/{slug}/" in h for h, _ in handbooks):
+            raise SystemExit(f"{slug} handbook not linked from {WI_PUBLICATIONS_URL}")
+    index_page = fetch(session, WI_SSI_INDEX_URL, cache_dir / "wi" / "index.htm")
+    program_pages = sorted(set(re.findall(r'href="(/ssi/[a-z-]+\.htm)"', index_page)))
+    docs = []
+    families = []
+    for slug, (pub, title, taken) in WI_HANDBOOKS.items():
+        base = f"{WI_HANDBOOK_BASE}{slug}/"
+        topics, toc_files = robohelp_toc(
+            lambda name, base=base, slug=slug: fetch(session, base + "whxdata/" + name, cache_dir / "wi" / slug / "whxdata" / name, pause=0.2)
+        )
+        if not topics:
+            raise SystemExit(f"no topics in the {slug} handbook TOC")
+        families.append({"family": f"{title} ({pub}) topic pages, RoboHelp TOC on emhandbooks.wisconsin.gov", "found": len(topics), "taken": len(topics) if taken else 0})
+        if not taken:
+            continue
+        first = strip_tags(fetch(session, base + topics[0][0], cache_dir / "wi" / slug / "first-topic.htm", pause=0.2))
+        release = re.search(r"Release (\d\d-\d\d) ([A-Z][a-z]+ \d{1,2}, \d{4})", first)
+        if not release:
+            raise SystemExit(f"no 'Release NN-NN <date>' line on the first {slug} topic page")
+        expression_date = long_date(release.group(2))
+        for order, (url, label) in enumerate(topics, start=1):
+            topic_slug = re.sub(r"[^a-z0-9]+", "-", re.sub(r"^policyfiles/", "", url[:-4].lower())).strip("-")
+            docs.append(
+                {
+                    "source_id": f"wi-dhs-{slug}-{topic_slug}",
+                    "jurisdiction": "us-wi",
+                    "document_class": "manual",
+                    "title": f"Wisconsin {title}: {label}",
+                    "source_url": base + url,
+                    "source_format": "html",
+                    "source_as_of": SOURCE_AS_OF_3,
+                    "expression_date": expression_date,
+                    "citation_path": f"us-wi/manual/dhs/ssi/{slug}/{topic_slug}",
+                    "extraction": {"html_drop_selectors": ROBOHELP_DROP_SELECTORS},
+                    "metadata": {
+                        "primary_source": True,
+                        "source_authority": "Wisconsin Department of Health Services",
+                        "hosting_authority": "emhandbooks.wisconsin.gov (the DHS eligibility-handbook host)",
+                        "document_subtype": "policy_handbook_topic",
+                        "publication_number": pub,
+                        "handbook": title,
+                        "handbook_release": release.group(1),
+                        "program": "ssi_state_supplement",
+                        "state_program": "State SSI Supplement (Wis. Stat. 49.77)" if slug == "ssi-admin" else "SSI Exceptional Expense Supplement (SSI-E)",
+                        "federal_program": "SSI",
+                        "state": "WI",
+                        "manual_landing_page": f"{base}{slug}.htm",
+                        "manual_toc_url": base + "whxdata/toc.new.js",
+                        "toc_label": label,
+                        "toc_order": order,
+                        "index_url": WI_PUBLICATIONS_URL,
+                        "program_index_url": WI_SSI_INDEX_URL,
+                        "source_discovery_group": f"us-wi/manual/dhs/ssi/{slug}",
+                        "discovered_via": f"{DISCOVERED_VIA_3} {WI_PUBLICATIONS_URL}",
+                        "extraction_note": "RoboHelp 2022 topic page; the topic header, breadcrumbs, mini table of contents and glossary pop-up text (.expanding-content) are dropped",
+                    },
+                }
+            )
+    families.extend(
+        [
+            {"family": "DHS SSI program web pages (index, apply, benefits, caretaker, eligibility, forms & publications, glossary, SSI-E, contacts)", "found": len(program_pages), "taken": 0},
+            {"family": "Forms (F-numbers) on the Forms and Publications page", "found": len(forms), "taken": 0},
+            {"family": "Interim-assistance letter templates (Word)", "found": len(letters), "taken": 0},
+            {"family": "Fact sheets and publications (P-numbers other than the handbooks)", "found": len(publications), "taken": 0},
+        ]
+    )
+    if len({d["citation_path"] for d in docs}) != len(docs):
+        raise SystemExit("duplicate WI citation paths")
+    index_info = {
+        "index_url": WI_PUBLICATIONS_URL,
+        "index_document_count": sum(f["found"] for f in families),
+        "taken_count": len(docs),
+        "families": families,
+    }
+    return docs, index_info
+
+
+# ---------------------------------------------------------------- Missouri (SNC and SAB manuals)
+
+MO_MANUALS_INDEX_URL = "https://dssmanuals.mo.gov/"
+MO_SITEMAP_URLS = ["https://dssmanuals.mo.gov/wp-sitemap-posts-page-1.xml", "https://dssmanuals.mo.gov/wp-sitemap-posts-page-2.xml"]
+MO_MANUALS = {
+    # site slug -> (short code, manual title, state program, taken)
+    "supplemental-nursing-care": ("snc", "Supplemental Nursing Care (SNC) Manual", "Supplemental Nursing Care (SNC)", True),
+    "supplemental-aid-to-the-blind": ("sab", "Supplemental Aid to the Blind (SAB) Manual", "Supplemental Aid to the Blind (SAB)", True),
+    "blind-pension": ("bp", "Blind Pension Manual", "Blind Pension (BP)", False),
+}
+
+
+@builder3("MO")
+def build_mo(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """Missouri's state supplements to SSI: the Family Support Division's Supplemental Nursing
+    Care (SNC) Manual and Supplemental Aid to the Blind (SAB) Manual on dssmanuals.mo.gov,
+    every section page from the site's WordPress sitemap (the 2026-09-10 MHABD Medicaid scope's
+    method; citation us-mo/manual/dss/<manual>/<section path>). The Blind Pension Manual is a
+    state-only pension for blind persons not eligible for SAB (separate family, not taken;
+    its 0505.000.00 eligibility page is password-protected)."""
+    home = fetch(session, MO_MANUALS_INDEX_URL, cache_dir / "mo" / "index.html")
+    site_manuals = sorted(
+        {
+            m.group(1)
+            for m in re.finditer(r'href="https://dssmanuals\.mo\.gov/([a-z0-9-]+)/"', home)
+            if m.group(1) not in {"search", "comments", "feed", "memorandums", "nvr", "wp-json"}
+        }
+    )
+    pages: list[str] = []
+    for n, url in enumerate(MO_SITEMAP_URLS, start=1):
+        pages.extend(re.findall(r"<loc>(https://dssmanuals\.mo\.gov/[^<]+)</loc>", fetch(session, url, cache_dir / "mo" / f"sitemap-page-{n}.xml")))
+    docs = []
+    families = []
+    for slug, (code, manual_title, state_program, taken) in MO_MANUALS.items():
+        landing = fetch(session, f"{MO_MANUALS_INDEX_URL}{slug}/", cache_dir / "mo" / f"{slug}.html", pause=0.3)
+        labels = {
+            href: strip_tags(text)
+            for href, text in re.findall(rf'href="(https://dssmanuals\.mo\.gov/{slug}/[^"]+/)"[^>]*>(.*?)</a>', landing, re.S)
+        }
+        section_pages = sorted(p for p in pages if p.startswith(f"{MO_MANUALS_INDEX_URL}{slug}/") and p != f"{MO_MANUALS_INDEX_URL}{slug}/")
+        if len(section_pages) < 5:
+            raise SystemExit(f"only {len(section_pages)} {slug} pages in the sitemap; layout changed?")
+        families.append({"family": f"{manual_title} section pages (dssmanuals.mo.gov sitemap)", "found": len(section_pages), "taken": len(section_pages) if taken else 0})
+        if not taken:
+            continue
+        for url in section_pages:
+            rel = url[len(f"{MO_MANUALS_INDEX_URL}{slug}/"):].strip("/")
+            label = labels.get(url)
+            title = f"Missouri {manual_title}: {label}" if label else f"Missouri {manual_title}: {rel.split('/')[-1]}"
+            docs.append(
+                {
+                    "source_id": f"mo-dss-{code}-{rel.replace('/', '-')}",
+                    "jurisdiction": "us-mo",
+                    "document_class": "manual",
+                    "title": title,
+                    "source_url": url,
+                    "source_format": "html",
+                    "source_as_of": SOURCE_AS_OF_3,
+                    "expression_date": SOURCE_AS_OF_3,
+                    "citation_path": f"us-mo/manual/dss/{code}/{rel}",
+                    "extraction": {"html_content_selector": ".entry-content"},
+                    "metadata": {
+                        "primary_source": True,
+                        "source_authority": "Missouri Department of Social Services, Family Support Division",
+                        "document_subtype": "eligibility_manual_section",
+                        "manual": f"Missouri {manual_title}",
+                        "manual_index_url": f"{MO_MANUALS_INDEX_URL}{slug}/",
+                        "program": "ssi_state_supplement",
+                        "state_program": state_program,
+                        "federal_program": "SSI",
+                        "state": "MO",
+                        "index_url": MO_MANUALS_INDEX_URL,
+                        "source_sitemap_urls": MO_SITEMAP_URLS,
+                        "source_discovery_group": f"us-mo/manual/dss/{code}",
+                        "discovered_via": f"{DISCOVERED_VIA_3} {MO_MANUALS_INDEX_URL}{slug}/",
+                        "expression_date_note": "fetch date; each section prints its own IM memo date",
+                    },
+                }
+            )
+    families.append(
+        {
+            "family": "other DSS manuals on the site index (" + ", ".join(m for m in site_manuals if m not in MO_MANUALS) + ")",
+            "found": len([m for m in site_manuals if m not in MO_MANUALS]),
+            "taken": 0,
+        }
+    )
+    if len({d["citation_path"] for d in docs}) != len(docs):
+        raise SystemExit("duplicate MO citation paths")
+    index_info = {
+        "index_url": MO_MANUALS_INDEX_URL,
+        "index_document_count": sum(f["found"] for f in families),
+        "taken_count": len(docs),
+        "families": families,
+    }
+    return docs, index_info
+
+
+# ---------------------------------------------------------------- South Dakota (ARSD 67:12:14)
+
+SD_ARTICLE_API_URL = "https://sdlegislature.gov/api/Rules/67:12"
+SD_CHAPTER_API_URL = "https://sdlegislature.gov/api/Rules/67:12:14"
+SD_LANDING_URL = "https://sdlegislature.gov/Rules/Administrative/67:12:14"
+
+
+@builder3("SD")
+def build_sd(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """South Dakota Optional State Supplemental Program: ARSD chapter 67:12:14 (Department of
+    Social Services) from the Legislative Research Council's rules API, the same publisher,
+    document shape (JSON ``Html`` field, labeled sections) and citation convention
+    (us-sd/regulation/arsd/67/12/14/<section>) as the 2026-09-10 CHIP and TANF scopes."""
+    article = json.loads(fetch(session, SD_ARTICLE_API_URL, cache_dir / "sd" / "67-12.json"))
+    article_text = html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", article["Html"])))
+    # the article's chapter list ends at the first "Rule 67:12:NN..." chapter heading; every catchline ends with "."
+    toc_text = article_text.split(" Rule 67:12:", 1)[0]
+    by_number: dict[str, str] = {}
+    for number, catchline in re.findall(r"67:12:(\d\d)\s+([A-Z][^.]{3,120}?)\.", toc_text):
+        by_number.setdefault(number, catchline.strip(" ."))  # the TOC entry comes first; chapter headings repeat later
+    chapters = sorted(by_number.items())
+    if len(chapters) < 15:
+        raise SystemExit(f"only {len(chapters)} chapters parsed from the Article 67:12 index")
+    if not any(n == "14" for n, _ in chapters):
+        raise SystemExit(f"chapter 67:12:14 not listed in {SD_ARTICLE_API_URL}")
+    chapter = json.loads(fetch(session, SD_CHAPTER_API_URL, cache_dir / "sd" / "67-12-14.json", pause=0.5))
+    if chapter["RuleNumber"] != "67:12:14" or "OPTIONAL STATE SUPPLEMENTAL" not in chapter["Catchline"].upper():
+        raise SystemExit(f"unexpected chapter payload: {chapter.get('RuleNumber')} {chapter.get('Catchline')}")
+    chapter_text = html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", chapter["Html"])))
+    sections = sorted(set(re.findall(r"67:12:14:(\d\d)\.", chapter_text)))
+    effective = [long_date(d) for d in re.findall(r"effective ([A-Z][a-z]+ \d{1,2}, \d{4})", chapter_text)]
+    if not sections or not effective:
+        raise SystemExit("chapter 67:12:14 has no sections or no 'effective <date>' source notes")
+    doc = {
+        "source_id": "sd-lrc-arsd-67-12-14",
+        "jurisdiction": "us-sd",
+        "document_class": "regulation",
+        "title": "ARSD Chapter 67:12:14 Optional State Supplemental Program",
+        "source_url": SD_CHAPTER_API_URL,
+        "source_format": "json",
+        "source_as_of": SOURCE_AS_OF_3,
+        "expression_date": max(effective),
+        "citation_path": "us-sd/regulation/arsd/67/12/14",
+        "extraction": {
+            "json_html_field": "Html",
+            "segmentation": "labeled_sections",
+            "section_heading_pattern": r"^67:12:14:(?P<num>\d{2})\s*\.\s+(?P<heading>[^.]+\.)\s*(?P<body>.*)$",
+            "section_label_template": "{num}",
+        },
+        "metadata": {
+            "primary_source": True,
+            "source_authority": "South Dakota Department of Social Services (ARSD Article 67:12), published by the South Dakota Legislative Research Council",
+            "document_subtype": "administrative_rule_chapter",
+            "legal_identifier": "ARSD 67:12:14",
+            "program": "ssi_state_supplement",
+            "state_program": "Optional State Supplemental Program",
+            "federal_program": "SSI",
+            "state": "SD",
+            "landing_page": SD_LANDING_URL,
+            "article_index": SD_ARTICLE_API_URL,
+            "index_url": SD_ARTICLE_API_URL,
+            "section_count": len(sections),
+            "latest_source_effective_date": max(effective),
+            "source_discovery_group": "us-sd/regulation/arsd/67/12",
+            "discovered_via": f"{DISCOVERED_VIA_3} {SD_ARTICLE_API_URL}",
+            "expression_date_note": "latest 'effective' date in the chapter's SDR source notes",
+        },
+    }
+    repealed = [c for c in chapters if re.search(r"Repealed|Transferred", c[1])]
+    index_info = {
+        "index_url": SD_ARTICLE_API_URL,
+        "index_document_count": len(chapters),
+        "taken_count": 1,
+        "families": [
+            {"family": "ARSD Article 67:12 Assistance Payments chapters in force", "found": len(chapters) - len(repealed), "taken": 1},
+            {"family": "ARSD Article 67:12 chapters repealed or transferred", "found": len(repealed), "taken": 0},
+        ],
+        "chapters": chapters,
+    }
+    return [doc], index_info
+
+
+# ---------------------------------------------------------------- Oklahoma (OAC 340:15)
+
+OK_LANDING_URL = "https://rules.ok.gov/home"
+OK_TITLE_API_URL = "https://prod-ok-rules-api.tecuity.com/GetSegmentsByTitleNum?titleNum=340"
+OK_CHAPTER_API_URL = "https://prod-ok-rules-api.tecuity.com/GetSegmentsByChapterNum?titleNum=340&chapterNum=15"
+OK_LEGACY_CHAPTER_URL = "https://oklahoma.gov/okdhs/library/policy/current/oac-340/chapter-15.html"
+
+
+@builder3("OK")
+def build_ok(session: requests.Session, cache_dir: Path) -> tuple[list[dict], dict]:
+    """Oklahoma State Supplemental Payment (SSP): OAC Title 340 Chapter 15 (Department of Human
+    Services) from the Secretary of State's Office of Administrative Rules, the rules.ok.gov
+    publication's own segments API, the same source, extraction and citation convention
+    (us-ok/regulation/oac/340/<chapter>) as the 2026-07-21 Oklahoma SNAP rules scope."""
+    title_segments = json.loads(fetch(session, OK_TITLE_API_URL, cache_dir / "ok" / "title-340.json"))
+    chapters = sorted(
+        ((int(s["chapterNum"]), s["description"] or "", s["statusName"]) for s in title_segments if s["name"] == "Chapter"),
+    )
+    if not any(n == 15 for n, _, _ in chapters):
+        raise SystemExit(f"chapter 15 not in the Title 340 segments at {OK_TITLE_API_URL}")
+    segments = json.loads(fetch(session, OK_CHAPTER_API_URL, cache_dir / "ok" / "chapter-15.json", pause=0.5))
+    sections = [s for s in segments if s["name"] == "Section"]
+    subchapters = [s for s in segments if s["name"] == "Subchapter"]
+    if not any("State Supplemental Payment" in (s["description"] or "") for s in subchapters):
+        raise SystemExit("OAC 340:15 segments do not carry the State Supplemental Payment subchapter")
+    doc = {
+        "source_id": "ok-oac-340-15-state-supplemental-payment",
+        "jurisdiction": "us-ok",
+        "document_class": "regulation",
+        "citation_path": "us-ok/regulation/oac/340/15",
+        "title": "Oklahoma Administrative Code Title 340 Chapter 15 State Supplemental Payment; Children and Youth with Special Health Care Needs",
+        "source_url": OK_LANDING_URL,
+        "download_url": OK_CHAPTER_API_URL,
+        "source_format": "json",
+        "source_as_of": SOURCE_AS_OF_3,
+        "expression_date": SOURCE_AS_OF_3,
+        "extraction": {
+            "segmentation": "records",
+            "json_record_text_field": "text",
+            "json_record_text_is_html": True,
+            "json_record_label_field": "sectionNum",
+            "json_record_heading_field": "description",
+            "json_record_kind_field": "name",
+            "json_record_status_field": "statusName",
+            "json_record_exclude_statuses": ["Revoked", "Reserved"],
+            "json_record_metadata_fields": [
+                "id", "parentId", "name", "titleNum", "chapterNum", "subChapterNum", "partNum", "sectionNum", "appendixNum",
+                "description", "statusName", "segmentStatusId", "segmentTypeId", "recordStatus", "effectiveDate", "filingId",
+                "hasEmergency", "segmentNotes",
+            ],
+        },
+        "metadata": {
+            "primary_source": True,
+            "source_authority": "Oklahoma Department of Human Services",
+            "official_publisher": "Oklahoma Secretary of State Office of Administrative Rules",
+            "document_subtype": "administrative_code_chapter",
+            "program": "ssi_state_supplement",
+            "state_program": "State Supplemental Payment (SSP)",
+            "federal_program": "SSI",
+            "state": "OK",
+            "rules_landing_page": OK_LANDING_URL,
+            "rules_api_url": OK_CHAPTER_API_URL,
+            "legacy_okdhs_chapter_url": OK_LEGACY_CHAPTER_URL,
+            "title_number": "340",
+            "title_name": "Department of Human Services",
+            "chapter_number": "15",
+            "chapter_name": next((d for n, d, _ in chapters if n == 15), ""),
+            "subchapters": "; ".join(f"{s['subChapterNum']} {s['description']}" for s in subchapters),
+            "section_count": len(sections),
+            "revoked_section_count": sum(1 for s in sections if s["statusName"] == "Revoked"),
+            "index_url": OK_TITLE_API_URL,
+            "source_discovery_group": "us-ok/regulation/oac/340",
+            "discovered_via": f"{DISCOVERED_VIA_3} {OK_TITLE_API_URL}",
+            "access_note": (
+                "re-probed 2026-09-11 from a US network: oklahoma.gov OKDHS policy-library chapter page 301 -> rules.ok.gov/home; "
+                "rules.ok.gov answers Cloudflare HTTP 403 to a plain client and HTTP 200 (JavaScript application shell) or 403 to a chrome120 "
+                "TLS fingerprint; the publication's own segments API (prod-ok-rules-api.tecuity.com, the SNAP rules scope's download_url) "
+                "answers HTTP 200 to a plain client; no proxy, mirror or third-party copy"
+            ),
+        },
+    }
+    current = [c for c in chapters if c[2] != "Revoked"]
+    index_info = {
+        "index_url": OK_TITLE_API_URL,
+        "index_document_count": len(chapters),
+        "taken_count": 1,
+        "families": [
+            {"family": "OAC Title 340 (Department of Human Services) chapters, current", "found": len(current), "taken": 1},
+            {"family": "OAC Title 340 chapters, revoked", "found": len(chapters) - len(current), "taken": 0},
+        ],
+        "chapters": chapters,
+        "sections": [(s["sectionNum"], s["description"], s["statusName"]) for s in sections],
+    }
+    return [doc], index_info
+
+
+SOURCE_KINDS_3 = {
+    "AK": "official_state_agency_manual",
+    "WI": "official_state_agency_manual",
+    "MO": "official_state_agency_manual",
+    "SD": "official_state_regulation",
+    "OK": "official_state_regulation",
+}
+ROW_NOTES_3 = {
+    "AK": (
+        "Adult Public Assistance (APA), Alaska's SSI supplement: the Division of Public Assistance's Adult Public Assistance "
+        "Manual, every topic page from the RoboHelp table of contents at dpaweb.hss.state.ak.us/manuals/apa/ (sections 400 "
+        "General Information to 482 Claims, addendum, transmittals and manual-change memos) plus a snapshot of each TOC file, "
+        "the 2026-07-16 SNAP manual scope's structure. document_class manual, citation us-ak/manual/dpa/apa/<topic> and "
+        "us-ak/manual/dpa/apa/navigation/toc-<key>. dpaweb.hss.state.ak.us HTTP 200 to a plain client over http (the https "
+        "port does not answer). The corpus's us-ak/guidance APA standards PDF (2026-06-30) is the payment-standard table; the "
+        "manual is the governing text."
+    ),
+    "WI": (
+        "State SSI Supplement (Wis. Stat. 49.77, administered by DHS): the SSI Administration Handbook (P-23129) and the "
+        "SSI Exceptional Expense (SSI-E) Handbook (P-20679), every topic page from each RoboHelp TOC on "
+        "emhandbooks.wisconsin.gov (the DHS handbook host), both listed on the DHS SSI program's Forms and Publications page. "
+        "document_class manual, citation us-wi/manual/dhs/ssi/ssi-admin/<topic> and us-wi/manual/dhs/ssi/ssi-e/<topic>; "
+        "expression_date the handbooks' printed Release 26-01 date (2026-05-01). The SSI Caretaker Supplement handbook "
+        "(P-23131; TANF-funded benefit to SSI parents, Wis. Stat. 49.775), the DHS SSI program web pages, forms and fact sheets "
+        "are separate families, not taken. Wisconsin has no administrative-rule chapter for the state SSI payment (the batch-2 "
+        "lead 'DHS 2 Wis. Adm. Code' is Recoupment of Benefit Overpayments)."
+    ),
+    "MO": (
+        "Supplemental Nursing Care (SNC) and Supplemental Aid to the Blind (SAB), Missouri's state-administered supplements: "
+        "the Family Support Division's SNC Manual (0600-0635) and SAB Manual (0400-0440), every section page from the "
+        "dssmanuals.mo.gov WordPress sitemap (the 2026-09-10 MHABD Medicaid scope's method). document_class manual, citation "
+        "us-mo/manual/dss/snc/<section> and us-mo/manual/dss/sab/<section>, .entry-content selector. The Blind Pension Manual "
+        "(state-only pension for blind persons not eligible for SAB; 0505.000.00 password-protected) is a separate family, not "
+        "taken. The MHABD scope mentions SNC on 22 rows but carries no SNC or SAB eligibility text. 13 CSR 40-2 (Secretary of "
+        "State) has no SNC/SAB-specific rule; the manuals are the governing text."
+    ),
+    "SD": (
+        "Optional State Supplemental Program: ARSD chapter 67:12:14 (Department of Social Services; 11 sections, sources 5 SDR 6 "
+        "1978 to 20 SDR 92 effective 1993-12-31) from the Legislative Research Council's rules API (sdlegislature.gov/api/Rules), "
+        "the publisher and JSON/labeled-section convention of the 2026-09-10 CHIP (67:46) and TANF (67:10) scopes. The Article "
+        "67:12 Assistance Payments index lists 21 chapters (11 repealed or transferred); 67:12:14 taken. document_class "
+        "regulation, citation us-sd/regulation/arsd/67/12/14/<section>. sdlegislature.gov HTTP 200 to a plain client (the "
+        "HTML site is a JavaScript application; the API is its data source)."
+    ),
+    "OK": (
+        "State Supplemental Payment (SSP): OAC Title 340 Chapter 15 (Department of Human Services; Subchapter 1 State "
+        "Supplemental Payment, 7 sections of which 2 revoked, and Subchapter 3 Children and Youth with Special Health Care Needs) "
+        "from the Secretary of State's Office of Administrative Rules (rules.ok.gov) segments API, the 2026-07-21 SNAP rules "
+        "scope's source and convention (records segmentation; revoked sections excluded). Title 340 lists 30 chapters (17 "
+        "current, 13 revoked); chapter 15 taken. document_class regulation, citation us-ok/regulation/oac/340/15/<section>. "
+        "Re-probe 2026-09-11 (batch 3, US network): oklahoma.gov/okdhs policy library now 301 -> rules.ok.gov/home; "
+        "rules.ok.gov/home Cloudflare HTTP 403 (5,316 bytes) plain, HTTP 200 (1,551-byte application shell) then 403 (5,906 "
+        "bytes) to chrome120 impersonation; the publication's own API (prod-ok-rules-api.tecuity.com) HTTP 200 plain. Batch 2 "
+        "(2026-09-10): both hosts 403."
+    ),
+}
+
+# The six states with no optional state supplement (POMS SI 01415.010, column Optional = N):
+# done with that finding and the POMS pointer; (mandatory-column value, note).
+NO_SUPPLEMENT_ROWS = {
+    "AR": ("Arkansas", "F", "federally administered mandatory supplement only"),
+    "AZ": ("Arizona", "S", "state-administered mandatory supplement only"),
+    "MS": ("Mississippi", "F", "federally administered mandatory supplement only"),
+    "ND": ("North Dakota", "NR", "no mandatory supplement (NR)"),
+    "TN": ("Tennessee", "F", "federally administered mandatory supplement only"),
+    "WV": ("West Virginia", "N", "no mandatory supplement"),
+}
+
+BLOCKED_ROWS_3 = {
+    "WY": (
+        "https://ecom.wyo.gov/m1800-other-programs/m1804-state-supplemental-payments",
+        "Wyoming's State Supplemental Payments are administered by the Department of Health (Division of Healthcare Financing); "
+        "the agency's governing text is Eligibility Operations Manual (EOM) section M1804 State Supplemental Payments on "
+        "ecom.wyo.gov (Google Sites; the EOM navigation lists 107 sections, M1804 the one SSP section). The page answers HTTP 200 "
+        "(248,711 bytes) to a plain client, but its content is a Google Drive viewer embed rendered by script "
+        "(embeds.googleusercontent.com inner frame); the HTML carries only the title and navigation and no document URL or file "
+        "id, so the document is not addressable from the publisher's page. DFS (dfs.wyo.gov) lists no SSI supplement family "
+        "(Cash Assistance = POWER; policy manuals: APS, Child Support, SNAP/POWER, Foster Care). rules.wyo.gov (Secretary of "
+        "State, ASP.NET search application) was not searched for a Department of Health SSP rule chapter. No index document taken. "
+        "The SSA regional description is in the federal family: us/manual/ssa/poms/si/01415.010 (Wyoming row S/S).",
+    ),
+}
+
+
+def update_queue_batch3(results: dict[str, dict]) -> dict:
+    """Rewrite only the batch-3 rows (MO, WI, SD, AK, WY, OK) and add the six no-supplement rows."""
+    queue = yaml.safe_load(QUEUE.read_text())
+    rows = {row["jurisdiction"]: row for row in queue["states"]}
+    federal_scope = rows["us"]["target_scope"]
+    for code, index in results.items():
+        row = rows[f"us-{code.lower()}"]
+        docs = index["docs"]
+        families = "; ".join(f"{f['family']}: {f['found']} found / {f['taken']} taken" for f in index["families"])
+        row.update(
+            {
+                "queue_status": "agent_ready",
+                "source_kind": index["source_kind"],
+                "primary_source_url": docs[0]["source_url"],
+                "target_manifest": str(manifest_path(code).relative_to(ROOT)),
+                "target_scope": {"jurisdiction": f"us-{code.lower()}", "document_class": docs[0]["document_class"], "version": VERSION},
+                "index_url": index["index_url"],
+                "index_document_count": index["index_document_count"],
+                "taken_count": index["taken_count"],
+                "index_families": families,
+                "notes": index["note"],
+            }
+        )
+    for code, (name, mandatory, mandatory_note) in NO_SUPPLEMENT_ROWS.items():
+        jurisdiction = f"us-{code.lower()}"
+        row = rows.get(jurisdiction)
+        if row is None:
+            row = {"jurisdiction": jurisdiction, "name": name, "lead_counts": {}, "candidate_sources": []}
+            queue["states"].append(row)
+            rows[jurisdiction] = row
+        row.update(
+            {
+                "queue_status": "done",
+                "source_kind": "ssa_poms_section",
+                "primary_source_url": POMS_SI_01415_010_URL,
+                "target_manifest": "manifests/us-ssa-poms-si-2026-09-10.yaml",
+                "target_scope": federal_scope,
+                "index_url": POMS_SI_01415_INDEX_URL,
+                "index_document_count": 1,
+                "taken_count": 1,
+                "index_families": "POMS SI 01415.010 Administration of State Supplementary Programs (state table): 1 found / 1 taken in the federal family; no state document family exists",
+                "administration": "N",
+                "notes": (
+                    f"No optional state supplement (POMS SI 01415.010 state table, {name} row: Mandatory = {mandatory}, "
+                    f"Optional = N; {mandatory_note}). Done with that finding: the governing text is the federal POMS row, "
+                    "already in the corpus as us/manual/ssa/poms/si/01415.010 (version 2026-09-10-ssi-poms-si); no state "
+                    "agency document exists to inventory and nothing was fetched. (2026-09-11 state-supplement batch 3.)"
+                ),
+            }
+        )
+    for code, (url, note) in BLOCKED_ROWS_3.items():
+        rows[f"us-{code.lower()}"].update(
+            {
+                "queue_status": "blocked_primary_source",
+                "source_kind": "state_agency_document",
+                "primary_source_url": url,
+                "target_manifest": None,
+                "index_url": "https://ecom.wyo.gov/",
+                "index_document_count": 107,
+                "taken_count": 0,
+                "index_families": "Department of Health EOM sections (Google Sites navigation): 107 found / 0 taken (M1804 content is a script-rendered Drive embed; see notes); DFS index: no SSI supplement family",
+                "notes": f"Blocked 2026-09-11 (state-supplement batch 3): {note}",
+            }
+        )
+    queue["states"].sort(key=lambda row: (row["jurisdiction"] != "us", row["jurisdiction"]))
+    queue["status_counts"] = {}
+    for row in queue["states"]:
+        queue["status_counts"][row["queue_status"]] = queue["status_counts"].get(row["queue_status"], 0) + 1
+    note = (
+        "2026-09-11 SSI state-supplement batch 3: scripts/build_ssi_state_supplement_manifests.py --batch 3; the six states with "
+        "no optional supplement (AR, AZ, MS, ND, TN, WV) added as done rows pointing at POMS SI 01415.010; MO, WI, SD, AK "
+        "extracted; WY blocked (script-rendered Drive embed); OK re-probed and extracted from the rules.ok.gov segments API; "
+        "docs/ingest-runs/2026-09-10-ssi-state-supplements-batch-3.md."
+    )
+    notes = queue.setdefault("policy", {}).setdefault("notes", [])
+    if note not in notes:
+        notes.append(note)
+    QUEUE.write_text(yaml.safe_dump(queue, sort_keys=False, allow_unicode=True, width=120))
+    return queue["status_counts"]
+
 
 def index_markdown(code: str, index: dict) -> str:
     lines = [f"**us-{code.lower()}** — {index['index_url']}", "", "| Family | Found | Taken |", "| --- | ---: | ---: |"]
@@ -1530,14 +2221,14 @@ def main() -> int:
     parser.add_argument("--only", help="comma-separated state codes to build (default: all extractable states)")
     parser.add_argument("--print-index", action="store_true", help="print each publisher index inventory as markdown")
     parser.add_argument("--skip-queue", action="store_true", help="do not rewrite manifests/ssi-agent-queue.yaml")
-    parser.add_argument("--batch", type=int, choices=(1, 2), default=2,
-                        help="which batch's builders and queue rows to run (default 2; batch-1 states are never regenerated by default)")
+    parser.add_argument("--batch", type=int, choices=(1, 2, 3), default=3,
+                        help="which batch's builders and queue rows to run (default 3; earlier batches' states are never regenerated by default)")
     args = parser.parse_args()
     session = requests.Session()
     session.headers.update({"User-Agent": USER_AGENT})
-    builders = BUILDERS if args.batch == 1 else BUILDERS_2
-    source_kinds = SOURCE_KINDS if args.batch == 1 else SOURCE_KINDS_2
-    row_notes = ROW_NOTES if args.batch == 1 else ROW_NOTES_2
+    builders = {1: BUILDERS, 2: BUILDERS_2, 3: BUILDERS_3}[args.batch]
+    source_kinds = {1: SOURCE_KINDS, 2: SOURCE_KINDS_2, 3: SOURCE_KINDS_3}[args.batch]
+    row_notes = {1: ROW_NOTES, 2: ROW_NOTES_2, 3: ROW_NOTES_3}[args.batch]
     codes = [c.strip().upper() for c in args.only.split(",")] if args.only else list(builders)
     results: dict[str, dict] = {}
     for code in codes:
@@ -1565,7 +2256,7 @@ def main() -> int:
             )
         )
     if not args.skip_queue:
-        update = update_queue if args.batch == 1 else update_queue_batch2
+        update = {1: update_queue, 2: update_queue_batch2, 3: update_queue_batch3}[args.batch]
         print("queue status_counts:", update(results))
     return 0
 
