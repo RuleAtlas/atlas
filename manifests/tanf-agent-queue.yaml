@@ -29,10 +29,10 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 3
+  needs_review: 2
   done: 26
+  blocked_primary_source: 3
   agent_ready: 26
-  blocked_primary_source: 2
 states:
 - jurisdiction: us
   name: Federal
@@ -376,9 +376,9 @@ states:
   notes: 'Batch 2 check: Arkansas TEA official documents already ingested. Done.'
 - jurisdiction: us-as
   name: American Samoa
-  queue_status: needs_review
-  source_kind: null
-  primary_source_url: null
+  queue_status: blocked_primary_source
+  source_kind: program_not_operated
+  primary_source_url: https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section619&num=0&edition=prelim
   target_manifest: null
   target_scope:
     jurisdiction: us-as
@@ -386,7 +386,16 @@ states:
     version: null
   lead_counts: null
   candidate_sources: []
-  notes: Row added by territories pass (2026-09-11) (not on the policyengine-us lead list).
+  notes: 'Not applicable (recorded as blocked_primary_source because the queue schema has no not-applicable status): American
+    Samoa is a ''State'' for TANF under 42 U.S.C. 619(5) but has never operated a TANF program; ACF''s TANF grantees are the
+    50 states, DC, Guam, Puerto Rico and the Virgin Islands (ACF OFA TANF program pages and the OPRE Welfare Rules Databook
+    territory coverage). The Department of Human and Social Services site (http://dhss.as; the https host presents a self-signed,
+    expired certificate, verification not disabled) lists no TANF program and its program pages are ''coming.html'' placeholders.
+    No territory TANF document exists to inventory; nothing was fetched. (2026-09-11 territories pass.)'
+  program_applicability: not_applicable
+  index_url: http://dhss.as/index.html
+  index_document_count: 0
+  taken_count: 0
 - jurisdiction: us-az
   name: Arizona
   queue_status: done

@@ -31,6 +31,7 @@ lead_list:
 status_counts:
   agent_ready: 20
   done: 35
+  needs_review: 1
 states:
 - jurisdiction: us
   name: Federal
@@ -3104,6 +3105,34 @@ states:
   index_url: https://www.dfa.arkansas.gov/office/taxes/income-tax-administration/individual-income-tax/forms/2025-tax-forms/
   index_document_count: 49
   taken_count: 3
+- jurisdiction: us-as
+  name: American Samoa
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: needs_review
+  source_kind: official_xlsx_forms_workbook
+  primary_source_url: https://www.americansamoa.gov/_files/ugd/4bfff9_a3bcba04ed65461ba9c6e20f503a8725.xlsx?dn=2025%20Tax%20Forms%20Updated-V3-%204.11.2026.xlsx
+  target_manifest: manifests/us-as-individual-income-tax-forms-ty2025.yaml
+  target_scope:
+    jurisdiction: us-as
+    document_class: form
+    version: null
+  index_url: https://www.americansamoa.gov/tax-office
+  index_document_count: 15
+  taken_count: 0
+  index_families:
+  - 'Form 390 American Samoa Individual Income Tax Return workbooks, tax years 2020-2025 (7 xlsx): the 2025 workbook (updated
+    V3, 4.11.2026) holds sheets 390, Sch. T8812, 8812(2001), Sch. TEITC, Sch A & B, Sch. C, 390X, 390A, Direct Deposit'
+  - '''IRS 2000 Tax Table and Instructions'' PDFs (2): the IRS 2000 booklet reposted because American Samoa applies the Internal
+    Revenue Code as of 2000-12-31; an IRS publication, not taken'
+  - 'other Tax Office files (6): ARPA child tax credit FAQ, Form T15323, stimulus FAQ, REAL ID policy, driver licence guide,
+    workmen''s compensation travel allowance; not taken'
+  notes: 'Territories pass (2026-09-11): needs_review. The American Samoa Government Tax Office page (HTTP 200) publishes
+    the 2025 Form 390 A.S. Individual Income Tax Return only as an Excel workbook of fillable form sheets (no PDF, no American
+    Samoa instructions; the page reposts the IRS 2000 tax table and instructions because the territory applies the Internal
+    Revenue Code as of 2000-12-31, 48 U.S.C. 1661 and A.S.C.A. 11.0403). The official-documents extractor''s xlsx path is
+    a header-row table reader and would not represent a form layout, so nothing was extracted; reviewer to decide on a form-workbook
+    extraction or a PDF print. 0 taken.'
 - jurisdiction: us-az
   name: Arizona
   queue_status: done

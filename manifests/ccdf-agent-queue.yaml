@@ -216,7 +216,11 @@ states:
   taken_count: 0
   notes: 'Publisher blocked: TLS: www.dhss.as presents a self-signed, expired certificate (CN=cmaster70); verification impossible,
     not disabled; retried 2026-09-10T18:36Z, same failure; retried 2026-09-10T21:35Z from US network, same failure (SSLCertVerificationError
-    / curl 60 self-signed, expired certificate). Nothing was worked around.'
+    / curl 60 self-signed, expired certificate); retried 2026-09-11T21:15Z from a US network (territories pass), same failure:
+    openssl reports the self-signed CN=cmaster70 certificate with verify return code 10 (certificate has expired), curl 60
+    for the plain client and for curl_cffi chrome120 alike; the plain-HTTP site http://dhss.as/index.html answers 200 but
+    its Child Care, ASNAP and ASWIC menu entries all point at the ''coming.html'' placeholder, so no plan is posted there
+    either. Nothing was worked around.'
 - jurisdiction: us-az
   name: Arizona
   queue_status: blocked_primary_source

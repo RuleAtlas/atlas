@@ -55,7 +55,7 @@ lead_list:
 status_counts:
   needs_review: 2
   agent_ready: 41
-  blocked_primary_source: 6
+  blocked_primary_source: 7
   done: 6
 states:
 - jurisdiction: us
@@ -1372,6 +1372,25 @@ states:
     other_program_manual_pdf:
       found: 11
       taken: 0
+- jurisdiction: us-as
+  name: American Samoa
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_publisher_unreachable
+  primary_source_url: https://medicaid.as.gov/
+  target_manifest: manifests/us-as-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-as
+    document_class: manual
+    version: null
+  index_url: https://medicaid.as.gov/
+  index_document_count: null
+  taken_count: 0
+  notes: 'Blocked (2026-09-11 territories pass): the American Samoa Medicaid State Agency site medicaid.as.gov has no DNS
+    A record (the zone is delegated to ns3-5.linode.com; NOERROR with an empty answer from the local resolver and from 8.8.8.8;
+    www.medicaid.as.gov is a CNAME to the same name), so the publisher cannot be reached by any client (curl 6, plain http
+    and https). Index inventory not possible; no workaround attempted.'
 - jurisdiction: us-az
   name: Arizona
   lead_counts: {}

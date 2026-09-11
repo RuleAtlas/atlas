@@ -31,7 +31,7 @@ lead_list:
 status_counts:
   done: 14
   agent_ready: 33
-  blocked_primary_source: 8
+  blocked_primary_source: 9
 states:
 - jurisdiction: us
   name: Federal
@@ -388,6 +388,31 @@ states:
     artifacts share data/corpus in the main checkout. Nothing separate to add.
   pointer: us-ar/manual/dco/medicaid/policy-manual (DCO Medical Services Policy Manual, 563 page provisions; ARKids First-B
     is determined under it)
+- jurisdiction: us-as
+  name: American Samoa
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_medicaid_expansion_chip_no_separate_document
+  primary_source_url: https://medicaid.as.gov/
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-as
+    document_class: manual
+    version: null
+  index_url: https://medicaid.as.gov/
+  index_document_count: null
+  taken_count: 0
+  index_families:
+    separate_chip_eligibility_document:
+      found: 0
+      taken: 0
+  notes: 'Blocked (2026-09-11 territories pass; first probe 2026-09-11T21:15Z from a US network). American Samoa''s CHIP is
+    a Medicaid-expansion CHIP (all five territories per the medicaid.gov CHIP Program by State map), so CHIP eligibility is
+    set in the Medicaid state plan and the Medicaid eligibility documents, and the territory publishes no separate CHIP manual,
+    handbook or rule. The Medicaid finding of the same pass applies: the American Samoa Medicaid State Agency site medicaid.as.gov
+    has no DNS A record and cannot be reached. CMS''s CHIP State Plan Amendments page (https://www.medicaid.gov/chip/state-program-information/chip-spa)
+    hosts SPA approval packages and the title XXI template, not territory CHIP plans. 0 taken. Nothing was worked around.'
 - jurisdiction: us-az
   name: Arizona
   lead_counts: {}

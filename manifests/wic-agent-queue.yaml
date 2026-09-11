@@ -30,7 +30,7 @@ lead_list:
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
   agent_ready: 22
-  blocked_primary_source: 33
+  blocked_primary_source: 34
 states:
 - jurisdiction: us
   name: Federal
@@ -282,6 +282,27 @@ states:
     be read from the publisher. Replacement for a blocked batch-3 state. No mirror was used. Selected in the third batch as
     a replacement (in order IA, NV, AR, MS, KS, NM) for a blocked or non-publishing state. retried 2026-09-10T21:34Z from
     US network, same failure (HTTP 403 Cloudflare for the WIC page and the site root).'
+- jurisdiction: us-as
+  name: American Samoa
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-as-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-as
+    document_class: manual
+    version: null
+  index_url: https://aswic.com/
+  index_document_count: 0
+  taken_count: 0
+  notes: 'American Samoa Department of Human and Social Services, WIC Program: The American Samoa WIC policy manual is not
+    published: the program site aswic.com (the address FNA''s WIC contact page gives for the agency; HTTP 200) carries program
+    descriptions, clinic information and the USDA complaint form only; the department site www.dhss.as presents a self-signed,
+    expired certificate (verification not disabled; curl 60 plain and curl_cffi chrome120) and its plain-HTTP ASWIC menu entry
+    is the ''coming.html'' placeholder. No page lists a manual. Selected in the territories pass (2026-09-11): the five inhabited
+    territories PR, GU, VI, AS, MP.'
 - jurisdiction: us-az
   name: Arizona
   lead_counts: {}

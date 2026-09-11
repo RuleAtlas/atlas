@@ -116,6 +116,32 @@ states:
     scope; nothing new to take here. SNAP-Employment-and-Training-7.24.26.pdf is the E&T provider contact list (a directory,
     not policy) and the two state-plan PDFs are the FFY25/FY26 SNAP E&T State Plans (state-plan family, not the manual). #680''s
     8 ''captured'' is the document count.'
+- jurisdiction: us-as
+  name: American Samoa
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_document_not_published
+  primary_source_url: http://dhss.as/index.html
+  target_manifest: manifests/us-as-nap-plan.yaml
+  target_scope:
+    jurisdiction: us-as
+    document_class: policy
+    version: null
+  index_url: https://fns-prod.azureedge.us/nap/nutrition-assistance-program-block-grants
+  index_document_count: 1
+  taken_count: 0
+  index_families:
+    fna_nap_summary_factsheet_pdf:
+      found: 1
+      taken: 0
+    asnap_plan_of_operation_or_manual:
+      found: 0
+      taken: 0
+  notes: 'Territories pass (2026-09-11): American Samoa runs the ASNAP block grant instead of SNAP (7 U.S.C. 2028). The administering
+    agency, the Department of Human and Social Services, presents a self-signed, expired certificate on https://www.dhss.as
+    (verification not disabled; curl 60 plain and curl_cffi chrome120) and its plain-HTTP site http://dhss.as/index.html (HTTP
+    200) has ''coming.html'' placeholders for ASNAP, ASWIC and Child Care; FNA''s NAP page hosts only the FY 2025 American
+    Samoa NAP summary factsheet and links the DHSS site. No plan of operation or eligibility manual is published. 0 taken.
+    Nothing was worked around.'
 - jurisdiction: us-az
   name: Arizona
   queue_status: blocked_primary_source
@@ -1107,5 +1133,5 @@ states:
     Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-2.md.'
 status_counts:
   done: 20
-  blocked_primary_source: 5
+  blocked_primary_source: 6
   agent_ready: 5
