@@ -39,28 +39,28 @@ completed (TX, NH, KY, WY, ND) or confirmed complete against their publishers.
 
 ## Controller steps
 
-1. Review and merge the PRs.
+Update 2026-09-11 (second pass): the selector collisions are resolved and the branches are
+verified to merge; see `2026-09-11-release-consolidation.md`. The draft successor selector
+`docs/ingest-runs/2026-09-11-us-rulespec-program-ingestion-union.selector.json`
+(`us-rulespec-2026-09-11-program-ingestion-union`, 536 scopes, 263 unreleased) deep-validates
+with zero errors. The Colorado, Ohio and Maryland collisions became three consolidated successor
+scopes built with `scripts/consolidate_release_scopes.py`; the Medicaid branch's CRLF copy of the
+DigiCert G2 intermediate was normalized so all ten branches merge onto `main` without conflict.
+
+1. Review and merge the PRs (#670 first; all CI jobs on it are green).
 2. On a clean branch cut from `main` after the merges, with `AXIOM_CORPUS_INGEST_PRIVATE_KEY`
-   exported in the shell (never in a file), run `scripts/sign_2026_09_10_scopes.sh`. It force-adds
-   the artifacts and commits them, signs every `2026-09-10*` scope against that commit, commits the
-   signed manifests under `.axiom/ingest-manifests/`, and self-verifies with `guard-ingested` when
-   `AXIOM_CORPUS_INGEST_PUBLIC_KEY` is exported. Open a PR; CI runs `guard-ingested`.
-3. Cut an immutable successor selector: the current US release's 275 scopes plus the 265 complete
-   `2026-09-10*` scopes (88,199 provisions), 540 in total. A draft validated with
-   `axiom-corpus-ingest validate-release --base data/corpus --release <selector> --ignore-r2-missing`.
-   Resolve these errors first:
-   - Colorado TANF `us-co/regulation/9-ccr-2503-6/3.606.{1,2,6}` duplicate the released
-     `us-co/regulation/2026-07-13-recovery` paths with different text (drop the three sections,
-     hold CO TANF out, or supersede the old scope).
-   - The Ohio OAC and Maryland COMAR adapters emit shared container rows (`us-oh/regulation`,
-     `us-md/regulation/title-07/...`) in every scope they build; the new OH TANF, OH SSI and
-     MD SSI adapter scopes collide with each other and with the released OAC 5101:4 scope.
-     Either the adapters stop emitting shared container rows or those scopes stay out.
-   - Advisory `unsectioned_document_body` warnings (GA, IA, KY, MD, OR single-body documents) can
-     be split later with `section-provisions`.
-4. `uv run --extra dev python scripts/publish_corpus.py --release manifests/releases/<name>.json --dry-run`,
+   exported in the shell (never in a file), run
+   `scripts/sign_release_scopes.sh docs/ingest-runs/2026-09-11-us-rulespec-program-ingestion-union.selector.json manifests/releases/us-rulespec-2026-08-23-canada-338-suspension-union.json`.
+   It force-adds the 263 unreleased scopes' artifacts (about 2.2 GB) and commits them, signs each
+   scope against that commit, commits the signed manifests under `.axiom/ingest-manifests/`,
+   self-verifies with `guard-ingested` when `AXIOM_CORPUS_INGEST_PUBLIC_KEY` is exported, then
+   copies the draft to `manifests/releases/<name>.json`, deep-validates it and commits it.
+   Open a PR; CI runs `guard-ingested` and validates the selector.
+3. `uv run --extra dev python scripts/publish_corpus.py --release manifests/releases/us-rulespec-2026-09-11-program-ingestion-union.json --dry-run`,
    then dispatch `activate-release.yml` and approve the `release-preview` and `release-activation`
    environments.
+4. Advisory `unsectioned_document_body` warnings (GA, IA, KY, MD, OR single-body documents) can
+   be split later with `section-provisions`; they do not block.
 
 ## Final per-jurisdiction tally
 
@@ -73,6 +73,11 @@ row in every program queue.
 
 ## Open reviewer decisions
 
+- The consolidation choices above are reversible until signing: the released Colorado recovery
+  and Ohio OAC 5101:4 scopes are replaced in the selector by successors that fold in the new
+  scopes (Colorado keeps the section-level TANF text for 3.606.1, 3.606.2 and 3.606.6 over the
+  recovery scope's page fragments). To reject, delete the three consolidated versions from
+  `data/corpus` and restore the originals in the draft selector.
 - `manual` vs `regulation` for codified rules ingested as `manual` under the work order (NJ, MA, CO,
   OK, OH, NM Medicaid); precedents used `regulation`.
 - Texas Works Handbook Part A text sits in both the Medicaid scope and the SNAP completion scope
