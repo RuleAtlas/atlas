@@ -17,5 +17,5 @@ PYTHONPATH=src axiom-corpus-ingest extract-official-documents --base data/corpus
 
 The local run used the native adapter's local_path option on the unchanged
 HTTPS-downloaded official PDF. The selector retains52 previous scopes and adds
-one:53 scopes,10207 rows,402 artifacts. No adapter or generated legal body was
+the BGH scope and a separate disability-paragraph scope:54 scopes,10211 rows,407 artifacts. No adapter or generated legal body was
 edited. Publication does not activate serving. No certified claim.

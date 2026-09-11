@@ -1,5 +1,5 @@
 {
-  "description": "Preserve all52 prior scopes and capture the complete official BGH XII ZR129/16 judgment, distinguishing general statutory written-form receipt from BGB550 rental documentation. Legal encoding remains open.",
+  "description": "Preserve all52 preceding release scopes; add the full BGH XII ZR129/16 judgment and exact complete SGBIX2(1) units from official2001/2018 pages for source-first native encoding. No legal encoding or certified claim.",
   "name": "de-rulespec-2026-09-11-kindergeld-bgh-counterpart",
   "quality_profile": "complete-expression-dates-v1",
   "scopes": [
@@ -267,6 +267,11 @@
       "jurisdiction": "de",
       "document_class": "guidance",
       "version": "2026-09-11-de-kindergeld-bgh-counterpart"
+    },
+    {
+      "jurisdiction": "de",
+      "document_class": "statute",
+      "version": "2026-09-11-de-kindergeld-disability-paragraphs"
     }
   ]
 }
