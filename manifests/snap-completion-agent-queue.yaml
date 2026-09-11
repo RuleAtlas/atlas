@@ -636,6 +636,26 @@ states:
   notes: 'Batch 2 (2026-09-10, #680): 4 documents taken from the publisher''s own index (160 documents inventoried across
     6 families; 4 taken; citation paths checked against every us-nd provisions file in /Users/pavelmakarchuk/axiom-corpus/data/corpus).
     Extraction proven with the official-documents extractor; see docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-2.md.'
+  superseding_scope:
+    jurisdiction: us-nd
+    document_class: manual
+    version: 2026-09-11-nd-snap-manual-supersede
+    supersedes: 2026-07-21-nd-snap-manual
+    manifest: manifests/us-nd-snap-manual.yaml
+    taken_at: '2026-09-11'
+    provision_count: 202
+    revised_documents:
+    - nd-hhs-snap-manual-landing
+    - nd-hhs-snap-manual-toc
+    - 62 of the 64 topics
+    run_note: docs/ingest-runs/2026-09-11-snap-superseding-scopes-batch-2.md
+    notes: 'Superseding scope taken 2026-09-11 (whole Release 26.5 document set re-extraction, same 67 citation paths) at the
+      publisher''s Release 26.7 edition (''Last published Sep 02, 2026''; every file Last-Modified 2026-09-02): landing page
+      (now carries the Release 26.7 summary), TOC (66 topics) and 62 topics changed; the ABAWD topics 401/402, 601, Appendix
+      B standards, 107, 302, 502 and the release log carry policy text changes, the rest differ by the republished MadCap template
+      (the ''Overview'' paragraph became an h2 heading); topics Appendix A glossary and Introduction and the Release 26.5 PDF
+      are text-identical. Extraction 9 s; validate-release on the swapped selector ok, 0 errors. The 2026-09-10 completion scope
+      (two new topics, Release 26.6 and 26.7 PDFs) is untouched.'
 - jurisdiction: us-ne
   name: Nebraska
   queue_status: done
