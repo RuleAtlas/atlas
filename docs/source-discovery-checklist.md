@@ -31,6 +31,12 @@ Use this as an offline checklist only:
       instruction, data table, or other policy document.
 - [ ] Prioritize official/open URLs that are not already covered by current
       release artifacts.
+      Federal SNAP: `sources/policyengine-us/snap_parity_gap_references.txt` is that
+      list, produced by `econ parity --emit-leads` (axiom-encode-economics) from every
+      PolicyEngine-US reference whose citation no manifest registers and no corpus
+      navigation node holds; mirrors are re-addressed to eCFR / uscode.house.gov and
+      the cited URL is kept as a comment. See
+      `docs/ingest-runs/2026-09-11-snap-policyengine-parity-leads.md`.
 - [x] Seed a fillable coverage manifest from ready official source groups:
       `manifests/policyengine-source-coverage.yaml`.
 - [ ] For each selected URL or source group, create or extend a corpus manifest that points to
