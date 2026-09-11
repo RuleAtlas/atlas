@@ -704,3 +704,22 @@ states:
       jurisdiction: us-wy
       document_class: manual
       version: 2026-05-27-wy-manuals-r2026-07-15-self-contained
+    superseding_scope:
+      jurisdiction: us-wy
+      document_class: manual
+      version: 2026-09-11-wy-snap-manual-supersede
+      supersedes: 2026-05-27-wy-manuals-r2026-07-15-self-contained
+      manifest: manifests/us-wy-manuals.yaml
+      taken_at: '2026-09-11'
+      provision_count: 9
+      revised_documents:
+      - wy-dfs-snap-power-table-ii-income-limits
+      - wy-dfs-snap-power-900
+      run_note: docs/ingest-runs/2026-09-11-snap-superseding-scopes-batch-2.md
+      notes: 'Superseding scope taken 2026-09-11 (whole released document set re-extraction, same four citation paths): Table
+        II now carries the July 1, 2025-June 30, 2026 POWER income guidelines (page modified 2026-07-28) and the 900 extended
+        menu was revised 2026-07-15 (income coding table); the 1100 menu is text-identical. The main manual page (modified 2025-05-19
+        on the publisher) now extracts to its full text (Sections 100-1400, 497,813 characters) where the released self-contained
+        scope held an 83,792-character block ending in Section 5xx; every substantive released sentence is present in the new
+        body. Extraction 6 s; validate-release on the swapped selector ok, 0 errors. The 2026-09-10 completion scope (Glossary,
+        Policy Clarifications, Table I, purchasing page) is untouched.'
