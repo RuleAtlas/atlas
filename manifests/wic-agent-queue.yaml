@@ -29,8 +29,8 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  agent_ready: 21
-  blocked_primary_source: 26
+  agent_ready: 22
+  blocked_primary_source: 30
 states:
 - jurisdiction: us
   name: Federal
@@ -218,6 +218,29 @@ states:
       '1992': 6
       '1991': 1
       total: 154
+- jurisdiction: us-ak
+  name: Alaska
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-ak-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-ak
+    document_class: manual
+    version: null
+  index_url: https://health.alaska.gov/en/services/division-of-public-assistance-dpa-services/wic/
+  index_document_count: 0
+  taken_count: 0
+  notes: 'Alaska Department of Health, Division of Public Assistance, WIC Program: The Alaska WIC policy manual is not published
+    on health.alaska.gov: the WIC program page (the legacy dpa/Pages/nutri/wic/default.aspx URL redirects to it; first probe
+    2026-09-10T22:58Z from a US network, HTTP 200 to the plain client) links applications, vendor newsletters, WIC Vendor
+    Forms, WIC Approved Foods, WIC Clinics by Region, the Farmers Market program and the WIC Vendor Management page; that
+    page links ''WIC Authorized Vendors'' only to the learn.dhss.alaska.gov login and lists no manual; the Nutrition topic
+    page lists none; the legacy manual.aspx and policy.aspx paths and an /en/resources/wic-policy-and-procedure-manual/ guess
+    answer 404. No page lists a policy manual or a local-agency section. Selected in the fifth batch as one of the last five
+    jurisdictions without a queue row (AK, DC, ND, VT, WY).'
 - jurisdiction: us-al
   name: Alabama
   lead_counts: {}
@@ -280,7 +303,10 @@ states:
     links ''WIC Manuals'' to an in-page anchor (#manuals) that the served page does not contain, for the plain client and
     one curl_cffi impersonation alike; candidate manuals sub-pages are the same soft 404 and the documents/prevention/azwic/manuals/policy/
     directory answers 403. No manual index is published on the site as served. No mirror was used. Selected in the second
-    batch as one of the next ten states by population (NJ, VA, WA, AZ, TN, MA, IN, MD, MO, WI).'
+    batch as one of the next ten states by population (NJ, VA, WA, AZ, TN, MA, IN, MD, MO, WI). re-checked 2026-09-10T23:00Z
+    from US network: the relocated Local Agencies page (prevention/azwic/agencies/index.php) still answers 200 (80,005 bytes)
+    with the ''WIC Manuals'' sidebar link to #manuals and no element with that id, to the plain client and to one curl_cffi
+    chrome120 impersonation alike; same finding.'
 - jurisdiction: us-ca
   name: California
   lead_counts: {}
@@ -364,6 +390,46 @@ states:
   notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
     listed there, single_block extraction. Selected in the third batch as one of the next ten states by population (CO, MN,
     SC, AL, LA, KY, OR, OK, CT, UT).
+- jurisdiction: us-dc
+  name: District of Columbia
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_state_agency_manual_pdf_per_section
+  primary_source_url: https://www.dcwic.org/policies-forms
+  target_manifest: manifests/us-dc-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-dc
+    document_class: manual
+    version: 2026-09-10-wic-state-policy-manual
+  index_url: https://www.dcwic.org/policies-forms
+  index_document_count: 192
+  taken_count: 92
+  index_inventory:
+    policy_pdf: 92
+    policy_attachment_file: 57
+    clinical_manual_pdf: 2
+    style_guide_pdf: 2
+    admin_forms_tab_file: 22
+    assessment_tools_tab_file: 8
+    substance_use_resources_tab_file: 5
+    teletask_messaging_guides_tab_file: 4
+    chapters:
+      '2': Nutrition Services
+      '3': MIS
+      '4': Organization and Management
+      '5': Nutrition Services Administration
+      '7': Caseload Management
+      '8': Certification and Eligibility
+      '9': Food Delivery
+      '10': Monitoring and Audits
+      '11': Civil Rights
+      '12': Administrative Procedures
+    duplicate_link_same_file: 1
+    duplicate_policy_number: []
+  notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
+    listed there, single_block extraction. Selected in the fifth batch as one of the last five jurisdictions without a queue
+    row (AK, DC, ND, VT, WY).
 - jurisdiction: us-de
   name: Delaware
   lead_counts: {}
@@ -383,7 +449,10 @@ states:
     a browser User-Agent for the WIC home page and the site root (first probe, 2026-09-10T21:47Z from a US network); one curl_cffi
     chrome120 impersonation fails TLS verification (''self signed certificate in certificate chain''), which was not disabled.
     No manual index could be read from the publisher. No mirror was used. Selected in the fourth batch (retry) as one of the
-    next ten not-yet-attempted states by population (NE, WV, ID, HI, NH, ME, MT, RI, DE, SD).'
+    next ten not-yet-attempted states by population (NE, WV, ID, HI, NH, ME, MT, RI, DE, SD). re-checked 2026-09-10T23:00Z
+    from US network: www.dhss.delaware.gov still answers HTTP 403 (''Web App - Unavailable'', 1,892 bytes) to the plain client
+    for the WIC home page, and one curl_cffi chrome120 impersonation still fails TLS verification (curl 60: self signed certificate
+    in certificate chain), which was not disabled; same failure.'
 - jurisdiction: us-fl
   name: Florida
   lead_counts: {}
@@ -835,6 +904,28 @@ states:
     complete_manual_pdf: 1
   notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
     listed there, single_block extraction. Selected in the first batch as one of the ten largest states by population.
+- jurisdiction: us-nd
+  name: North Dakota
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-nd-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-nd
+    document_class: manual
+    version: null
+  index_url: https://www.hhs.nd.gov/food-programs/WIC
+  index_document_count: 0
+  taken_count: 0
+  notes: 'North Dakota Health and Human Services, WIC Program: The North Dakota WIC policy manual is not published on hhs.nd.gov:
+    the WIC program page (reached via www.hhs.nd.gov/wic; the health/wic, health/family-health/wic and health/nutrition/wic
+    paths answer 404; first probe 2026-09-10T22:58Z from a US network) and its sub-pages (Common Questions, Apply, Eligible,
+    Pick-WIC Paper, About, Free Food, Appointment, eWIC for Families, eWIC for Stores, New Participant Training, Referrals,
+    Breastfeeding Resources) are participant- and store-facing; eWIC for Stores links one PDF (approved infant formula suppliers)
+    and the site search for ''WIC policy manual'' returns only those pages. No page lists a manual or a local-agency section.
+    Selected in the fifth batch as one of the last five jurisdictions without a queue row (AK, DC, ND, VT, WY).'
 - jurisdiction: us-ne
   name: Nebraska
   lead_counts: {}
@@ -1209,6 +1300,29 @@ states:
   notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
     listed there, single_block extraction. Selected in the second batch as one of the next ten states by population (NJ, VA,
     WA, AZ, TN, MA, IN, MD, MO, WI).
+- jurisdiction: us-vt
+  name: Vermont
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-vt-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-vt
+    document_class: manual
+    version: null
+  index_url: https://www.healthvermont.gov/family/wic
+  index_document_count: 0
+  taken_count: 0
+  notes: 'Vermont Department of Health, WIC Program: The Vermont WIC policy manual is not published on healthvermont.gov:
+    the WIC section (first probe 2026-09-10T22:58Z from a US network) has fourteen sub-pages (Apply, Check Your Balance, Information
+    for Grocers, Resources for Health Professionals, Shopping, Basics, Breastfeeding, Community Resources, Discounts, Eligibility,
+    Nutrition, Plans & Reports, Remote Appointments, Rights & Concerns) and none is a policy or local-agency page; Plans &
+    Reports links the ''2025 State Plan Goals and Objectives'' PDF (WIC State Plan, a different document family; MT precedent)
+    and data reports; Information for Grocers links the Vermont WIC Grocer Handbook and vendor forms (vendor family); the
+    site search for ''WIC policy manual'' returns only those pages. Selected in the fifth batch as one of the last five jurisdictions
+    without a queue row (AK, DC, ND, VT, WY).'
 - jurisdiction: us-wa
   name: Washington
   lead_counts: {}
@@ -1309,3 +1423,25 @@ states:
   notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
     listed there, single_block extraction. Selected in the fourth batch (retry) as one of the next ten not-yet-attempted states
     by population (NE, WV, ID, HI, NH, ME, MT, RI, DE, SD).
+- jurisdiction: us-wy
+  name: Wyoming
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-wy-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-wy
+    document_class: manual
+    version: null
+  index_url: https://health.wyo.gov/publichealth/wic/
+  index_document_count: 0
+  taken_count: 0
+  notes: 'Wyoming Department of Health, WIC Program: The Wyoming WIC policy manual is not published on health.wyo.gov: the
+    WIC program page (first probe 2026-09-10T22:58Z from a US network) and its sub-pages (Learn About WIC, Apply, Clinic Locator,
+    Appointment FAQ, Medical Documentation, Forms & Documents, Breastfeeding Support, Nutrition Education, Food Shopping Guide,
+    Where Can I Shop, Yearly Savings, Vendor Services, Complaints and Fraud) list no policy manual or local-agency section;
+    Vendor Services links a ''Vendor Manual'', minimum stocking requirements and a price survey as Google Docs (vendor family,
+    not the program policy manual); the site search for ''WIC policy manual'' returns only the program page. Selected in the
+    fifth batch as one of the last five jurisdictions without a queue row (AK, DC, ND, VT, WY).'

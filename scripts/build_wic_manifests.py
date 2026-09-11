@@ -50,6 +50,12 @@ ME, MT, RI, DE, SD): WV (eleven chapter pages, one PDF per policy), ME (one PDF 
 compiled Procedures Manual and the Vendor Policies PDFs on the program page) are built here; NE, ID, HI, SD publish no
 manual, MT publishes its policies only as the State Plan, and NH and DE answer 403 to the plain client.
 
+Fifth batch (the last five jurisdictions without a queue row: AK, DC, ND, VT, WY; first probes 2026-09-10T22:58Z from a US
+network): DC is built here from dcwic.org, the DC Health WIC State Agency's program site (linked from dchealth.dc.gov's
+WIC service page), whose public 'Policies, Forms, & Tools' page lists one PDF per numbered policy in ten chapter
+dropdowns. AK, ND, VT and WY publish no policy manual on their agency sites (VT posts its State Plan and a Grocer
+Handbook, WY a vendor manual as a Google Doc). The AZ and DE access blocks from batch 4 were re-checked once (RETRIED).
+
     uv run python scripts/build_wic_manifests.py                      # everything
     uv run python scripts/build_wic_manifests.py --only us-va,us-wa   # selected rows only
 """
@@ -1230,6 +1236,80 @@ def build_ri() -> tuple[str, int, dict]:
     return write_manifest("us-ri-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
 
 
+def build_dc() -> tuple[str, int, dict]:
+    """District of Columbia: DC Health's WIC State Agency publishes its policies on the program site dcwic.org, which the
+    dchealth.dc.gov WIC service page links as 'dcwic.org' (the site footer carries DC Health WIC's headquarters address
+    and info.wic@dc.gov). The public 'Policies, Forms, & Tools' page (policies-forms; the 'LA Staff Portal' is
+    password-protected and was not entered) has a Webflow tab set whose 'Policy and Procedures' tab holds one dropdown
+    per chapter ('2 - Nutrition Services' ... '12 - Administrative Procedures'; no chapter 1 or 6 is listed) of
+    '<N.NNN> Title' policy PDFs and lettered '<N.NNNA> Title' attachments (forms, guides, workbooks). Policies are
+    taken; attachments, the other four tabs, the two clinical manuals (Anthropometrics, Laboratory) and the style guides
+    above the tabs are inventoried, not taken. Files are served from the site's Webflow CDN (cdn.prod.website-files.com)."""
+    index = "https://www.dcwic.org/policies-forms"
+    page = soup_of(get(index))
+    tabs = page.select_one("div.w-tabs")
+    docs, seen_labels, seen_urls = [], set(), set()
+    families = {"policy_pdf": 0, "policy_attachment_file": 0, "clinical_manual_pdf": 0, "style_guide_pdf": 0,
+                "admin_forms_tab_file": 0, "assessment_tools_tab_file": 0, "substance_use_resources_tab_file": 0,
+                "teletask_messaging_guides_tab_file": 0, "chapters": {}, "duplicate_link_same_file": 0,
+                "duplicate_policy_number": []}
+    tab_family = {"Admin Forms": "admin_forms_tab_file", "Assessment Tools": "assessment_tools_tab_file",
+                  "Substance Use Resources": "substance_use_resources_tab_file",
+                  "Teletask Messaging Guides": "teletask_messaging_guides_tab_file"}
+    for pane in tabs.select(".w-tab-content > .w-tab-pane"):
+        name = pane.get("data-w-tab")
+        if name in tab_family:
+            families[tab_family[name]] += len(pane.find_all("a", href=True))
+            continue
+        if name != "Policy and Procedures":
+            raise RuntimeError(f"DC policies page has an unexpected tab {name!r}")
+        for dd in pane.select(".w-dropdown"):
+            toggle = " ".join(dd.select_one(".w-dropdown-toggle").get_text(" ", strip=True).split())
+            cm = re.match(r"^(\d+) - (.+)$", toggle)
+            if not cm:
+                raise RuntimeError(f"DC chapter dropdown without an 'N - Title' toggle: {toggle!r}")
+            ch_num, ch_title = cm.group(1), cm.group(2)
+            families["chapters"][ch_num] = ch_title
+            for a in dd.select(".w-dropdown-list a[href]"):
+                text = " ".join(a.get_text(" ", strip=True).split())
+                url = urljoin(index, a["href"])
+                # '11.00lB Civil Rights Complaint Form' (letter l for 1) is an attachment of 11.001
+                m = re.match(r"^(\d+)\.(\d{2}[0-9l])([A-Za-z]?)\b\s*(.*)$", text)
+                if not m:
+                    raise RuntimeError(f"DC policy link without a policy number: {text!r}")
+                if url in seen_urls:  # 12.008A links the 12.008 file again
+                    families["duplicate_link_same_file"] += 1
+                    continue
+                seen_urls.add(url)
+                if m.group(3):
+                    families["policy_attachment_file"] += 1
+                    continue
+                label, title = f"{m.group(1)}.{m.group(2)}", m.group(4)
+                families["policy_pdf"] += 1
+                if m.group(1) != ch_num or not url.lower().endswith(".pdf"):
+                    raise RuntimeError(f"DC policy {label} ({text!r}) is outside chapter {ch_num} or not a PDF")
+                if label in seen_labels:
+                    families["duplicate_policy_number"].append(label)
+                    continue
+                seen_labels.add(label)
+                docs.append(state_doc(
+                    "us-dc", "dchealth", label,
+                    f"DC WIC Policy & Procedure Manual, Chapter {ch_num} {ch_title}: Policy {label} {title}",
+                    url, authority="District of Columbia Department of Health (DC Health), WIC State Agency",
+                    index_url=index, manual="DC WIC Policy & Procedure Manual",
+                    extra={"chapter": ch_num, "chapter_title": ch_title, "index_link_text": text,
+                           "program_site": "https://www.dcwic.org/",
+                           "agency_page_linking_program_site":
+                               "https://dchealth.dc.gov/service/special-supplemental-nutrition-program-women-infants-and-children-wic"},
+                ))
+    for a in page.find_all("a", href=True):
+        if "website-files.com" in a["href"] and a.find_parent(class_="w-tabs") is None:
+            families["clinical_manual_pdf" if "manual" in a["href"].lower() else "style_guide_pdf"] += 1
+    if len(docs) < 85:
+        raise RuntimeError(f"DC index yielded only {len(docs)} policies")
+    return write_manifest("us-dc-wic-policy-manual", docs, STATE_VERSION), len(docs), {"index_url": index, **families}
+
+
 BLOCKED = {
     "us-ny": (
         "New York State Department of Health",
@@ -1427,6 +1507,46 @@ BLOCKED = {
         "The South Dakota WIC policy manual is not published on doh.sd.gov: the WIC program page links only the sd.gov/wic participant "
         "portal (approved foods, eligibility, news), the Family Nutrition Services page and the grocery-store lookup; no page lists a manual.",
     ),
+    "us-ak": (
+        "Alaska Department of Health, Division of Public Assistance, WIC Program",
+        "https://health.alaska.gov/en/services/division-of-public-assistance-dpa-services/wic/",
+        "The Alaska WIC policy manual is not published on health.alaska.gov: the WIC program page (the legacy dpa/Pages/nutri/wic/default.aspx "
+        "URL redirects to it; first probe 2026-09-10T22:58Z from a US network, HTTP 200 to the plain client) links applications, vendor "
+        "newsletters, WIC Vendor Forms, WIC Approved Foods, WIC Clinics by Region, the Farmers Market program and the WIC Vendor Management "
+        "page; that page links 'WIC Authorized Vendors' only to the learn.dhss.alaska.gov login and lists no manual; the Nutrition topic page "
+        "lists none; the legacy manual.aspx and policy.aspx paths and an /en/resources/wic-policy-and-procedure-manual/ guess answer 404. "
+        "No page lists a policy manual or a local-agency section.",
+    ),
+    "us-nd": (
+        "North Dakota Health and Human Services, WIC Program",
+        "https://www.hhs.nd.gov/food-programs/WIC",
+        "The North Dakota WIC policy manual is not published on hhs.nd.gov: the WIC program page (reached via www.hhs.nd.gov/wic; the "
+        "health/wic, health/family-health/wic and health/nutrition/wic paths answer 404; first probe 2026-09-10T22:58Z from a US network) "
+        "and its sub-pages (Common Questions, Apply, Eligible, Pick-WIC Paper, About, Free Food, Appointment, eWIC for Families, eWIC for "
+        "Stores, New Participant Training, Referrals, Breastfeeding Resources) are participant- and store-facing; eWIC for Stores links one "
+        "PDF (approved infant formula suppliers) and the site search for 'WIC policy manual' returns only those pages. No page lists a "
+        "manual or a local-agency section.",
+    ),
+    "us-vt": (
+        "Vermont Department of Health, WIC Program",
+        "https://www.healthvermont.gov/family/wic",
+        "The Vermont WIC policy manual is not published on healthvermont.gov: the WIC section (first probe 2026-09-10T22:58Z from a US "
+        "network) has fourteen sub-pages (Apply, Check Your Balance, Information for Grocers, Resources for Health Professionals, Shopping, "
+        "Basics, Breastfeeding, Community Resources, Discounts, Eligibility, Nutrition, Plans & Reports, Remote Appointments, Rights & "
+        "Concerns) and none is a policy or local-agency page; Plans & Reports links the '2025 State Plan Goals and Objectives' PDF (WIC "
+        "State Plan, a different document family; MT precedent) and data reports; Information for Grocers links the Vermont WIC Grocer "
+        "Handbook and vendor forms (vendor family); the site search for 'WIC policy manual' returns only those pages.",
+    ),
+    "us-wy": (
+        "Wyoming Department of Health, WIC Program",
+        "https://health.wyo.gov/publichealth/wic/",
+        "The Wyoming WIC policy manual is not published on health.wyo.gov: the WIC program page (first probe 2026-09-10T22:58Z from a US "
+        "network) and its sub-pages (Learn About WIC, Apply, Clinic Locator, Appointment FAQ, Medical Documentation, Forms & Documents, "
+        "Breastfeeding Support, Nutrition Education, Food Shopping Guide, Where Can I Shop, Yearly Savings, Vendor Services, Complaints and "
+        "Fraud) list no policy manual or local-agency section; Vendor Services links a 'Vendor Manual', minimum stocking requirements and a "
+        "price survey as Google Docs (vendor family, not the program policy manual); the site search for 'WIC policy manual' returns only "
+        "the program page.",
+    ),
 }
 
 STATE_NAMES = {"us-ca": "California", "us-tx": "Texas", "us-fl": "Florida", "us-ny": "New York", "us-pa": "Pennsylvania",
@@ -1437,7 +1557,8 @@ STATE_NAMES = {"us-ca": "California", "us-tx": "Texas", "us-fl": "Florida", "us-
                "us-ky": "Kentucky", "us-or": "Oregon", "us-ok": "Oklahoma", "us-ct": "Connecticut", "us-ut": "Utah",
                "us-ia": "Iowa", "us-nv": "Nevada", "us-ar": "Arkansas", "us-ms": "Mississippi", "us-ks": "Kansas", "us-nm": "New Mexico",
                "us-ne": "Nebraska", "us-wv": "West Virginia", "us-id": "Idaho", "us-hi": "Hawaii", "us-nh": "New Hampshire",
-               "us-me": "Maine", "us-mt": "Montana", "us-ri": "Rhode Island", "us-de": "Delaware", "us-sd": "South Dakota"}
+               "us-me": "Maine", "us-mt": "Montana", "us-ri": "Rhode Island", "us-de": "Delaware", "us-sd": "South Dakota",
+               "us-ak": "Alaska", "us-dc": "District of Columbia", "us-nd": "North Dakota", "us-vt": "Vermont", "us-wy": "Wyoming"}
 
 BATCH_NOTE = {
     1: "Selected in the first batch as one of the ten largest states by population.",
@@ -1445,12 +1566,14 @@ BATCH_NOTE = {
     3: "Selected in the third batch as one of the next ten states by population (CO, MN, SC, AL, LA, KY, OR, OK, CT, UT).",
     4: "Selected in the third batch as a replacement (in order IA, NV, AR, MS, KS, NM) for a blocked or non-publishing state.",
     5: "Selected in the fourth batch (retry) as one of the next ten not-yet-attempted states by population (NE, WV, ID, HI, NH, ME, MT, RI, DE, SD).",
+    6: "Selected in the fifth batch as one of the last five jurisdictions without a queue row (AK, DC, ND, VT, WY).",
 }
 BATCH = dict.fromkeys(("us-ca", "us-tx", "us-fl", "us-ny", "us-pa", "us-il", "us-oh", "us-ga", "us-nc", "us-mi"), 1)
 BATCH.update(dict.fromkeys(("us-nj", "us-va", "us-wa", "us-az", "us-tn", "us-ma", "us-in", "us-md", "us-mo", "us-wi"), 2))
 BATCH.update(dict.fromkeys(("us-co", "us-mn", "us-sc", "us-al", "us-la", "us-ky", "us-or", "us-ok", "us-ct", "us-ut"), 3))
 BATCH.update(dict.fromkeys(("us-ia", "us-nv", "us-ar", "us-ms", "us-ks", "us-nm"), 4))
 BATCH.update(dict.fromkeys(("us-ne", "us-wv", "us-id", "us-hi", "us-nh", "us-me", "us-mt", "us-ri", "us-de", "us-sd"), 5))
+BATCH.update(dict.fromkeys(("us-ak", "us-dc", "us-nd", "us-vt", "us-wy"), 6))
 
 # Batch-1 blocked rows re-checked once during batch 2 (agency site only; nothing else was tried).
 RECHECKED = {"us-ny": "2026-09-10T18:47Z", "us-fl": "2026-09-10T18:47Z", "us-il": "2026-09-10T18:47Z", "us-oh": "2026-09-10T18:47Z"}
@@ -1468,6 +1591,13 @@ RETRIED = {
     "us-nm": "re-probed 2026-09-10T21:38Z from US network: the Policies & Procedures page still links only the intranet.",
     **dict.fromkeys(("us-ny", "us-fl", "us-in", "us-wi", "us-al", "us-ok", "us-ms"),
                     "re-probed 2026-09-10T21:38Z from US network, still not published (page reachable, no manual link)."),
+    # Batch-5 re-check of the two batch-4 access blocks (2026-09-10T23:00Z, US network; one plain request and one impersonation each).
+    "us-az": "re-checked 2026-09-10T23:00Z from US network: the relocated Local Agencies page (prevention/azwic/agencies/index.php) still "
+             "answers 200 (80,005 bytes) with the 'WIC Manuals' sidebar link to #manuals and no element with that id, to the plain client "
+             "and to one curl_cffi chrome120 impersonation alike; same finding.",
+    "us-de": "re-checked 2026-09-10T23:00Z from US network: www.dhss.delaware.gov still answers HTTP 403 ('Web App - Unavailable', 1,892 "
+             "bytes) to the plain client for the WIC home page, and one curl_cffi chrome120 impersonation still fails TLS verification "
+             "(curl 60: self signed certificate in certificate chain), which was not disabled; same failure.",
 }
 
 # inventory keys that annotate documents already counted in another family (or that are not documents at all)
@@ -1490,6 +1620,7 @@ STATE_BUILDERS = {
     "us-ut": lambda bundle: build_ut(), "us-ia": lambda bundle: build_ia(),
     "us-or": lambda bundle: build_or(), "us-ky": lambda bundle: build_ky(),
     "us-wv": lambda bundle: build_wv(), "us-me": lambda bundle: build_me(), "us-ri": lambda bundle: build_ri(),
+    "us-dc": lambda bundle: build_dc(),
 }
 
 
