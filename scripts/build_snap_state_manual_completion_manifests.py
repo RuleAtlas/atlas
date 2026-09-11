@@ -32,6 +32,15 @@ static rows AZ (blocked), NE, AR, IA, HI, NM, VT, NV, ID (publisher index confir
 findings, including revised editions that need a superseding scope, are in the row notes). See
 docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-2.md. Batch-1 manifests are never
 regenerated: run with ``--only us-ky --only us-wy --only us-nd`` for batch 2.
+
+Batch 3 (2026-09-11, US network): the issue's last seven discovery-gap states NC, OH, MT, OK, GA,
+TN and MI were diagnosed against the released scopes and confirmed on the publisher's own index, and
+AZ and NY were re-probed once. Every index is already fully in the corpus, so batch 3 builds no
+completion scope: all nine rows are static (NC, MT, OK, GA, TN, MI done with revised editions recorded
+for superseding scopes; OH blocked for the eManuals manual family while OAC 5101:4 is complete; AZ and
+NY still bot-challenged). Run with ``--static-only`` for batch 3 so no live builder runs and no
+earlier manifest is regenerated. See
+docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-3.md.
 """
 
 from __future__ import annotations
@@ -60,6 +69,7 @@ UA = "Axiom/1.0 (Legal Archive; contact@axiom-foundation.org) https://github.com
 ISSUE = "https://github.com/TheAxiomFoundation/axiom-corpus/issues/680"
 RUN_NOTE = "docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-1.md"
 RUN_NOTE_BATCH2 = "docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-2.md"
+RUN_NOTE_BATCH3 = "docs/ingest-runs/2026-09-10-snap-state-manual-completion-batch-3.md"
 
 _LINK_RE = re.compile(r'<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', re.S | re.I)
 
@@ -667,6 +677,8 @@ NAMES = {
     "us-ca": "California", "us-ny": "New York", "us-nh": "New Hampshire", "us-ky": "Kentucky", "us-me": "Maine",
     "us-ne": "Nebraska", "us-wy": "Wyoming", "us-az": "Arizona", "us-ar": "Arkansas", "us-ia": "Iowa", "us-hi": "Hawaii",
     "us-nm": "New Mexico", "us-vt": "Vermont", "us-nv": "Nevada", "us-nd": "North Dakota", "us-id": "Idaho",
+    "us-nc": "North Carolina", "us-oh": "Ohio", "us-mt": "Montana", "us-ok": "Oklahoma", "us-ga": "Georgia",
+    "us-tn": "Tennessee", "us-mi": "Michigan",
 }
 SOURCE_KIND = {
     "us-tx": "official_html_handbook_sections", "us-nh": "official_html_webhelp_manual_topics",
@@ -683,6 +695,15 @@ BATCH2_NOTE = (
     "replacement for AZ (blocked on the first probe). Every publisher index was fetched live; revised editions of "
     "documents already in a released scope are recorded, not re-taken (their citation paths exist). Generator: "
     "scripts/build_snap_state_manual_completion_manifests.py --only us-ky --only us-wy --only us-nd."
+)
+
+BATCH3_NOTE = (
+    "Batch 3 (2026-09-11, axiom-corpus#680, US network): the issue's last seven discovery-gap states NC, OH, MT, OK, GA, TN, "
+    "MI diagnosed against the released scopes and confirmed on the publisher's own index; AZ and NY re-probed once (both still "
+    "bot-challenged). Every index is already fully in the corpus, so no completion scope was built; revised editions since the "
+    "released scopes are recorded for superseding scopes. Ohio's OAC 5101:4 is complete (82 of 82 rules) and its eManuals host "
+    "does not answer (blocked_primary_source for the manual family). Generator: "
+    "scripts/build_snap_state_manual_completion_manifests.py --static-only."
 )
 
 STATIC_ROWS: dict[str, dict[str, Any]] = {
@@ -1080,10 +1101,251 @@ STATIC_ROWS_BATCH2: dict[str, dict[str, Any]] = {
 }
 
 
+STATIC_ROWS_BATCH3: dict[str, dict[str, Any]] = {
+    "us-nc": {
+        "queue_status": "done",
+        "source_kind": "official_pdf_manual_sections",
+        "primary_source_url": "https://policies.ncdhhs.gov/divisional-n-z/social-services/food-and-nutrition-services/fns-policies-manuals/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-nc", "document_class": "manual", "version": "2026-05-27-nc-fns-manuals-r2026-07-15-self-contained"},
+        "index_url": "https://policies.ncdhhs.gov/divisional-n-z/social-services/food-and-nutrition-services/fns-policies-manuals/",
+        "index_document_count": 758, "taken_count": 0,
+        "index_families": {
+            "fns_manual_section_pdf": {"found": 77, "taken": 0, "already_in_corpus": 77, "revised_edition_since_release": 4},
+            "fns_manual_appendix_pdf": {"found": 2, "taken": 0, "already_in_corpus": 2},
+            "fns_administrative_letter_document": {"found": 367, "taken": 0},
+            "fns_change_notice_document": {"found": 312, "taken": 0},
+        },
+        "notes": (
+            "Index confirmed 2026-09-11: the NCDHHS FNS Policies & Manuals page lists 77 FNS manual sections (FNS 100-175, 200-270, "
+            "300-390, 400-450, 500-515, 600, 650, 700-705, 800-865, 900-915) as document pages with their PDFs, plus Appendix 3100 "
+            "(Social Security district offices) and Appendix 3300 (glossary): 79 documents, all 79 in manifests/us-nc-fns-manuals.yaml "
+            "and the released scope us-nc/manual/2026-05-27-nc-fns-manuals-r2026-07-15-self-contained (723 provisions, coverage "
+            "complete). Nothing new to take. Reviewer: four sections are revised editions since the release, served under new August "
+            "2026 file names (FNS 212 Household Composition Special Arrangements 8.17.2026, FNS 215 Residence 8.4.2026, FNS 340 "
+            "Deductions 8.4.2026, FNS 515 SR Changes During the Certification Period 8.13.2026; Last-Modified 2026-08-05 to 2026-08-31); "
+            "the released URLs still answer HTTP 200 with the old files and none of the other 75 released files is modified after "
+            "2026-05-27 (Last-Modified headers; the self-contained release object keeps no per-file hashes). Their citation paths exist, "
+            "so a superseding NC scope is needed, not a completion scope. The FNS Administrative Letters page (367 documents, 2002-2020) "
+            "and FNS Change Notices page (312 documents, 2022-2026; FNS-CN-01..03-2026 carry the four revised sections as attachments) "
+            "are the transmittal and change-summary families, not the manual. #680's 79 'captured' is the document count."
+        ),
+    },
+    "us-oh": {
+        "queue_status": "blocked_primary_source",
+        "source_kind": "official_administrative_code_and_emanuals",
+        "primary_source_url": "https://emanuals.jfs.ohio.gov/FoodAssistance/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-oh", "document_class": "regulation", "version": "2026-07-16-agency-5101-4"},
+        "index_url": "https://codes.ohio.gov/ohio-administrative-code/5101%3A4",
+        "index_document_count": 82, "taken_count": 0,
+        "index_families": {
+            "oac_5101_4_rule_html": {"found": 82, "taken": 0, "already_in_corpus": 82},
+            "emanuals_food_assistance_manual_html": {"found": 0, "taken": 0, "blocked": True},
+        },
+        "notes": (
+            "Diagnosed 2026-09-11: #680's 82 'captured' is the rule count of the OAC 5101:4 adapter scope "
+            "us-oh/regulation/2026-07-16-agency-5101-4 (93 rows: 82 rules in 9 chapters plus the agency, division and OAC container "
+            "rows). The Ohio Laws and Rules site lists 9 chapters (5101:4-1 to 5101:4-9) with 82 rules; every one is in the scope and "
+            "the scope has none the publisher lacks, so the OAC gap is nil and no second OAC adapter scope is built (the adapter's shared "
+            "container rows would collide across scopes in release validation). A per-rule revision check was not completed: "
+            "codes.ohio.gov rate-limited the rule pages (HTTP 429) after 21 of 82. The SNAP-governing manual family is the ODJFS "
+            "eManuals Food Assistance manual, and that host does not answer from this network: emanuals.jfs.ohio.gov (156.63.50.60) "
+            "TCP connect timeout to the plain Axiom request (requests ConnectTimeout after 20.7 s) and to curl-cffi chrome120 browser "
+            "impersonation (curl 28, 20.0 s); the legacy host emanuals.odjfs.state.oh.us (156.63.65.106) also times out after 20 s. "
+            "No index inventory of the manual is possible; no workaround attempted. When the host answers, inventory the Food "
+            "Assistance manual as a new us-oh manual scope."
+        ),
+    },
+    "us-mt": {
+        "queue_status": "done",
+        "source_kind": "official_pdf_manual_sections",
+        "primary_source_url": "https://dphhs.mt.gov/hcsd/Manuals/snapmanual",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-mt", "document_class": "manual", "version": "2026-07-17-mt-snap-policy-manual"},
+        "index_url": "https://dphhs.mt.gov/hcsd/Manuals/snapmanual",
+        "index_document_count": 90, "taken_count": 0,
+        "index_families": {
+            "snap_policy_manual_section_pdf": {"found": 82, "taken": 0, "already_in_corpus": 82},
+            "other_program_manual_and_site_pdf": {"found": 8, "taken": 0},
+        },
+        "notes": (
+            "Index confirmed 2026-09-11: the DPHHS SNAP policy manual page links 90 PDFs: 82 SNAP manual sections (TOC, index, "
+            "introduction, sections 100-1900 and appendices), all in manifests/us-mt-snap-manual.yaml and the released scope "
+            "us-mt/manual/2026-07-17-mt-snap-policy-manual (435 provisions, coverage complete), plus 8 non-SNAP documents (Commodity "
+            "Supplemental Food Program, CSBG, ESG, LIHEAP and Weatherization manuals, the TANF State Plan, a sign-language interpreter "
+            "list and a state privacy notice). All 83 released files were re-fetched and are byte-identical to the released inventory "
+            "(SHA-256), so nothing is revised; the 83rd, SNAP 1704.1 Nutrition Education Programs, is no longer linked from the index but "
+            "still answers HTTP 200 at its released URL. Nothing new to take. #680's 83 'captured' is the document count."
+        ),
+    },
+    "us-ok": {
+        "queue_status": "done",
+        "source_kind": "official_rules_api_and_agency_appendices",
+        "primary_source_url": "https://rules.ok.gov/home",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-ok", "document_class": "regulation", "version": "2026-07-21-ok-snap-rules"},
+        "index_url": "https://prod-ok-rules-api.tecuity.com/GetSegmentsByChapterNum?titleNum=340&chapterNum=50",
+        "index_document_count": 11, "taken_count": 0,
+        "index_families": {
+            "oac_340_50_chapter_api_response_json": {"found": 1, "taken": 0, "already_in_corpus": 1},
+            "okdhs_snap_appendix_document": {"found": 7, "taken": 0, "already_in_corpus": 7, "revised_edition_since_release": 1},
+            "oac_dependency_chapter_api_response_json": {"found": 3, "taken": 0, "already_in_corpus": 3},
+        },
+        "notes": (
+            "Index confirmed 2026-09-11: the Oklahoma Secretary of State rules site (rules.ok.gov/home) answers HTTP 403 to both the "
+            "plain Axiom request and curl-cffi chrome120 impersonation, but its own production API, the released scope's download_url, "
+            "answers: GetSegmentsByChapterNum for OAC 340 Chapter 50 returns 205 segments (1 chapter, 9 subchapters, 19 parts, 162 "
+            "sections, 14 appendices). 77 sections are active (statusName Undefined) and all 77 are in "
+            "us-ok/regulation/2026-07-21-ok-snap-rules (78 rows with the chapter root; 340:50-5-7.1, 5-10.1 and 5-64.1 are held as "
+            "340-50-5-7.1 etc.); the other 85 sections (80 Revoked, 5 Reserved) and the 14 appendices (all Revoked) carry no text and are "
+            "excluded by the released extraction's json_record_exclude_statuses. The supporting policy scope "
+            "us-ok/policy/2026-07-21-ok-snap-policy holds the seven OKDHS appendix documents (B-2, C-1, C-3 PDF, C-3 landing page and "
+            "allotment-table data, C-3-A, D-4-C) and the Chapter 2, 10 and 65 dependency API responses; oklahoma.gov's OKDHS policy "
+            "library now redirects to rules.ok.gov (HTTP 403), so the appendices have no reachable HTML index and were verified "
+            "document by document. Reviewer: D-4-C is a revised edition (new SHA-256, Last-Modified 2026-08-28); the C-3 landing page "
+            "differs only in the site menu, the C-3 table is still the 10/01/2025 edition (no 10012026 page yet, HTTP 404), and the "
+            "three dependency-chapter API responses are content-identical to the released files. D-4-C's citation path exists, so a "
+            "superseding OK policy scope is needed. Nothing new to take. #680's 87 'captured' is 77 sections plus the policy rows."
+        ),
+    },
+    "us-ga": {
+        "queue_status": "done",
+        "source_kind": "official_html_manual",
+        "primary_source_url": "https://pamms.dhs.ga.gov/dfcs/snap/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-ga", "document_class": "manual", "version": "2026-05-27-ga-snap-manual-r2026-07-15-self-contained"},
+        "index_url": "https://pamms.dhs.ga.gov/dfcs/snap/",
+        "index_document_count": 369, "taken_count": 0,
+        "index_families": {
+            "snap_manual_section_html": {"found": 82, "taken": 0, "already_in_corpus": 82, "revised_edition_since_release": 16},
+            "snap_manual_appendix_html": {"found": 14, "taken": 0, "already_in_corpus": 14, "revised_edition_since_release": 2},
+            "snap_manual_appendix_table_pdf": {"found": 4, "taken": 0, "already_in_corpus": 4},
+            "manual_transmittal_cover_letter_pdf": {"found": 87, "taken": 0},
+            "manual_form_attachment_pdf": {"found": 181, "taken": 0},
+            "manual_landing_html": {"found": 1, "taken": 0},
+        },
+        "notes": (
+            "Index confirmed 2026-09-11: the DHS PAMMS SNAP Policy Manual index links 369 distinct dfcs/snap URLs: 82 policy sections "
+            "(3000-3810), 14 appendix pages (A, B hearings set, D, E glossary, F forms TOC, J, L) and 4 Appendix A BOI table PDFs, all "
+            "100 in manifests/us-ga-snap-manual.yaml and the released scope us-ga/manual/2026-05-27-ga-snap-manual-r2026-07-15-self-contained "
+            "(1,214 provisions, coverage complete); 87 Manual Transmittal cover letters (MT 1-87, the change-summary family); 181 form "
+            "attachments under Appendix F (applications, notices and verification forms in 16 languages, the form family); and the "
+            "landing page. Nothing new to take. Reviewer: Manual Transmittal 87 (dated June 1, 2026, after the released 2026-05-27 "
+            "scope) revised sections 3035, 3105, 3110, 3205, 3335, 3350, 3405, 3420, 3515, 3614, 3617, 3710, 3715, 3725, 3730 and 3805 "
+            "and Appendices E and F (18 items); their citation paths exist, so a superseding GA scope is needed (MT 86 of January 3, 2026 "
+            "and MT 85 of November 1, 2025 predate the release). #680's 110 'captured' is the document count plus queue rows."
+        ),
+    },
+    "us-tn": {
+        "queue_status": "done",
+        "source_kind": "official_publications_page",
+        "primary_source_url": "https://www.tn.gov/humanservices/information-and-resources/dhs-publications.html",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-tn", "document_class": "manual", "version": "2026-05-27-tn-snap-policies-r2026-07-15-self-contained"},
+        "index_url": "https://www.tn.gov/humanservices/information-and-resources/dhs-publications.html",
+        "index_document_count": 106, "taken_count": 0,
+        "index_families": {
+            "snap_policy_manual_section_pdf": {"found": 27, "taken": 0, "already_in_corpus": 27, "revised_edition_since_release": 1},
+            "other_dhs_publication_pdf": {"found": 79, "taken": 0},
+        },
+        "notes": (
+            "Index confirmed 2026-09-11 (borderline state, re-checked against the publisher, not the threshold): the TDHS Publications "
+            "page links 106 PDFs; the 27 SNAP policy sections 24.00-24.31 are all in manifests/us-tn-snap-policies.yaml and the released "
+            "scope us-tn/manual/2026-05-27-tn-snap-policies-r2026-07-15-self-contained (233 provisions, coverage complete); the other 79 "
+            "are Families First, child care, child support, APS and agency publications. The SNAP resource-library page lists 11 "
+            "customer flyers and checklists (no policy). Nothing new to take. Reviewer: 24.31 Tennessee Summer Nutrition Initiative is a "
+            "revised edition (Last-Modified 2026-06-01, after the release; the other 26 files are dated 2026-04-24 and unchanged); its "
+            "citation path exists, so a superseding TN scope is needed. The TN regulation scope (Tenn. Comp. R. & Regs. 1240-01) is "
+            "republished by Cornell LII (primary_source false); a primary Secretary of State edition is a separate follow-on family. "
+            "#680's 180 'captured' is the manual plus regulation section count; the manual is complete, as the issue noted."
+        ),
+    },
+    "us-mi": {
+        "queue_status": "done",
+        "source_kind": "official_pdf_manual_tree",
+        "primary_source_url": "https://mdhhs-pres-prod.michigan.gov/OLMWeb/ex/BP/Public/BEM/000.pdf",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-mi", "document_class": "manual", "version": "2026-07-17-mi-bridges-manual"},
+        "index_url": "https://mdhhs-pres-prod.michigan.gov/OLMWeb/ex/BP/Public/BEM/000.pdf",
+        "index_document_count": 639, "taken_count": 0,
+        "index_families": {
+            "bem_chapter_pdf": {"found": 129, "taken": 0, "already_in_corpus": 129, "revised_edition_since_release": 5},
+            "bam_chapter_pdf": {"found": 56, "taken": 0, "already_in_corpus": 56, "revised_edition_since_release": 3},
+            "rft_reference_table_pdf": {"found": 22, "taken": 0, "already_in_corpus": 7},
+            "rfs_reference_schedule_pdf": {"found": 8, "taken": 0, "already_in_corpus": 2},
+            "bpg_glossary_pdf": {"found": 1, "taken": 0, "already_in_corpus": 1},
+            "bpb_bulletin_log_pdf": {"found": 1, "taken": 0, "already_in_corpus": 1, "revised_edition_since_release": 1},
+            "bpb_policy_bulletin_pdf": {"found": 422, "taken": 0},
+        },
+        "notes": (
+            "Index confirmed 2026-09-11 (borderline state, re-checked against the publisher): the current BEM 000 (BPB 2026-024, "
+            "8-1-2026) and BAM 000 (BPB 2026-023, 8-1-2026) tables of contents list 128 BEM and 55 BAM chapters; with the two TOCs, all "
+            "185 are in manifests/us-mi-bridges-manual.yaml and the released scope us-mi/manual/2026-07-17-mi-bridges-manual (2,310 "
+            "provisions, coverage complete), as are the BPG glossary, the BPB bulletin log and 7 of the 22 RFT reference tables (000, "
+            "248 SSI payment levels, 250 FAP income limits, 255 food assistance standards, 260 issuance table, 262 restaurants, 295 "
+            "combined budget tables) and 2 of the 8 RFS schedules (000, 305 transaction deadlines and issuance schedule); the 15 other RFT "
+            "tables (zip codes, MA shelter areas, FIP/RCA/SDA payment standards, MA income levels, CDC scale, exam fees) and 6 other RFS "
+            "schedules (SSI payroll, home help, APS, Great Start, foster care, independent living) are other programs' tables, as the "
+            "released row decided. The bulletin log lists 422 Bridges Policy Bulletins (BPB/<year>-<nnn>.pdf), the change-summary "
+            "family. Nothing new to take. Reviewer: the six August 2026 bulletins (BPB 2026-019 to 2026-024, after the released "
+            "2026-07-01 TOC edition) revised BEM 106, 230B, 554 and 630, BAM 220 and 401E, both TOCs and the log (9 revised editions); "
+            "RFT 000 (RFB 2026-006, 5-1-2026) and RFS 000 (RFB 2026-003, 1-1-2026) are the released editions. Their citation paths "
+            "exist, so a superseding MI scope is needed. #680's 196 'captured' is the document count; the manual is complete."
+        ),
+    },
+    "us-az": {
+        "queue_status": "blocked_primary_source",
+        "source_kind": "official_html_manual",
+        "primary_source_url": "https://dbmefaapolicy.azdes.gov/FAA5.html",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-az", "document_class": "manual", "version": "2025-10-30-az-des-faa5-manual-r2026-07-15-self-contained"},
+        "index_url": "https://dbmefaapolicy.azdes.gov/FAA5.html",
+        "index_document_count": None, "taken_count": 0,
+        "index_families": {},
+        "notes": (
+            "Blocked 2026-09-10 (batch 2, first probe): the DES FAA policy manual host dbmefaapolicy.azdes.gov answers HTTP 403 with a "
+            "5,675-byte page to the plain Axiom request and HTTP 403 with a 5,995-byte F5/TSPD JavaScript bot-challenge page to curl-cffi "
+            "chrome120 browser impersonation (20 s timeouts). No workaround attempted; the released scope's archived-snapshot captures "
+            "(web.archive.org download_url) are not an option for new documents under this run's rules. The released scopes hold 80 FAA5 "
+            "manual pages (2025-10-30, 7 provisions) and the FAA5 recovery scope (143 provisions); #680's 7 'captured' reflects that thin "
+            "release. ID was taken as the replacement state. Re-probed 2026-09-11 (batch 3, US network, 20 s timeouts, one plain request "
+            "and one browser-impersonation request): HTTP 403 with a 5,654-byte page after 6.7 s and HTTP 403 with a 5,995-byte TSPD "
+            "challenge page after 2.0 s; still blocked."
+        ),
+    },
+    "us-ny": {
+        "queue_status": "blocked_primary_source",
+        "source_kind": "official_pdf_manuals",
+        "primary_source_url": "https://otda.ny.gov/programs/snap/",
+        "target_manifest": None,
+        "target_scope": {"jurisdiction": "us-ny", "document_class": "manual", "version": "2026-07-17-ny-snap-manuals"},
+        "index_url": "https://otda.ny.gov/programs/snap/",
+        "index_document_count": None, "taken_count": 0,
+        "index_families": {},
+        "notes": (
+            "Blocked 2026-09-10 (batch 1, first network): otda.ny.gov reset the plain Axiom request (curl 56) and answered curl-cffi "
+            "chrome120 impersonation with a 5,609-byte F5/TSPD JavaScript bot-challenge page. Retried 2026-09-10 (batch 2, US network, "
+            "20 s timeouts, one plain request and one browser-impersonation request): the plain request is closed without a response "
+            "(requests ConnectionError: RemoteDisconnected('Remote end closed connection without response') after 0.7 s); "
+            "curl-cffi chrome120 gets HTTP 200 carrying a 7,562-byte TSPD bot-challenge page instead of the SNAP program page. No "
+            "index inventory is possible; no workaround attempted. The released scopes already hold the 576-page SNAP Source Book, "
+            "the 16-part Employment Policy Manual (340 provisions) and 18 NYCRR Parts 385 and 387 (1,678 provisions); #680's 18 "
+            "'captured' is a document count. OTDA policy directives (ADM/INF/GIS) remain a separate family to inventory when the host answers. "
+            "Re-probed 2026-09-11 (batch 3, US network, 20 s timeouts): the plain request is reset (requests ConnectionError: "
+            "ConnectionResetError(54, 'Connection reset by peer') after 3.2 s); curl-cffi chrome120 gets HTTP 200 with a 7,355-byte "
+            "TSPD challenge page (/TSPD/... scripts) after 2.6 s; still blocked."
+        ),
+    },
+}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--only", action="append", default=[], metavar="JURISDICTION",
                         help="restrict live builders to these jurisdictions (static rows are still applied)")
+    parser.add_argument("--static-only", action="store_true",
+                        help="apply only the static rows (batch 3 built no scope); no live builder runs and no manifest is written")
     parser.add_argument("--corpus-base", type=Path, default=None,
                         help="corpus root whose provisions JSONL are scanned for citation paths that already exist "
                              "(skipped and recorded); omit in a sparse worktree without data/corpus")
@@ -1119,7 +1381,7 @@ def main() -> int:
     summary: dict[str, Any] = {}
     built: set[str] = set()
     for jur, build in BUILDERS.items():
-        if args.only and jur not in args.only:
+        if args.static_only or (args.only and jur not in args.only):
             continue
         docs, info = build()
         if not docs:
@@ -1158,14 +1420,14 @@ def main() -> int:
         rows[jur] = row
         built.add(jur)
         print(f"{jur}: {len(docs)} documents; index families {info['families']}")
-    for jur, static in {**STATIC_ROWS, **STATIC_ROWS_BATCH2}.items():
+    for jur, static in {**STATIC_ROWS, **STATIC_ROWS_BATCH2, **STATIC_ROWS_BATCH3}.items():
         if jur in BUILDERS:
             continue  # a live-built state (KY in batch 2) keeps its generated row; the batch-1 KY/NY static rows are superseded
         row = rows.get(jur) or {"jurisdiction": jur, "name": NAMES[jur]}
         row.update({"name": NAMES[jur], **static})
         rows[jur] = row
     notes = queue.setdefault("policy", {}).setdefault("notes", [])
-    for note in (BATCH_NOTE, BATCH2_NOTE):
+    for note in (BATCH_NOTE, BATCH2_NOTE, BATCH3_NOTE):
         if note not in notes:
             notes.append(note)
     queue["states"] = [rows[j] for j in sorted(rows)]
