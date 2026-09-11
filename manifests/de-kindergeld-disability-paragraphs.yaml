@@ -15,8 +15,12 @@
         "browser_user_agent": true
       },
       "extraction": {
-        "html_content_selector": "#tab-content > p:nth-of-type(1)",
-        "segmentation": "single_block"
+        "html_content_selector": "#tab-content",
+        "segmentation": "anchor_range",
+        "html_start_selector": ":scope > p:nth-of-type(1)",
+        "html_stop_selector": ":scope > p:nth-of-type(2)",
+        "section_label": "inhalt",
+        "section_heading": "SGB IX §2 Absatz1 (2001-07-01)"
       },
       "metadata": {
         "primary_source": true,
@@ -44,8 +48,12 @@
         "browser_user_agent": true
       },
       "extraction": {
-        "html_content_selector": "#tab-content > p:nth-of-type(1)",
-        "segmentation": "single_block"
+        "html_content_selector": "#tab-content",
+        "segmentation": "anchor_range",
+        "html_start_selector": ":scope > p:nth-of-type(1)",
+        "html_stop_selector": ":scope > p:nth-of-type(2)",
+        "section_label": "inhalt",
+        "section_heading": "SGB IX §2 Absatz1 (2018-01-01)"
       },
       "metadata": {
         "primary_source": true,

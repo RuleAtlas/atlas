@@ -3,7 +3,7 @@
   "complete_source_unit": "SGB IX §2 Absatz1, all sentences; separate dated2001and2018 versions",
   "rows": [
     {
-      "citation_path": "de/statute/sgb-9/fassung-2001-07-01/2/absatz-1/block-1",
+      "citation_path": "de/statute/sgb-9/fassung-2001-07-01/2/absatz-1/inhalt",
       "body": "(1) Menschen sind behindert, wenn ihre körperliche Funktion, geistige Fähigkeit oder seelische Gesundheit mit hoher Wahrscheinlichkeit länger als sechs Monate von dem für das Lebensalter typischen Zustand abweichen und daher ihre Teilhabe am Leben in der Gesellschaft beeinträchtigt ist. Sie sind von Behinderung bedroht, wenn die Beeinträchtigung zu erwarten ist.",
       "body_sha256": "bc77b032739a2a25c249779fe2853aee617ae83b7f6bd8e8c8b25fc59483f009",
       "full_section_citation_path": "de/statute/sgb-9/fassung-2001-07-01/2/inhalt",
@@ -11,7 +11,7 @@
       "expression_date": "2001-07-01"
     },
     {
-      "citation_path": "de/statute/sgb-9-2018/2/absatz-1/block-1",
+      "citation_path": "de/statute/sgb-9-2018/2/absatz-1/inhalt",
       "body": "(1) Menschen mit Behinderungen sind Menschen, die körperliche, seelische, geistige oder Sinnesbeeinträchtigungen haben, die sie in Wechselwirkung mit einstellungs- und umweltbedingten Barrieren an der gleichberechtigten Teilhabe an der Gesellschaft mit hoher Wahrscheinlichkeit länger als sechs Monate hindern können. Eine Beeinträchtigung nach Satz 1 liegt vor, wenn der Körper- und Gesundheitszustand von dem für das Lebensalter typischen Zustand abweicht. Menschen sind von Behinderung bedroht, wenn eine Beeinträchtigung nach Satz 1 zu erwarten ist.",
       "body_sha256": "ca98fd427cc197ff85e96b8b6882fe04bed8fcf1caed0fa8cab6aaf53d4d7c4d",
       "full_section_citation_path": "de/statute/sgb-9-2018/fassung-2018-01-01/2/inhalt",
@@ -24,5 +24,6 @@
     "The threatened-disability sentence remains present; it does not itself meet the EStG32(4) disability route according to the separately reviewed III R44/17.",
     "Paragraphs2and3 remain in the full-section captures, not silently treated as the definition in paragraph1.",
     "Capture provides source units for protected native generation; no generated rule or legal proof acceptance is claimed."
-  ]
+  ],
+  "path_repair": "The initial HTML default emitted block-1 paths, rejected by A6 CI34644404487. Native anchor_range capture selects the identical first paragraph up to the second and supplies semantic inhalt labels. Both body hashes remain unchanged; no grammar baseline or generated provision was hand-edited."
 }

@@ -15,3 +15,8 @@ The local run used the native local_path option on the same retained official
 HTML snapshots. Four rows and complete coverage are generated. The additive
 BGH-counterpart release selector now contains54 scopes,10211 rows and407
 artifacts. No legal row, RuleSpec module or encoding manifest was hand-edited.
+
+The initial default HTML blocks failed the A6 grammar gate. The final native
+anchor-range configuration uses semantic `inhalt` paths, selecting paragraph1
+up to paragraph2. Both legal bodies and their SHA-256 values are unchanged.
+The grammar baseline is unchanged.
