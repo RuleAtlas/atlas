@@ -30,7 +30,7 @@ lead_list:
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
   agent_ready: 22
-  blocked_primary_source: 30
+  blocked_primary_source: 31
 states:
 - jurisdiction: us
   name: Federal
@@ -1144,6 +1144,26 @@ states:
     other_pdf: 11
   notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
     listed there, single_block extraction. Selected in the first batch as one of the ten largest states by population.
+- jurisdiction: us-pr
+  name: Puerto Rico
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-pr-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-pr
+    document_class: manual
+    version: null
+  index_url: https://wic.pr.gov/
+  index_document_count: 0
+  taken_count: 0
+  notes: 'Puerto Rico Department of Health, WIC Program: The Puerto Rico WIC policy manual is not published on wic.pr.gov
+    (HTTP 200): the site is a single-page Angular application whose server response is the app-root shell with no document
+    links or text, and the Department of Health site www.salud.pr.gov lists no WIC manual; the client-side application was
+    not driven. No mirror was used. Selected in the territories pass (2026-09-11): the five inhabited territories PR, GU,
+    VI, AS, MP.'
 - jurisdiction: us-ri
   name: Rhode Island
   lead_counts: {}

@@ -29,9 +29,9 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 1
+  needs_review: 5
   done: 26
-  agent_ready: 24
+  agent_ready: 25
   blocked_primary_source: 1
 states:
 - jurisdiction: us
@@ -374,6 +374,19 @@ states:
   lead_counts: null
   candidate_sources: []
   notes: 'Batch 2 check: Arkansas TEA official documents already ingested. Done.'
+- jurisdiction: us-as
+  name: American Samoa
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-as
+    document_class: null
+    version: null
+  lead_counts: null
+  candidate_sources: []
+  notes: Row added by territories pass (2026-09-11) (not on the policyengine-us lead list).
 - jurisdiction: us-az
   name: Arizona
   queue_status: done
@@ -1453,6 +1466,19 @@ states:
     - policyengine-us#parameters/gov/states/ga/dfcs/tanf/resources/limit.yaml
     - policyengine-us#variables/gov/states/ga/dfcs/tanf/eligibility/ga_tanf_resources_eligible.py
   notes: Georgia DFCS TANF Policy Manual already ingested. Done per the prior-ingest list.
+- jurisdiction: us-gu
+  name: Guam
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-gu
+    document_class: null
+    version: null
+  lead_counts: null
+  candidate_sources: []
+  notes: Row added by territories pass (2026-09-11) (not on the policyengine-us lead list).
 - jurisdiction: us-hi
   name: Hawaii
   queue_status: done
@@ -2553,6 +2579,19 @@ states:
   index_url: https://dssmanuals.mo.gov/temporary-assistance-case-management/
   index_document_count: 486
   taken_count: 486
+- jurisdiction: us-mp
+  name: Northern Mariana Islands
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-mp
+    document_class: null
+    version: null
+  lead_counts: null
+  candidate_sources: []
+  notes: Row added by territories pass (2026-09-11) (not on the policyengine-us lead list).
 - jurisdiction: us-ms
   name: Mississippi
   queue_status: agent_ready
@@ -3900,6 +3939,26 @@ states:
   index_url: http://services.dpw.state.pa.us/oimpolicymanuals/cash/index.htm
   index_document_count: 365
   taken_count: 365
+- jurisdiction: us-pr
+  name: Puerto Rico
+  queue_status: agent_ready
+  source_kind: official_pdf_regulation
+  primary_source_url: https://serviciosenlinea.adsef.pr.gov/documents/2.ReglamentoTANF.pdf
+  target_manifest: manifests/us-pr-tanf-state-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-pr
+    document_class: regulation
+    version: 2026-09-11-tanf-territory-regulation
+  lead_counts: null
+  candidate_sources: []
+  notes: 'Territories pass (2026-09-11). Primary source confirmed from the publisher''s own index. Inventory: 16 PDFs on the
+    ADSEF Reglamentos page: 2 adopted regulations (PAN 8684, taken by the SNAP/NAP territories row; TANF 7653, taken here),
+    3 program state plans (TEFAP 2025, CSFP 2025, NAP 2023), 8 application and certification forms, and public notices (LIHEAP
+    benefits, TANF services convocatoria, NAP-to-SNAP transition RFP); taken 1. Extraction proven 2026-09-11 (coverage complete,
+    0 missing/extra/duplicate).'
+  index_url: https://serviciosenlinea.adsef.pr.gov/sobre-adsef/reglamento
+  index_document_count: 16
+  taken_count: 1
 - jurisdiction: us-ri
   name: Rhode Island
   queue_status: agent_ready
@@ -4651,6 +4710,19 @@ states:
   index_url: https://www.dss.virginia.gov/relief/tanf/tanf-manual/
   index_document_count: 12
   taken_count: 10
+- jurisdiction: us-vi
+  name: Virgin Islands
+  queue_status: needs_review
+  source_kind: null
+  primary_source_url: null
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-vi
+    document_class: null
+    version: null
+  lead_counts: null
+  candidate_sources: []
+  notes: Row added by territories pass (2026-09-11) (not on the policyengine-us lead list).
 - jurisdiction: us-vt
   name: Vermont
   queue_status: agent_ready

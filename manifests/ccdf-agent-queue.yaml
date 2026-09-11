@@ -1006,7 +1006,11 @@ states:
   taken_count: 0
   notes: 'Not extracted: publisher''s documents page lists only ''Borrador Plan Estatal Child Care 2025-2027'' (draft) plus
     hearing notices and supporting studies; no approved plan; retried 2026-09-10: unchanged (draft, hearing notice, ''Fee
-    Scale State Plan 2025-2027'' supporting document, emergency plan); no approved or certified plan. Nothing was worked around.'
+    Scale State Plan 2025-2027'' supporting document, emergency plan); no approved or certified plan; re-read 2026-09-11T21:15Z
+    (territories pass): unchanged, the documents page (84 file links) still lists only the ''Borrador Plan Estatal Child Care
+    2025-2027'' draft with its hearing notice, fee-scale study and emergency-plan attachments, plus the Child Care 2026-27
+    proposal guide and forms and the adopted Reglamento del Programa Child Care (Num. 8687 de 2016), which is a separate regulation
+    family. Nothing was worked around.'
 - jurisdiction: us-ri
   name: Rhode Island
   queue_status: agent_ready
