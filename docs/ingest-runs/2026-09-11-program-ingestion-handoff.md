@@ -45,8 +45,8 @@ completed (TX, NH, KY, WY, ND) or confirmed complete against their publishers.
    the artifacts and commits them, signs every `2026-09-10*` scope against that commit, commits the
    signed manifests under `.axiom/ingest-manifests/`, and self-verifies with `guard-ingested` when
    `AXIOM_CORPUS_INGEST_PUBLIC_KEY` is exported. Open a PR; CI runs `guard-ingested`.
-3. Cut an immutable successor selector: the current US release's scopes plus every complete
-   `2026-09-10*` scope. A draft validated with
+3. Cut an immutable successor selector: the current US release's 275 scopes plus the 265 complete
+   `2026-09-10*` scopes (88,199 provisions), 540 in total. A draft validated with
    `axiom-corpus-ingest validate-release --base data/corpus --release <selector> --ignore-r2-missing`.
    Resolve these errors first:
    - Colorado TANF `us-co/regulation/9-ccr-2503-6/3.606.{1,2,6}` duplicate the released
@@ -61,6 +61,15 @@ completed (TX, NH, KY, WY, ND) or confirmed complete against their publishers.
 4. `uv run --extra dev python scripts/publish_corpus.py --release manifests/releases/<name>.json --dry-run`,
    then dispatch `activate-release.yml` and approve the `release-preview` and `release-activation`
    environments.
+
+## Final per-jurisdiction tally
+
+Extracted / done by pointer / blocked, over the 50 states plus DC: LIHEAP 51/0/0 · Medicaid 41/6/3
+(AL, CA, NE; WY needs_review) · CCDF 43/0/6 (AZ, GA, MD, MO, NY, TX; AK and IN post no conforming plan)
+· CHIP 33/13/5 (CA, DC, FL, MT, WY) · SSI 27/22/2 (NY, WY) · TANF 24/26/1 (NY) · WIC 21/0/30 (7 access
+blocks, 3 behind login, 20 publish no manual) · tax 17/34/0 · SNAP completion 5/20/3 (AZ, NY,
+OH eManuals) · Medicare federal only (IOM Pub 100-01 and Pub 100-24). Every jurisdiction has a resolved
+row in every program queue.
 
 ## Open reviewer decisions
 
