@@ -46,7 +46,7 @@ lead_list:
 status_counts:
   agent_ready: 28
   done: 22
-  blocked_primary_source: 4
+  blocked_primary_source: 5
 states:
 - jurisdiction: us
   name: Federal
@@ -1616,6 +1616,31 @@ states:
   index_families: 'Auxiliary Grant Program Manual chapters: 12 found / 12 taken; manual transmittals: 1 found / 0 taken; provider
     manuals, agreements, certification and forms: 8 found / 0 taken; 22VAC30-80 Auxiliary Grants Program sections on Virginia
     LIS (https://law.lis.virginia.gov/admincode/title22/agency30/chapter80/; separate index): 12 found / 0 taken'
+- jurisdiction: us-vi
+  name: Virgin Islands
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  program_applicability: not_applicable
+  source_kind: federal_statute_excludes_jurisdiction
+  primary_source_url: https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title42-section1382c&num=0&edition=prelim
+  target_manifest: null
+  target_scope:
+    jurisdiction: us-vi
+    document_class: null
+    version: null
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05005
+  index_document_count: 0
+  taken_count: 0
+  index_families: 'no SSI document family: the jurisdiction is outside the SSI program'
+  administration: null
+  notes: 'Not applicable (recorded as blocked_primary_source because the queue schema has no not-applicable status): SSI does
+    not operate in Virgin Islands. 42 U.S.C. 1382c(e) defines ''United States'' for title XVI as the 50 States and the District
+    of Columbia (in the corpus as us/statute/42/1382c/e, version 2026-06-20-ssi-title-xvi-title-42-r2026-07-15-self-contained-r2026-07-17-dedup),
+    and POMS SI 00501.410 / SI 00501.415 add only the Northern Mariana Islands (us/manual/ssa/poms/si/00501.410, version 2026-09-10-ssi-poms-si).
+    the Virgin Islands Department of Human Services administers Old Age Assistance, Aid to the Blind and Aid to the Disabled
+    (SSA titles I, X and XIV), a separate family. No territory SSI document exists to inventory and nothing was fetched. (2026-09-11
+    territories pass.)'
 - jurisdiction: us-vt
   name: Vermont
   lead_counts: {}

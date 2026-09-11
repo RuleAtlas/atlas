@@ -30,7 +30,7 @@ lead_list:
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
   agent_ready: 22
-  blocked_primary_source: 32
+  blocked_primary_source: 33
 states:
 - jurisdiction: us
   name: Federal
@@ -1340,6 +1340,27 @@ states:
   notes: Current WIC policy manual confirmed on the state WIC agency's own index page; one document per policy/chapter PDF
     listed there, single_block extraction. Selected in the second batch as one of the next ten states by population (NJ, VA,
     WA, AZ, TN, MA, IN, MD, MO, WI).
+- jurisdiction: us-vi
+  name: Virgin Islands
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: null
+  target_manifest: manifests/us-vi-wic-policy-manual.yaml
+  target_scope:
+    jurisdiction: us-vi
+    document_class: manual
+    version: null
+  index_url: https://doh.vi.gov/programs/women-infants-and-children/more-wic-information/
+  index_document_count: 0
+  taken_count: 0
+  notes: 'Virgin Islands Department of Health, WIC Program: The Virgin Islands WIC policy manual is not published on doh.vi.gov
+    (HTTP 200): the More WIC Information page lists nine participant PDFs (eligibility checklist, medical referral and formula
+    prescription forms, mobile-app sheet, rights and responsibilities forms in English and Spanish, eWIC card guides, brochure)
+    and the department''s news item opens the FY 2027 WIC State Plan of Operations for public comment (state-plan family,
+    MT precedent); no page lists a manual or local-agency section. Selected in the territories pass (2026-09-11): the five
+    inhabited territories PR, GU, VI, AS, MP.'
 - jurisdiction: us-vt
   name: Vermont
   lead_counts: {}

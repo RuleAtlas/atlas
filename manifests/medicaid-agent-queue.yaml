@@ -55,7 +55,7 @@ lead_list:
 status_counts:
   needs_review: 2
   agent_ready: 41
-  blocked_primary_source: 5
+  blocked_primary_source: 6
   done: 6
 states:
 - jurisdiction: us
@@ -2633,6 +2633,37 @@ states:
     other_pdf:
       found: 1
       taken: 0
+- jurisdiction: us-vi
+  name: Virgin Islands
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
+  primary_source_url: https://dhs.vi.gov/office-of-medicaid/
+  target_manifest: manifests/us-vi-medicaid-eligibility-manual.yaml
+  target_scope:
+    jurisdiction: us-vi
+    document_class: manual
+    version: null
+  index_url: https://dhs.vi.gov/office-of-medicaid/
+  index_document_count: 10
+  taken_count: 0
+  index_families:
+    application_form_pdf:
+      found: 9
+      taken: 0
+    provider_general_information_manual_pdf:
+      found: 1
+      taken: 0
+    eligibility_manual_or_state_plan_pdf:
+      found: 0
+      taken: 0
+  notes: 'Territories pass (2026-09-11): the Virgin Islands Department of Human Services, Office of Medicaid (Medical Assistance
+    Program) page (HTTP 200) lists nine application-family PDFs (hospital presumptive eligibility application, application
+    flyer, documents required, application, room and board statement, authorized representative, statement of circumstances,
+    employment wage and self-employment income forms) and the Providers General Information Manual (2026-01-21; provider family,
+    with a public-comment notice for the Provider Enrollment and General Information manuals); no eligibility manual or state
+    plan. 0 taken. Nothing was worked around.'
 - jurisdiction: us-vt
   name: Vermont
   lead_counts: {}

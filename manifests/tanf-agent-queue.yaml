@@ -29,10 +29,10 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  needs_review: 4
+  needs_review: 3
   done: 26
   agent_ready: 26
-  blocked_primary_source: 1
+  blocked_primary_source: 2
 states:
 - jurisdiction: us
   name: Federal
@@ -4719,17 +4719,24 @@ states:
   taken_count: 10
 - jurisdiction: us-vi
   name: Virgin Islands
-  queue_status: needs_review
-  source_kind: null
+  queue_status: blocked_primary_source
+  source_kind: official_state_agency_manual_not_published
   primary_source_url: null
-  target_manifest: null
+  target_manifest: manifests/us-vi-tanf-state-policy-manual.yaml
   target_scope:
     jurisdiction: us-vi
-    document_class: null
+    document_class: manual
     version: null
   lead_counts: null
   candidate_sources: []
-  notes: Row added by territories pass (2026-09-11) (not on the policyengine-us lead list).
+  notes: 'Territories pass (2026-09-11): the Virgin Islands Department of Human Services, Division of Family Assistance page
+    (HTTP 200 to the plain client) lists 24 PDFs: SNAP application packets and forms, the FY 2026 SNAP income-limits chart
+    and simplified-reporting notice, the SNAP E&T plan and handbook, ABAWD flyers, ECAP forms, waivers and one TANF brochure
+    (participant leaflet). No TANF policy manual, adopted rule or state plan is posted; the TANF state plan is filed with
+    ACF through OLDC and not published by the territory. 0 taken. Nothing was worked around.'
+  index_url: https://dhs.vi.gov/family-assistance-programs/
+  index_document_count: 24
+  taken_count: 0
 - jurisdiction: us-vt
   name: Vermont
   queue_status: agent_ready

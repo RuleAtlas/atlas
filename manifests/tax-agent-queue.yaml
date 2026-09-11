@@ -30,7 +30,7 @@ lead_list:
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
   agent_ready: 20
-  done: 34
+  done: 35
 states:
 - jurisdiction: us
   name: Federal
@@ -21803,6 +21803,34 @@ states:
     not re-ingested and not counted toward batch 1. The prior manifest exists but no local coverage artifact or release selector
     names its version in this checkout; reviewer to confirm the scope.
   taken_count: 0
+- jurisdiction: us-vi
+  name: Virgin Islands
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: official_index_points_to_irs_form
+  primary_source_url: https://bir.vi.gov/Form
+  target_manifest: manifests/us-irs-individual-income-tax-forms-ty2025.yaml
+  target_scope:
+    jurisdiction: us
+    document_class: form
+    version: 2026-09-10-tax-irs-forms-ty2025
+  index_url: https://bir.vi.gov/Form
+  index_document_count: 131
+  taken_count: 0
+  index_families:
+  - 'individual income tax returns, tax years 2011-2025 (14): every ''1040 U.S. Individual Income Tax Return'' entry links
+    the IRS PDF (2025: https://www.irs.gov/pub/irs-prior/f1040--2025.pdf)'
+  - 'Form 1040 INFO, Non-Virgin Islands Source Income of Virgin Islands Residents, tax years 2016-2025 (10): BIR''s own attachment
+    form (2025 revision 2025-01-08); not taken'
+  - Form 8689 Allocation of Individual Income Tax to the U.S. Virgin Islands (13, IRS PDFs), gross receipts, withholding,
+    excise and other BIR forms (94); not taken
+  notes: 'Territories pass (2026-09-11): done by pointer. Bona fide Virgin Islands residents file the federal Form 1040 with
+    the Bureau of Internal Revenue under the mirror code (48 U.S.C. 1397); the Bureau''s Forms page (https://bir.vi.gov/Form,
+    an application whose listing is served by the publisher''s own /api/form/find endpoint, 131 entries) links the tax year
+    2025 Form 1040 entry to the IRS PDF and posts no Virgin Islands return or instructions booklet of its own. The IRS TY2025
+    Form 1040 and instructions are in the corpus as us/form/irs/ty2025/f1040 and i1040gi (version 2026-09-10-tax-irs-forms-ty2025).
+    BIR''s own TY2025 product is Form 1040 INFO (a residents'' attachment, not the return), recorded and not taken. 0 taken.'
 - jurisdiction: us-vt
   name: Vermont
   queue_status: agent_ready
