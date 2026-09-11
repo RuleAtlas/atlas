@@ -29,7 +29,7 @@ lead_list:
   reference_file: policyengine-us-committed-program-references.jsonl
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
-  agent_ready: 20
+  agent_ready: 21
   done: 35
   needs_review: 1
 states:
@@ -14439,6 +14439,36 @@ states:
     not re-ingested and not counted toward batch 1. The prior manifest exists but no local coverage artifact or release selector
     names its version in this checkout; reviewer to confirm the scope.
   taken_count: 0
+- jurisdiction: us-mp
+  name: Northern Mariana Islands
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: agent_ready
+  source_kind: official_pdf_forms_instructions
+  primary_source_url: https://www.finance.gov.mp/division-forms/revenue-taxation/2025/f1040cm--2025.pdf
+  target_manifest: manifests/us-mp-individual-income-tax-forms-ty2025.yaml
+  target_scope:
+    jurisdiction: us-mp
+    document_class: form
+    version: 2026-09-11-tax-territory-forms-ty2025
+  index_url: https://www.finance.gov.mp/forms.php
+  index_document_count: 170
+  taken_count: 5
+  notes: 'Territories pass (2026-09-11) = the five inhabited territories: us-pr, us-gu, us-mp built here; us-vi done by pointer
+    (its publisher''s index links the IRS Form 1040); us-as needs_review (Form 390 posted only as an Excel workbook). TY2025
+    resident individual income tax return material confirmed from the CNMI Department of Finance, Division of Revenue and
+    Taxation index. The Department of Finance Forms page lists 170 file links across its divisions; the Revenue and Taxation
+    2025 block carries the Northern Marianas Territorial Income Tax return (Form 1040CM), the wage and salary tax return (Form
+    1040NMI), the nonresident and amended returns and the 1040CM schedules 1CM, ETC and WSD, and links IRS Schedules 8812
+    and EIC, the IRS Form 1040 instructions and tax tables for the mirrored code. Taken: Form 1040CM, Form 1040NMI, Schedule
+    1CM, Schedule ETC and Schedule WSD for 2025. Extraction proven 2026-09-10.'
+  index_families:
+  - '2025 Revenue and Taxation forms (14): 1040CM, 1040NMI, 1040NR-CM, 1040-CM-X, Schedule 1CM, Schedule ETC, Schedule WSD,
+    OS-3710, W-2CM, W-2GCM, 1120CM, 1120F-CM, 1120S, 1065-CM'
+  - '2025 Revenue and Taxation instructions and publications (7): Publication IOC (W-2CM code reference), OS-3710/W-2 supplemental
+    instructions, electronic filing specifications and templates, withholding guidelines; no 2025 Form 1040CM instructions
+    (the last posted i1040-CM is tax year 2020 under prior-year forms)'
+  - prior-year (2019-2024) income tax forms and IRS links on the same page and the prior-year page (149); not taken
 - jurisdiction: us-ms
   name: Mississippi
   queue_status: agent_ready

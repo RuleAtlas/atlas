@@ -910,8 +910,10 @@ states:
   target_manifest: manifests/us-mp-ccdf-state-plan-fy2025-2027.yaml
   taken_count: 0
   notes: 'Publisher blocked: HTTP 403 (nginx) for requests with browser UA and curl_cffi chrome120/safari17_0/edge101; retried
-    2026-09-10T18:36Z, same failure; retried 2026-09-10T21:35Z from US network, same failure (HTTP 403 nginx). Nothing was
-    worked around.'
+    2026-09-10T18:36Z, same failure; retried 2026-09-10T21:35Z from US network, same failure (HTTP 403 nginx); retried 2026-09-11T21:15Z
+    from a US network (territories pass), same failure (HTTP 403, server nginx/1.29.8, 358-byte body, for the plain browser
+    UA and curl_cffi chrome120; the parent Department of Community and Cultural Affairs site www.dcca.gov.mp answers the same
+    403). Nothing was worked around.'
 - jurisdiction: us-oh
   name: Ohio
   queue_status: agent_ready

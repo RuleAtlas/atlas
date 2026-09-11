@@ -45,7 +45,7 @@ lead_list:
   classifier: axiom_corpus.corpus.source_discovery.build_source_discovery_report
 status_counts:
   agent_ready: 28
-  done: 22
+  done: 23
   blocked_primary_source: 6
 states:
 - jurisdiction: us
@@ -1163,6 +1163,28 @@ states:
     Manual section pages (dssmanuals.mo.gov sitemap): 42 found / 0 taken; other DSS manuals on the site index (childrens-services-policy-manual,
     family-mo-healthnet-magi, food-stamps, forms-manual, independent-living-rehabilitation-policy-manual, mo-healthnet-for-the-aged-blind-and-disabled,
     prevention-of-blindness-policy-manual, temporary-assistance-case-management): 8 found / 0 taken'
+- jurisdiction: us-mp
+  name: Northern Mariana Islands
+  lead_counts: {}
+  candidate_sources: []
+  queue_status: done
+  source_kind: ssa_poms_section
+  primary_source_url: https://secure.ssa.gov/apps10/poms.nsf/lnx/0500501410
+  target_manifest: manifests/us-ssa-poms-si-2026-09-10.yaml
+  target_scope: *id001
+  index_url: https://secure.ssa.gov/apps10/poms.nsf/subchapterlist!openview&restricttocategory=05005
+  index_document_count: 1
+  taken_count: 1
+  index_families: 'POMS SI 00501.410 Residency / United States definition (SSI applies in the NMI): 1 found / 1 taken in the
+    federal family; POMS SI 01415.010 state table: no Northern Mariana Islands row; no territory document family exists'
+  administration: N
+  notes: 'SSI applies in the Northern Mariana Islands (Covenant to Establish a Commonwealth, section 502(a)(1), 48 U.S.C.
+    1801 note); POMS SI 00501.410 (3. United States) and SI 00501.415 state that for SSI purposes the United States includes
+    only the 50 States, the District of Columbia and the Northern Mariana Islands, and both sections are already in the corpus
+    (us/manual/ssa/poms/si/00501.410, 00501.415; version 2026-09-10-ssi-poms-si). No optional state supplement: POMS SI 01415.010''s
+    state table carries no Northern Mariana Islands row and the CNMI government sites reviewed 2026-09-11 (cnmimedicaid.org,
+    finance.gov.mp, dcca.gov.mp) list no supplement program. Done with that finding; nothing was fetched. (2026-09-11 territories
+    pass.)'
 - jurisdiction: us-ms
   name: Mississippi
   lead_counts: {}
