@@ -1,4 +1,55 @@
-# Needs-driven closure check, 2026-09-11
+# Needs-driven closure check, 2026-09-11 corpus, ten board Year 1 programs
+
+Question: does the corpus, as cut by `us-rulespec-2026-09-11-program-ingestion-union` plus the
+2026-09-11 second-run scopes on disk, hold every source document family a complete encoding of each
+program's rulebook needs, per jurisdiction? The bar is the law's own structure: every section of the
+federal statute and implementing regulation, then each state's own rulebook (manual or regulation table
+of contents, state plan, tables, transmittals). PolicyEngine is a cross-check column only, so the
+`pe_modeled` field shows where the law has elements PolicyEngine does not model.
+
+Each program has a `<program>-schema.yaml` (the elements and their carrying document families), a
+`<program>-matrix.csv` with exactly one row per jurisdiction x element (status PRESENT with a cited
+scope version and citation_path, or EXTRACTABLE, ABSENT, OUTREACH, REVIEW; federal elements are decided
+once and marked INHERITED for states; N/A where the jurisdiction's law has no such rule), and a
+`<program>.md` with method, roll-up, largest gap families and what closes them. Builders are checked
+in so the check can be re-run. Percentages below are of state-level checked cells; every agent reports
+a residual false-positive rate on PRESENT of roughly 10 to 20 percent, so the gap columns are floors.
+
+| Program | Elements | Cells checked | Present | Extractable | Absent | Outreach | Review | Elements PE does not model |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| SNAP | 393 | 3443 | 77% | 6% | 6% | 2% | 9% | 286 |
+| WIC | 110 | 1664 | 38% | 2% | 36% | 18% | 5% | 87 |
+| Medicaid | 302 | 7385 | 50% | 29% | 6% | 5% | 10% | 261 |
+| CHIP | 186 | 2733 | 50% | 35% | 0% | 6% | 9% | 170 |
+| TANF | 181 | 1781 | 64% | 17% | 0% | 1% | 18% | 162 |
+| CCDF | 99 | 1599 | 75% | 8% | 0% | 9% | 8% | 84 |
+| SSI | 131 | 6812 | 48% | 50% | 1% | 0% | 1% | 97 |
+| Liheap | 41 | 2132 | 33% | 59% | 2% | 0% | 5% | 37 |
+| Medicare | 68 | 3536 | 37% | 60% | 0% | 1% | 2% | 38 |
+| TAX | 206 | 1629 | 55% | 43% | 0% | 0% | 2% | 85 |
+| **All ten** | 1717 | 32714 | 52% | 34% | 4% | 3% | 6% | 1307 |
+
+
+## What closes the gaps, by leverage
+
+1. **Federal statute and regulation layers never taken.** 42 U.S.C. for SNAP, WIC, TANF, SSI, LIHEAP
+   and Medicare eligibility and premiums; 7 CFR 271, 272, 274, 276 to 285; 45 CFR 260 to 265 and 96
+   subpart H; 42 CFR 406, 407, 408, 423 and 447 subpart A; 26 CFR part 1 and 31 IRC sections. Each
+   missing federal section costs 51 cells. One eCFR and U.S. Code run.
+2. **State plans filed with the federal agency.** CMS-posted Medicaid and CHIP state plans (about 3,700
+   cells), FNS-posted SNAP E&T plans (50 states), TANF plans (49), WIC plans, CCDF Appendix 1 (51).
+3. **Dollar figures in charts and attachments.** MSP income charts (36 states), LIHEAP benefit matrices
+   (37), SSI supplement standards (10), FY2026 SNAP tables (15 to 25), TY2026 indexed tax amounts (30).
+4. **Whole-chapter state statute and regulation for income tax.** 18 states hold only a handful of
+   income-tax sections; no state income-tax regulation chapter is selected.
+5. **Structural absences.** WIC: 20 states publish no manual, 10 gate it. Medicaid community
+   engagement: absent in 48 states until the 2027 compliance date. Territories: most programs post nothing.
+6. **Our own misses, fixable by selection or one extraction each.** Delaware TANF 3000-series never taken;
+   HI, ME, MD, NC TANF rulebooks and TX, WY zero-liability tax scopes on disk but not selected; header-only
+   stubs in DE, ME, KY, NH tax recovery rows; whole-chapter dumps used as section bodies in CT, OR, NC, NY, MI.
+
+## Per-program indexes (appended by each agent)
+
 
 One folder per pass over the board Year 1 programs: does the corpus hold every source-document
 family a complete encoding of each program's rulebook needs, per jurisdiction (federal plus the
