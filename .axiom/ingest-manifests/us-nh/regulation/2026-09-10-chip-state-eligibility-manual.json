@@ -6,11 +6,11 @@
     },
     {
       "path": "data/corpus/inventory/us-nh/regulation/2026-09-10-chip-state-eligibility-manual.json",
-      "sha256": "c2b39818b676c93c53e67d4031b440128d995bb7897a548a574b2f3001ed7415"
+      "sha256": "d51c663912701b1d4d15fada45e099358fa77e5e12251ab3033faf1df88294c2"
     },
     {
       "path": "data/corpus/provisions/us-nh/regulation/2026-09-10-chip-state-eligibility-manual.jsonl",
-      "sha256": "83ca0191ba768915450a97253036739884aa8a18cd59b1637b1a0c2f9d421040"
+      "sha256": "ac3ac345775738b1151a3776d16716c341dc64be0dfdecbdb851123a462cf03f"
     },
     {
       "path": "data/corpus/sources/us-nh/regulation/2026-09-10-chip-state-eligibility-manual/official-documents/nh-gencourt-he-w-800.html",
@@ -18,13 +18,13 @@
     }
   ],
   "axiom_corpus_git": {
-    "commit": "3643139c72f856a5f38127df61cf7592313051b9",
+    "commit": "043020521b2d60fc887dc8df1f27473805c8f944",
     "dirty_tracked": false,
     "root": "."
   },
   "axiom_corpus_version": "0.1.0",
   "command": {
-    "text": "axiom-corpus-ingest extract-official-documents --base data/corpus --version 2026-09-10-chip-state-eligibility-manual --manifest manifests/us-nh-chip-state-eligibility-manual.yaml (run note: docs/ingest-runs/2026-09-10-*.md)"
+    "text": "axiom-corpus-ingest extract-official-documents --base data/corpus --version 2026-09-10-chip-state-eligibility-manual --manifest manifests/us-nh-chip-state-eligibility-manual.yaml (run note: docs/ingest-runs/2026-09-10-chip-*.md; re-extracted 2026-09-12 with slug-safe section paths)"
   },
   "coverage": {
     "complete": true,
@@ -35,14 +35,14 @@
     "source_count": 157
   },
   "document_class": "regulation",
-  "generated_at": "2026-09-11T22:17:17.258684+00:00",
+  "generated_at": "2026-09-12T13:25:21.477647+00:00",
   "jurisdiction": "us-nh",
   "reasoning_logs": [],
   "schema_version": "axiom-corpus/ingest-manifest/v1",
   "signature": {
     "algorithm": "ed25519",
     "key_id": "axiom-corpus-ingest-v1",
-    "value": "eFmiKC3oDtn/xdx2fXYvzmb2Uw91ZfNoyMd/HUqoIoo3lpJHZRlVlaWk/g5ODNeqYf+Hy5HStszbv0tpAfNzDA=="
+    "value": "T1mQB7h9ZKdipTQHbB6/ARt4XSOT5zWWh3zKBUpWjQMay5nREa4bHV/drOT7/tfqVhX6VOrB2PeFfFJoVLbuAw=="
   },
   "tool": "axiom-corpus-ingest signed ingest manifest",
   "version": "2026-09-10-chip-state-eligibility-manual"
